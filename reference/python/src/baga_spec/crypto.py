@@ -16,9 +16,12 @@ def b64u_encode(data: bytes) -> str:
 
 def b64u_decode(value: str) -> bytes:
     try:
-        return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
+        decoded = base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
     except Exception as exc:
         raise SignatureError("invalid base64url value") from exc
+    if b64u_encode(decoded) != value:
+        raise SignatureError("base64url value is not canonical unpadded encoding")
+    return decoded
 
 
 def sha256_digest(data: bytes) -> str:
@@ -38,7 +41,7 @@ def ed25519_public_key_from_seed(seed32: bytes) -> bytes:
 def ed25519_key_id(public_key: bytes) -> str:
     if len(public_key) != 32:
         raise SignatureError("Ed25519 public key must be exactly 32 bytes")
-    return "ed25519:" + hashlib.sha256(public_key).hexdigest()
+    return "ed25519:" + b64u_encode(hashlib.sha256(public_key).digest())
 
 
 def sign_ed25519(seed32: bytes, message: bytes) -> bytes:
