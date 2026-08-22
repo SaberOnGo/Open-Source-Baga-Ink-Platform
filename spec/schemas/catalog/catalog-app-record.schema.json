@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:catalog-app-record:0.1",
+  "title": "Baga Catalog App Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "repository_id", "app_id", "publisher_id", "publisher_display_name", "title", "summary", "description", "category", "tags", "icon", "screenshots", "license", "source", "privacy", "support", "release_channels", "review_attestations", "updated_at"],
+  "properties": {
+    "type": {"const": "baga.catalog-app"},
+    "format": {"const": "0.1"},
+    "repository_id": {"type": "string", "pattern": "^repo1_[a-z2-7]{52}$"},
+    "app_id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160},
+    "publisher_id": {"type": "string", "pattern": "^pub1_[a-z2-7]{52}$"},
+    "publisher_display_name": {"type": "string", "minLength": 1, "maxLength": 120},
+    "title": {"$ref": "#/$defs/localeMap"},
+    "summary": {"$ref": "#/$defs/localeMap"},
+    "description": {"$ref": "#/$defs/localeMap"},
+    "category": {"type": "string", "pattern": "^[a-z0-9_-]{2,64}$"},
+    "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9_-]{1,64}$"}},
+    "icon": {"$ref": "#/$defs/target"},
+    "screenshots": {"type": "array", "items": {"$ref": "#/$defs/target"}},
+    "license": {"type": "string", "minLength": 1, "maxLength": 128},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["url", "verified"],
+      "properties": {"url": {"type": "string", "minLength": 1, "maxLength": 2048}, "verified": {"type": "boolean"}}
+    },
+    "privacy": {"type": "object"},
+    "support": {"type": "object"},
+    "release_channels": {"type": "object"},
+    "review_attestations": {"type": "array", "items": {"$ref": "#/$defs/target"}},
+    "updated_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"}
+  },
+  "$defs": {
+    "localeMap": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "maxLength": 20000}, "propertyNames": {"pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"}},
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "length", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "maxLength": 512},
+        "length": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      }
+    }
+  }
+}
