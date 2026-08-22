@@ -1,0 +1,1 @@
+{"type":"baga.publisher-genesis","format":"0.1","display_name":"Example Studio","root_threshold":1,"root_keys":[{"key_id":"ed25519:0011","algorithm":"ed25519","public_key":"AQID"}],"recovery_threshold":1,"recovery_keys":[{"key_id":"ed25519:2233","algorithm":"ed25519","public_key":"BAUG"}],"created_at":"2026-08-22T00:00:00Z"}
