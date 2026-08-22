@@ -5,7 +5,30 @@ import copy
 import pytest
 
 from baga_spec.errors import SchemaValidationError
-from baga_spec.schemas import validate_schema
+from baga_spec.schemas import schema_path, validate_schema
+
+EXPECTED_SCHEMAS = [
+    "publisher-genesis",
+    "publisher-root-update",
+    "app-ownership",
+    "app-key-delegation",
+    "app-transfer",
+    "files-manifest",
+    "release-statement",
+    "signature-envelope",
+    "release-record",
+    "baga-target-custom",
+    "review-attestation",
+    "revocation-statement",
+    "update-journal",
+    "transfer-session",
+    "offline-snapshot-manifest",
+    "transparency-event",
+    "transparency-checkpoint",
+    "catalog-root",
+    "catalog-app-record",
+    "catalog-diff",
+]
 
 GENESIS = {
     "type": "baga.publisher-genesis",
@@ -13,19 +36,11 @@ GENESIS = {
     "display_name": "Example Studio",
     "root_threshold": 1,
     "root_keys": [
-        {
-            "key_id": "ed25519:" + "11" * 32,
-            "algorithm": "ed25519",
-            "public_key": "A" * 43,
-        }
+        {"key_id": "ed25519:" + "11" * 32, "algorithm": "ed25519", "public_key": "A" * 43}
     ],
     "recovery_threshold": 1,
     "recovery_keys": [
-        {
-            "key_id": "ed25519:" + "22" * 32,
-            "algorithm": "ed25519",
-            "public_key": "B" * 43,
-        }
+        {"key_id": "ed25519:" + "22" * 32, "algorithm": "ed25519", "public_key": "B" * 43}
     ],
     "created_at": "2026-08-22T00:00:00Z",
 }
@@ -88,6 +103,11 @@ TRANSFER = {
         }
     ],
 }
+
+
+def test_all_executable_spec_schemas_are_registered() -> None:
+    for name in EXPECTED_SCHEMAS:
+        assert schema_path(name).is_file(), name
 
 
 @pytest.mark.parametrize(
