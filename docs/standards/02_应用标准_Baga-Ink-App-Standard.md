@@ -1,8 +1,8 @@
 # Baga Ink 应用标准 / Baga Ink App Standard
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.3**  
-> **日期：2026-08-22**  
+> **状态：Draft v0.4**  
+> **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`、`06_IKP应用包规范_IKP-Package-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`**
 
@@ -78,6 +78,8 @@ Native Extension MAY 使用：
 - Vendor SDK。
 
 但它必须由 Platform 以受控 Capability 的形式重新暴露给 App。
+
+**内部使用成熟开源库本身不等于 Native Extension，也不意味着每个库都需要一个 Capability Provider。** Platform 可以在现有 Core / Adapter 实现中直接、组合或拆分复用成熟组件。
 
 ---
 
@@ -210,7 +212,7 @@ Platform MAY 因设备限制合并某些底层事件，但对 App 暴露的语�
 
 ## 6.1 基本原则
 
-应用 MUST 查询“设备具有什么能力”，而不是“设备是什么品牌”。
+应用 MUST 查询“设备 / Platform 具有什么能力”，而不是“设备是什么品牌”或“底层用了什么库”。
 
 推荐：
 
@@ -218,14 +220,17 @@ Platform MAY 因设备限制合并某些底层事件，但对 App 暴露的语�
 if baga.device.has("input.pen") then
     enable_pen_ui()
 end
+
+if baga.device.has("reader.anchor") then
+    enable_anchor_navigation()
+end
 ```
 
 不推荐：
 
 ```lua
-if device.vendor == "BOOX" then
-    enable_pen_ui()
-end
+if device.vendor == "BOOX" then ... end
+if reader_impl == "KOReader" then ... end
 ```
 
 ## 6.2 Required Capability
@@ -246,7 +251,7 @@ Platform MUST 在安装或启动前提示不兼容，而不是允许应用运行
 
 Capability 与 Permission 是两个不同概念：
 
-- **Capability**：设备是否具备某能力；
+- **Capability**：设备 / Platform 是否具备某能力；
 - **Permission**：应用是否被允许使用某资源或用户数据。
 
 例如：
@@ -279,11 +284,11 @@ Platform SHOULD 采用最小权限原则。
 
 ---
 
-# 8. Storage 与沙箱
+# 8. Storage、Data、Library 与沙箱
 
 每个 App MUST 拥有独立应用沙箱。
 
-建议逻辑路径：
+逻辑路径：
 
 ```text
 appdata/
@@ -292,12 +297,29 @@ documents/
 downloads/
 ```
 
+应用 MUST 区分三类接口：
+
+```text
+baga.storage
+→ 文件 / 字节资源与逻辑路径
+
+baga.data
+→ App 私有结构化事务本地数据
+
+baga.library
+→ 经权限控制的用户书库 / 文档资源
+```
+
 应用：
 
 - MUST 不假设 Android 或 Kindle 的真实文件路径；
 - MUST 不直接扫描系统目录；
-- SHOULD 使用 Baga Ink Storage API；
-- MUST 通过显式权限访问用户书库或用户选择的外部文件。
+- SHOULD 使用 `baga.storage` 处理文件/字节；
+- SHOULD 使用 `baga.data` 处理需要可靠事务语义的结构化本地状态；
+- MUST 使用 `baga.library` 与 `library.read/write` Permission 访问用户书库；
+- MUST 不直接使用 SQLite/Room/厂商书库数据库作为 Universal App contract。
+
+`baga.data` 的实现可以由 Platform 复用 SQLite 等成熟数据库，但 App 不依赖其 SQL、路径、WAL 或内部 schema。
 
 卸载应用时，Platform SHOULD 区分：
 
@@ -307,7 +329,7 @@ downloads/
 
 ---
 
-# 9. Network 与离线优先
+# 9. Network、Offline-first 与 Sync
 
 墨水屏经常处于断网或低频联网状态，因此 Baga Ink App SHOULD 默认采用 offline-first 思维。
 
@@ -316,8 +338,26 @@ downloads/
 - 正确处理无网络；
 - 不把网络在线作为正常启动前提；
 - 不持续高频轮询；
+- 本地用户确认操作 SHOULD 先可靠持久化，再等待同步；
 - 不因同步失败破坏本地数据；
 - 使用 Baga Ink Network / Sync API，而不是直接依赖设备私有网络接口。
+
+必须区分：
+
+```text
+baga.data
+→ 本地可靠持久化
+
+baga.sync
+→ 网络/电源/生命周期下的同步触发和调度
+
+App business merge
+→ 对象身份、冲突、版本历史和业务合并规则
+```
+
+对于真正有多设备并发离线编辑需求的数据，App / Platform implementation SHOULD 优先评估 Automerge 等成熟 Local-first / CRDT 实现，而不是自行发明通用 CRDT。
+
+但任何具体 CRDT library 都不是 Universal App 必须学习的 API，也不应被机械用于所有数据。
 
 长时间任务 SHOULD 支持重试、取消以及睡眠/唤醒后的恢复。
 
@@ -412,14 +452,25 @@ Platform MAY 拒绝不合理的 keep-awake 请求。
 
 # 14. Reader 能力
 
-如果应用使用阅读能力，SHOULD 优先调用 Baga Ink Reader API。
+如果应用使用阅读能力，SHOULD 调用 Baga Ink Reader API。
+
+Reader API 是**格式无关的应用边界**，不以 EPUB 或任意单一文档格式为中心。
+
+应用 SHOULD：
+
+```lua
+baga.reader.supports(source_or_format)
+baga.reader.open(source)
+```
+
+而不是假设某个固定格式一定存在。
 
 应用不应因为 Baga Ink Platform 某一版本内部复用了 KOReader，就直接依赖 KOReader 私有 Lua 对象。
 
 原则：
 
 ```text
-App → Baga Ink Reader API → Reader implementation
+App → Baga Ink Reader API → Platform implementation
 ```
 
 而不是：
@@ -428,13 +479,24 @@ App → Baga Ink Reader API → Reader implementation
 App → KOReader internals
 ```
 
-这样未来 Reader Engine 可以替换或演进。
+## 14.1 Reader Anchor
+
+当应用需要保存阅读位置、笔记、高亮或把业务对象关联到正文时，应优先使用 `baga.reader` 的标准 Position / Anchor 语义。
+
+App MUST：
+
+- 把 Anchor 视为 opaque、可序列化 Baga 值；
+- 不自行解析 XPointer、PDF pboxes、EPUB CFI 等 Reader 私有/外部表示；
+- 不为 EPUB/PDF/MOBI/FB2/TXT/DjVu/CBZ 等分别重写 Locator；
+- 由 Platform/Reader implementation 负责真正定位和恢复。
+
+Platform 可以在内部复用 KOReader 等成熟 Reader 已有的不同格式位置模型。
 
 ---
 
-# 15. 依赖规则
+# 15. 依赖与成熟实现复用规则
 
-为了避免早期生态出现 dependency hell，Universal App v0.3 SHOULD 默认自包含。
+为了避免早期生态出现 dependency hell，Universal App v0.4 SHOULD 默认自包含应用代码与资源。
 
 第一阶段：
 
@@ -445,6 +507,22 @@ App → KOReader internals
 - 跨 App shared dependency 暂不作为第一阶段核心能力。
 
 这里的“自包含”指**应用代码与应用资源自包含**，不代表 App 自带一套平台核心、Lua 解释器、设备适配层或系统桥。
+
+同时：
+
+> **Universal App 不直接依赖某个 native library，并不意味着 Baga Ink Platform 不能大量复用成熟 native/open-source 实现。**
+
+例如 Platform MAY 在内部使用：
+
+```text
+KOReader / koreader-base
+SQLite
+Automerge
+FBInk
+Vendor SDK
+```
+
+只要 App 面对的仍是稳定 `baga.*`。
 
 ---
 
@@ -523,9 +601,10 @@ Experimental
 - Vendor-specific API 直接调用；
 - WebView / Chromium 作为平台默认应用执行方式；
 - 每个 App 自己实现系统级更新机制；
-- 每个 App 自带另一套 Lua 解释器或设备兼容代码。
+- 每个 App 自带另一套 Lua 解释器或设备兼容代码；
+- 每个 App 自己实现一套 Reader/数据库/通用 CRDT 只是为了绕过 Platform API。
 
-这些能力如未来需要，应位于受控扩展层，而不是侵蚀 Universal App 边界。
+这些能力如未来需要，应位于受控扩展层或 Platform 实现层，而不是侵蚀 Universal App 边界。
 
 ---
 
@@ -547,7 +626,7 @@ LifeBook 本身不依赖额外通用中间层；它直接基于 Baga Ink Platfor
 
 # 22. 最终目标
 
-Baga Ink App Standard 的目标不是限制创造力，而是把跨设备最痛苦、最容易重复造轮子的部分收敛到平台。
+Baga Ink App Standard 的目标不是限制创造力，而是把跨设备最痛苦、最容易重复造轮子的部分收敛到平台，并让平台内部最大化复用成熟实现。
 
 开发者应该把时间花在：
 
@@ -570,6 +649,9 @@ BOOX refresh API
 iReader private SDK
 Android vendor differences
 不同设备的安装脚本
+文件拼接式“数据库”
+每种书籍格式的定位算法
+自研通用 CRDT
 ```
 
 这就是 Baga Ink Universal App 标准存在的根本价值。
