@@ -1,7 +1,7 @@
 # Baga Ink Platform 顶层战略与架构定义
 
 > **文档级别：Strategic Source of Truth / 项目最高层级定义**  
-> **状态：Strategic Baseline v0.1**  
+> **状态：Strategic Baseline v0.2**  
 > **日期：2026-08-22**  
 > **适用项目：Open-Source-Baga-Ink-Platform**
 
@@ -13,17 +13,32 @@
 
 它不是某一款 Kindle、某一家 Android 墨水屏厂商的适配说明，也不是某一个 SDK 版本的 API Reference。它是整个 Baga Ink 项目的**顶层定义文档**。
 
-后续的 README、SDK 文档、IKP Package Specification、Kindle Adapter、Android Adapter、Market 审核规则、Compatibility Test Suite、LifeBook 实现，以及其他子项目的设计，应当与本文档保持一致。
+后续的 README、SDK 文档、IKP Package Specification、Kindle Adapter、Android Adapter、Market 审核规则、Compatibility Test Suite、LifeBook 实现，以及其他子项目的设计，都应当与本文档保持一致。
 
 若后续实现与本文档的战略原则发生冲突，应通过正式架构决策更新本文档，而不是在子模块中静默偏离。
 
 ### 0.1 规范性用词
 
-本文档中的：
-
 - **MUST / 必须**：平台级硬约束；
 - **SHOULD / 应当**：默认应遵守，除非有明确且记录在案的原因；
 - **MAY / 可以**：允许的实现选择。
+
+### 0.2 术语原则
+
+Baga Ink 必须坚持轻量平台定位。
+
+设备端统一使用以下术语：
+
+- **Baga Ink Platform**：整个设备端统一平台；
+- **Baga Ink Platform Core**：设备端共享核心代码与平台能力；
+- **Baga Ink API**：第三方应用唯一稳定公开接口；
+- **Baga Lua Profile**：第三方 Lua 应用可使用的语言子集与标准库范围；
+- **Embedded Lua Interpreter**：Platform Core 内部嵌入或复用的轻量 Lua 解释器；
+- **Baga Ink Device Adapter**：连接 Platform Core 与具体设备/系统能力的适配层。
+
+项目文档不得把 Baga Ink 描述成一个需要额外安装、独立管理、独立升级的通用执行环境或庞大中间层。
+
+对用户而言，设备上只有 **Baga Ink Platform**；对开发者而言，只有 **Baga Ink SDK / API / App Standard**；对平台实现者而言，才需要理解 Platform Core 与 Device Adapter。
 
 ---
 
@@ -60,7 +75,7 @@ Android E-Paper
 不同厂商 SDK
 ```
 
-Baga Ink 的目标状态是：
+Baga Ink 的目标状态：
 
 ```text
                    Third-party Apps
@@ -72,7 +87,7 @@ Baga Ink 的目标状态是：
             Baga Ink SDK / Baga Ink API
                           │
                           ▼
-                 Baga Ink Platform
+                Baga Ink Platform Core
                           │
              ┌────────────┴────────────┐
              │                         │
@@ -87,12 +102,12 @@ Baga Ink 的目标状态是：
 
 ---
 
-# 2. Baga Ink 的战略目标
+# 2. 战略目标
 
-Baga Ink 的长期目标不是“兼容尽可能多的设备”这么简单，而是形成一种事实标准：
+Baga Ink 的长期目标不是“兼容尽可能多的设备”这么简单，而是形成事实标准：
 
 1. 开发者学习一次 Baga Ink SDK，就可以为多个墨水屏设备开发；
-2. 一个符合标准的应用包可以跨 Kindle 与 Android E-Paper 设备运行；
+2. 一个符合标准的 IKP 应用包可以跨 Kindle 与 Android E-Paper 设备运行；
 3. 新设备通过实现 Baga Ink Device Adapter 和 Compatibility Standard 接入生态；
 4. 第三方应用不需要理解 Kindle 私有机制或 Android 厂商私有刷新接口；
 5. 设备厂商最终有动力主动声明并实现 **Baga Ink Compatible**；
@@ -104,15 +119,7 @@ Baga Ink 的长期目标不是“兼容尽可能多的设备”这么简单，�
 
 ---
 
-# 3. 品牌与产品顶层命名
-
-## 3.1 整个生态品牌
-
-整个生态统一使用：
-
-# **Baga Ink**
-
-`Baga Ink` 是品牌级概念，用来承载平台、客户端、应用市场、SDK、API、开发者生态和兼容认证。
+# 3. Baga Ink 生态品牌架构
 
 ```text
                          Baga Ink
@@ -132,7 +139,7 @@ Baga Ink 的长期目标不是“兼容尽可能多的设备”这么简单，�
  LifeBook RSS / Reader   Notes / AI / ...
 ```
 
-## 3.2 正式名称
+## 3.1 正式命名
 
 | 对象 | 正式名称 |
 |---|---|
@@ -149,40 +156,40 @@ Baga Ink 的长期目标不是“兼容尽可能多的设备”这么简单，�
 | 旗舰应用 | **LifeBook** |
 | Kindle 版本描述 | **LifeBook for Kindle** |
 
-## 3.3 名称边界
+## 3.2 Baga Ink Platform 的边界
 
-### Baga Ink Platform
+Baga Ink Platform 包括：
 
-指设备端统一应用平台及其技术规范，包括：
-
-- Runtime / Core；
+- Platform Core；
+- Embedded Lua Interpreter；
+- Baga Lua Profile；
 - App Lifecycle；
 - Baga Ink API；
-- UI / Display / Input / Storage 等平台能力；
+- UI / Display / Input / Storage / Network / Power / Reader 等平台能力；
 - Capability Model；
 - Permission / Sandbox；
 - IKP Package Loader；
 - Device Adapter；
 - Compatibility 机制。
 
+这些都是同一个轻量设备端平台的组成部分，不应被拆成需要用户额外安装和理解的独立产品层。
+
 **Baga Ink Platform 不等于 PC 客户端，也不等于应用市场。**
 
-### Baga Ink Client
+## 3.3 Baga Ink Client
 
 Windows / macOS 上的设备安装与管理客户端，负责：
 
-- 自动识别连接的 Kindle 或 Android 墨水屏；
+- 自动识别 Kindle 或 Android 墨水屏；
 - 识别型号、固件、系统与兼容状态；
 - 安装、升级、修复或卸载 Baga Ink Platform；
-- 执行各设备所需的安全安装流程；
-- 管理应用、备份、恢复与未来的设备迁移；
+- 执行设备所需的安全安装流程；
+- 管理应用、备份、恢复与未来设备迁移；
 - 作为用户进入 Baga Ink 生态的桌面入口。
 
-### Baga Ink Market
+## 3.4 Baga Ink Market
 
-Baga Ink 生态的官方应用与扩展分发市场。
-
-它不仅可以分发应用，未来还可以承载：
+Baga Ink 官方应用与扩展分发市场，可承载：
 
 - Universal Apps；
 - Device Enhanced Apps；
@@ -194,25 +201,23 @@ Baga Ink 生态的官方应用与扩展分发市场。
 - Capability Provider；
 - AI / 云服务入口。
 
-### LifeBook
+## 3.5 LifeBook
 
-LifeBook 是 Baga Ink 上的**旗舰 App**，但不是 Platform 本身。
+LifeBook 是 Baga Ink 上的**旗舰 App**，不是 Platform 本身。
 
-设备 UI 中应用名称保持：
+设备中显示：
 
 > **LifeBook**
 
-只有在需要区分平台版本或官网介绍时使用：
+只有在需要区分版本时使用：
 
 > **LifeBook for Kindle**
 
-LifeBook 的现有产品品牌不应继续承担平台、SDK、API 或第三方生态的命名责任。
+LifeBook 不承担平台 SDK、API 或第三方生态的命名空间责任。
 
 ---
 
-# 4. 为什么必须先定义标准，再扩大应用市场
-
-Baga Ink 的核心价值不是“同一个 Market 里有很多 App”。
+# 4. 为什么必须先定义标准
 
 如果第三方开发者可以自由直接使用：
 
@@ -221,24 +226,22 @@ Baga Ink 的核心价值不是“同一个 Market 里有很多 App”。
 - Android Context；
 - BOOX 私有 SDK；
 - iReader 私有接口；
-- 各种 Vendor Refresh API；
-- 自定义安装器和包格式；
+- Vendor Refresh API；
+- 自定义安装方式和包格式；
 
-那么生态最终仍会碎片化，只是多了一个统一下载入口。
+那么 Baga Ink 最终只会成为统一下载入口，而不是统一平台。
 
 因此：
 
 > **统一标准 MUST 先于应用数量扩张。**
 
-Baga Ink Market SHOULD 强化标准，而不是绕开标准。
+Baga Ink Market SHOULD 强化统一标准，而不是奖励设备私有分叉。
 
 ---
 
 # 5. 平台核心原则
 
 ## 5.1 一次开发，多设备运行
-
-符合 Baga Ink App Standard 的 Universal App 应当满足：
 
 ```text
 一份应用源代码
@@ -252,29 +255,19 @@ Kindle + 多种 Android E-Paper 设备运行
 
 ## 5.2 Capability，而不是 Vendor
 
-应用 MUST 优先查询设备能力，而不是判断品牌或型号。
-
-错误方向：
+标准方式：
 
 ```lua
-if vendor == "BOOX" then
-    ...
-end
-
-if device == "Kindle" then
-    ...
+if baga.device.has("input.pen") then
+    enable_pen_ui()
 end
 ```
 
-标准方向：
+不推荐：
 
 ```lua
-if baga.device.has("pen") then
-    -- 启用手写能力
-end
-
-if baga.device.has("audio.output") then
-    -- 启用音频能力
+if device.vendor == "BOOX" then
+    enable_pen_ui()
 end
 ```
 
@@ -295,9 +288,7 @@ light.frontlight
 storage.external
 ```
 
-新增设备只要正确实现 Adapter 与 Capability 声明，上层应用原则上无需知道设备品牌。
-
-## 5.3 Platform API 是稳定边界
+## 5.3 API 是稳定边界
 
 第三方 Universal App 面向：
 
@@ -305,7 +296,7 @@ storage.external
 Baga Ink API
 ```
 
-而不是面向：
+而不是：
 
 ```text
 KOReader internals
@@ -317,7 +308,7 @@ Linux device nodes
 Raw framebuffer
 ```
 
-平台内部实现 MAY 改变，但公开 API SHOULD 尽可能保持长期稳定并版本化。
+平台内部实现可以变化，公开 API 应尽可能长期稳定并版本化。
 
 ---
 
@@ -325,13 +316,13 @@ Raw framebuffer
 
 ## 6.1 Universal App：Lua
 
-Baga Ink 的第一官方跨设备应用语言采用 **Lua**。
+第一官方跨设备应用语言采用 **Lua**。
 
-但 Baga Ink App 面向的不是“任意 Lua 环境”，而是一个受平台约束的：
+第三方应用面向的是受平台约束的：
 
 > **Baga Lua Profile**
 
-Baga Lua Profile 由 Baga Ink SDK 定义，包括：
+它定义：
 
 - 允许的 Lua 语言特性；
 - 标准库范围；
@@ -341,21 +332,25 @@ Baga Lua Profile 由 Baga Ink SDK 定义，包括：
 - 权限模型；
 - 版本兼容规则。
 
-具体 Lua / LuaJIT 基线属于 SDK 实现决策，不在本顶层战略文档中锁死。
+Lua 只是应用开发语言；它不构成一个额外产品层。
 
-## 6.2 为什么不是 Kotlin / Java 作为统一语言
+在 Kindle 上，Platform MAY 直接复用 KOReader 等现有项目已经验证过的 Lua 解释器能力；在 Android 上，Baga Ink Platform APK MAY 直接嵌入轻量 Lua 解释器。
+
+无论采用哪种实现，开发者只面对 Baga Lua Profile 和 `baga.*` API。
+
+## 6.2 为什么不是 Kotlin / Java 作为统一应用语言
 
 Android 墨水屏可以天然运行 Kotlin / Java，但 Kindle 并不是 Android。
 
-如果把 Kotlin / Java 作为统一应用语言，就需要让 Kindle 承担 JVM / Android Runtime 级别的复杂度，违背 Baga Ink 的轻量目标。
+如果把 Kotlin / Java 作为统一应用语言，就会迫使 Kindle 增加一整套不必要的 JVM / Android 框架级中间层，明显违背轻量原则。
 
 Lua 的战略优势：
 
-- Runtime 很小；
+- 解释器体积小；
 - 易嵌入 Rust / C / C++；
-- 跨 CPU / OS 分发简单；
+- 同一份应用代码更容易跨 CPU / OS 分发；
 - 适合事件驱动 UI 与业务逻辑；
-- KOReader 已经证明 Lua 前端可以长期运行在 Kindle、Android、Kobo、PocketBook 等多类墨水屏设备上。
+- KOReader 已经证明 Lua 前端可以长期运行于多类墨水屏设备。
 
 ## 6.3 Rust 的位置
 
@@ -390,15 +385,13 @@ Kindle Adapter    Android Adapter
 Rust/C/Shell      Kotlin/Java/JNI/Rust/C
 ```
 
-因此，Baga Ink 的“语言统一”发生在**第三方应用边界**，而不是要求平台内部所有代码只能使用一种语言。
+语言统一发生在第三方应用边界，而不是要求平台内部所有代码只用一种语言。
 
 ---
 
 # 7. Baga Ink SDK 与 API
 
-Baga Ink SDK MUST 保持薄、稳定、可理解。
-
-第一阶段 API 顶层命名空间建议：
+第一阶段顶层命名空间：
 
 ```lua
 baga.app
@@ -416,18 +409,16 @@ baga.sync
 示例：
 
 ```lua
-local page = baga.ui.page({
-    title = "Hello Ink"
-})
+local page = baga.ui.page({ title = "Hello Ink" })
 
-baga.display.set_mode("text")
+baga.display.mode("TEXT")
 
-if baga.device.has("pen") then
-    -- Enable pen UI
+if baga.device.has("input.pen") then
+    enable_pen_ui()
 end
 ```
 
-正式产品名称：
+正式名称：
 
 > **Baga Ink API**
 
@@ -435,39 +426,32 @@ end
 
 > **`baga.*`**
 
-二者不冲突。
-
-第三方应用自己的 Application ID MUST 不强制使用 `baga.*` 前缀，应用身份应属于对应开发者，例如：
+第三方 Application ID 不强制使用 `baga.*`，例如：
 
 ```text
 com.example.reader
-com.example.notes
+org.example.notes
 ```
 
 ---
 
 # 8. 第一阶段平台能力边界
 
-以下模块属于第一阶段 SDK / API 的顶层能力划分，具体函数签名由 API Reference 单独定义。
-
 ## 8.1 App Lifecycle
 
 ```text
 install
-launch
-pause
+start
 resume
+pause
 sleep
 wake
+stop
 update
 uninstall
 ```
 
-应用不得自行依赖 Kindle 或 Android 私有生命周期实现。
-
 ## 8.2 UI
-
-Baga Ink UI 必须针对墨水屏，而不是简单复制手机 UI。
 
 基础组件方向：
 
@@ -495,8 +479,6 @@ ReaderView
 
 ## 8.3 Display
 
-抽象能力包括：
-
 ```text
 refresh
 partial_refresh
@@ -505,7 +487,7 @@ set_mode
 invalidate_region
 ```
 
-典型显示意图：
+语义模式：
 
 ```text
 AUTO
@@ -515,11 +497,9 @@ FAST
 ANIMATION
 ```
 
-App 提出显示意图，Device Adapter 根据硬件能力选择真正刷新方式。
+App 表达刷新意图，Adapter 根据设备映射实际刷新方式。
 
 ## 8.4 Input
-
-统一抽象：
 
 ```text
 touch
@@ -532,33 +512,20 @@ physical_button
 
 ## 8.5 Storage
 
-应用默认运行于沙箱中，不得任意扫描系统目录。
-
-逻辑目录可包括：
+应用默认运行于沙箱：
 
 ```text
 appdata/
 cache/
 documents/
-books/
 downloads/
 ```
 
 ## 8.6 Network
 
-统一 HTTP / connectivity / sync policy 等接口。
-
-平台应允许墨水屏特有策略，例如：
-
-```text
-Wi-Fi only
-sync when connected
-sync when charging
-```
+统一连接状态、HTTP 与同步策略。
 
 ## 8.7 Power
-
-墨水屏设备必须把电源作为一等平台能力：
 
 ```text
 battery
@@ -570,7 +537,7 @@ sync_when_charging
 
 ## 8.8 Reader
 
-Baga Ink SHOULD 将成熟阅读能力逐渐抽象为平台能力：
+逐步提供：
 
 ```text
 open book
@@ -583,13 +550,13 @@ search
 metadata
 ```
 
-底层 MAY 复用 KOReader、MuPDF、EPUB 解析器等成熟组件，但第三方 App 不应依赖这些组件的内部 API。
+底层可以复用 KOReader、MuPDF 等成熟组件，但第三方 App 不依赖其内部 API。
 
 ---
 
-# 9. IKP 应用包格式
+# 9. IKP 应用包
 
-Baga Ink Universal App 的标准分发包扩展名定义为：
+Baga Ink Universal App 标准扩展名：
 
 # **`.ikp`**
 
@@ -598,29 +565,10 @@ Baga Ink Universal App 的标准分发包扩展名定义为：
 ```text
 lifebook.ikp
 rss-reader.ikp
-wikipedia.ikp
 notes.ikp
 ```
 
-## 9.1 IKP 的定位
-
-`IKP` 是 Baga Ink 应用包格式的固定格式标识符。
-
-`.ikp` **不要求被机械解释为某个逐字母英文缩写**。它首先是一个稳定、短、独立的平台包扩展名。
-
-选择 `.ikp` 的战略原因：
-
-- 不再绑定 LifeBook，因此不使用 `.lbk` / `.lbapp`；
-- 比 `.baga` 更像平台应用包而不是普通品牌数据文件；
-- 比 `.inkapp` 更短；
-- 避免使用在嵌入式 Linux / OpenWrt 等生态中已有成熟含义的 `.ipk`；
-- 可以形成独立的 Baga Ink 应用包身份。
-
-## 9.2 第一阶段逻辑结构
-
-具体压缩、索引、签名、校验与二进制格式由单独的 **Baga Ink IKP Package Specification** 定义。
-
-逻辑结构预计至少包括：
+IKP 包应主要包含：
 
 ```text
 example.ikp
@@ -632,56 +580,39 @@ example.ikp
 └── signature/
 ```
 
-示例 Manifest：
+Universal IKP 的重要原则：
 
-```json
-{
-  "id": "com.example.reader",
-  "name": "Example Reader",
-  "version": "1.0.0",
-  "baga_api": "1",
-  "entry": "main.lua",
-  "permissions": [
-    "network",
-    "library.read"
-  ],
-  "capabilities": [
-    "display.partial_refresh"
-  ]
-}
-```
+> **IKP 是应用代码与资源包，不是设备适配包，不携带自己的设备抽象层，也不携带针对某一设备的私有执行组件。**
 
-字段和语义 MUST 在 Package Specification 中版本化。
+Universal IKP 不应包含：
+
+- Android APK / DEX 作为应用主逻辑；
+- Kindle 专用 Shell executable；
+- BOOX / iReader 专用 native library 作为应用依赖；
+- 自己私带一套 Lua 解释器；
+- 绕过 Baga Ink API 的系统调用桥。
+
+所有 Universal App 共享设备上 Baga Ink Platform 已提供的 Baga Lua Profile 与 API。
 
 ---
 
-# 10. Universal App、Enhanced App 与 Native Extension
-
-Baga Ink 不能通过“禁止一切原生能力”来实现统一，也不能允许每个应用自行穿透平台。
-
-因此采用分层生态。
+# 10. Universal / Enhanced / Native Extension
 
 ## 10.1 Universal App
 
-这是 Baga Ink 最核心、最高优先级的应用类型。
-
 要求：
 
-- 使用 Baga Lua Profile；
-- 以 `.ikp` 分发；
-- 使用 Baga Ink API；
-- 使用 Capability Model；
-- 使用标准 Lifecycle；
-- 使用标准 Permission；
-- 不直接访问 Vendor / OS 私有 API。
-
-Market 建议标识：
-
-> **Baga Ink Universal**
+- Lua / Baga Lua Profile；
+- `.ikp`；
+- Baga Ink API；
+- Capability Model；
+- 标准生命周期；
+- 标准权限；
+- 不直接访问设备私有 API。
 
 ## 10.2 Device Enhanced App
 
-允许应用使用平台暴露的硬件增强能力，例如：
+允许使用 Platform 暴露的标准 Capability Extension，例如：
 
 ```text
 pen.low_latency
@@ -689,32 +620,21 @@ display.vendor_fast_mode
 audio.tts
 ```
 
-但增强能力仍然 SHOULD 通过 Baga Ink Capability Extension 暴露，而不是让普通 App 直接调用厂商 SDK。
-
-Market 必须清晰标识兼容范围，例如：
-
-```text
-Universal
-Enhanced on BOOX
-Requires Pen
-Kindle Unsupported
-```
+增强能力必须通过平台公开接口获得。
 
 ## 10.3 Native Extension / Capability Provider
 
-Kotlin / Java / Rust / C / C++ 等原生代码主要存在于此层。
+Kotlin / Java / Rust / C / C++ 等原生代码主要用于扩展 Platform 能力。
 
-它们的职责是给 Platform 增加标准化能力，而不是让每个应用重新绕开 Platform。
+原生扩展的目标是：
+
+> **让平台新增一个标准化 Capability，而不是让每个 App 自己绕过平台。**
 
 ---
 
 # 11. 防碎片化硬规则
 
-以下属于战略级硬约束。
-
-## 11.1 Universal App 默认不得直接调用系统
-
-默认禁止或严格限制：
+Universal App 默认禁止或严格限制：
 
 ```text
 os.execute
@@ -730,38 +650,21 @@ raw framebuffer
 vendor SDK
 ```
 
-必要能力必须通过 Baga Ink API / Capability Provider 暴露。
-
-## 11.2 设备差异由 Adapter 消化
+设备差异必须沿以下方向消化：
 
 ```text
 App
  │
 Baga Ink API
  │
-Baga Ink Platform
+Platform Core
  │
 Device Adapter
  │
 Vendor / OS
 ```
 
-不得反过来要求 App 大量识别设备品牌和系统细节。
-
-## 11.3 API 版本必须稳定且可协商
-
-IKP Manifest 必须声明 API 版本。
-
-平台 MUST 能够判断：
-
-- 当前 App 能否运行；
-- 是否缺少 Capability；
-- 是否需要兼容层；
-- 是否明确拒绝安装。
-
-不能通过“先运行，崩了再说”来处理兼容性。
-
-## 11.4 兼容认证
+API 和 Capability 必须版本化。
 
 未来建立：
 
@@ -771,13 +674,11 @@ IKP Manifest 必须声明 API 版本。
 
 > **Baga Ink Compatible**
 
-Universal 标识 MUST 建立在兼容测试之上。
-
 ---
 
 # 12. Kindle 平台战略
 
-Kindle 当前 Homebrew 生态是 Baga Ink 的重要基础，但不是未来第三方开发者应该直接面对的统一开发模型。
+Kindle 当前 Homebrew 生态是 Baga Ink 的重要基础，但不是未来第三方开发者应该直接面对的开发模型。
 
 可复用基础包括：
 
@@ -791,50 +692,36 @@ Shell / Native binaries
 Kindle system services
 ```
 
-Baga Ink 的策略是：
+Baga Ink 的策略：
 
-> **收编和封装现有 Kindle Homebrew 能力，而不是为了“纯洁架构”从零重写整个生态。**
-
-逻辑关系：
+> **收编和封装现有 Kindle Homebrew 能力，而不是从零重写。**
 
 ```text
-现有 Kindle Homebrew 基础设施
-            │
-            ▼
-   Baga Ink Kindle Adapter
-            │
-            ▼
-     Baga Ink Platform
-            │
-            ▼
-         .ikp Apps
+Kindle Homebrew 基础设施
+          │
+          ▼
+Baga Ink Kindle Adapter
+          │
+          ▼
+ Baga Ink Platform Core
+          │
+          ▼
+       .ikp Apps
 ```
 
-早期 KUAL、MRPI 等 MAY 继续承担安装、启动或兼容桥梁角色。
+早期 KUAL、MRPI 等可以继续承担安装、启动或兼容桥梁角色。
 
-长期普通用户应该看到的是：
-
-```text
-Kindle Home
-    │
-    ▼
-LifeBook / Baga Ink
-    │
-    ▼
-Baga Ink Market
-```
-
-而不是被要求理解 KUAL、MRPI、Shell、Framebuffer 等内部基础设施。
+普通用户不需要理解这些基础设施。
 
 ---
 
-# 13. KOReader 的战略位置
+# 13. KOReader 的位置
 
-KOReader 是 Baga Ink 的重要技术基础和 Reference Implementation 来源，但：
+KOReader 是重要技术基础和 Reference Implementation 来源，但：
 
 > **Baga Ink API ≠ KOReader API**
 
-Baga Ink MAY 大量复用：
+Baga Ink 可以复用：
 
 - Lua UI；
 - ReaderUI；
@@ -842,11 +729,10 @@ Baga Ink MAY 大量复用：
 - Display / Device abstraction；
 - EPUB / PDF 能力；
 - 字体与排版；
-- Kindle 兼容经验。
+- Kindle 兼容经验；
+- 现有 Lua 解释器集成方式。
 
-但第三方 Baga Ink App MUST 不直接绑定 KOReader 内部对象。
-
-正确关系：
+第三方 App 不直接绑定 KOReader internals。
 
 ```text
 Third-party App
@@ -855,26 +741,18 @@ Third-party App
 Baga Ink API
       │
       ▼
-Baga Ink Platform
+Platform Core
       │
       ├── KOReader-derived components
-      ├── Rust / C Core
+      ├── Rust / C components
       └── Device Adapter
 ```
-
-这样未来即使重构或替换部分 KOReader 组件，也不会破坏第三方生态。
 
 ---
 
 # 14. Android E-Paper 平台战略
 
-Android 墨水屏设备本质仍然运行 Android 应用。
-
-因此：
-
-> **Baga Ink Platform 本身 MAY 作为 Android APK 安装。**
-
-但 Universal Baga Ink App 不要求开发者分别制作 APK。
+Baga Ink Platform 在 Android 墨水屏上可以作为一个普通 APK 安装：
 
 ```text
 Android E-Paper Device
@@ -882,27 +760,20 @@ Android E-Paper Device
         ▼
 Baga Ink Platform.apk
         │
-        ▼
-Baga Runtime / API
+        ├── Platform Core
+        ├── Embedded Lua Interpreter
+        ├── Baga Ink API
+        └── Device Adapter
         │
         ▼
-     .ikp Apps
+      .ikp Apps
 ```
 
-Android Platform 内部 MAY 使用：
+Platform APK 内部可以使用 Kotlin、Java、JNI、Rust、C/C++ 与厂商 E-Paper SDK。
 
-- Kotlin；
-- Java；
-- JNI；
-- Rust；
-- C / C++；
-- 厂商 E-Paper SDK。
+第三方 Universal App 不需要知道这些实现细节。
 
-这些实现细节被 Device Adapter 封装。
-
-第三方 Universal App 只面对 Baga Ink API。
-
-其战略收益是：
+战略收益：
 
 > **Platform 适配一次设备或厂商，所有 Universal Apps 同时获益。**
 
@@ -910,9 +781,7 @@ Android Platform 内部 MAY 使用：
 
 # 15. Baga Ink Client
 
-Baga Ink Client 是 Baga Ink 生态的桌面入口。
-
-首要支持目标：
+首要支持：
 
 ```text
 Windows
@@ -941,23 +810,19 @@ macOS
 安装 LifeBook 或 Baga Ink Market 应用
 ```
 
-客户端必须坚持以下安全原则：
+客户端必须坚持：
 
-- MUST 不清除用户书籍；
-- MUST 不清除用户笔记；
-- MUST 不要求恢复出厂作为标准流程；
-- MUST 尽可能做到失败可恢复；
-- MUST 对未知或不安全组合明确显示“不支持 / 实验性支持”，不能假装兼容。
-
-Baga Ink Client 是**管理 Baga Ink Platform 的工具**，不是 Platform 本身。
+- 不清除用户书籍；
+- 不清除用户笔记；
+- 不要求恢复出厂作为标准流程；
+- 失败尽可能可恢复；
+- 未知或不安全组合明确显示“不支持 / 实验性支持”。
 
 ---
 
 # 16. Baga Ink Market
 
-Baga Ink Market 的战略职责不是“收集 APK / 脚本”。
-
-Market 的核心作用包括：
+Market 的核心职责：
 
 1. 应用发现与分发；
 2. 数字签名与开发者身份；
@@ -966,16 +831,14 @@ Market 的核心作用包括：
 5. Compatibility Test；
 6. 权限展示；
 7. 更新、回滚和撤回；
-8. Universal / Enhanced 等兼容标签；
+8. Universal / Enhanced 兼容标签；
 9. 应用审核与生态治理。
 
-Market SHOULD 优先鼓励 Universal App，并清晰标记厂商私有依赖。
+Market SHOULD 优先鼓励 Universal App，并明确标记设备私有依赖。
 
 ---
 
 # 17. 开发者体验目标
-
-理想开发流程：
 
 ```text
 安装 Baga Ink SDK
@@ -1002,25 +865,21 @@ Compatibility Test
 发布到 Baga Ink Market
 ```
 
-第三方开发者 SHOULD 尽可能不需要知道：
+开发者 SHOULD 尽可能不需要知道：
 
-- 当前 Kindle 固件私有细节；
+- Kindle 固件私有细节；
 - BOOX 私有刷新类；
-- 某个 iReader 系统接口；
-- 某款设备 CPU ABI；
+- iReader 系统接口；
+- 某款 CPU ABI；
 - Kindle framebuffer；
 - Android 厂商 API 差异。
 
-这就是 Baga Ink Platform 存在的理由。
-
 ---
 
-# 18. Baga Ink Device Adapter
-
-每类设备通过 Device Adapter 实现平台要求。
+# 18. Device Adapter 模型
 
 ```text
-Baga Ink Platform
+Baga Ink Platform Core
         │
         ├── Kindle Adapter
         ├── Generic Android Adapter
@@ -1030,7 +889,7 @@ Baga Ink Platform
         └── Future Adapters
 ```
 
-Adapter 负责抽象：
+Adapter 负责：
 
 - Display；
 - Refresh；
@@ -1045,15 +904,9 @@ Adapter 负责抽象：
 - Network；
 - Device Capability Detection。
 
-长期目标要从：
+长期目标：
 
-> Baga Ink 团队主动适配每一家厂商
-
-逐渐转变为：
-
-> 设备厂商主动实现 Baga Ink Device Adapter，并通过 Compatibility Test。
-
-这是平台从“兼容项目”走向“行业事实标准”的关键转折点。
+> **由设备厂商主动实现 Baga Ink Device Adapter，并通过 Compatibility Test。**
 
 ---
 
@@ -1061,7 +914,7 @@ Adapter 负责抽象：
 
 Baga Ink **不是新的墨水屏操作系统**。
 
-它不试图替换：
+它不替换：
 
 ```text
 Kindle OS
@@ -1075,7 +928,7 @@ Linux kernel
 ```text
 Apps
  │
-Baga Ink Platform
+Baga Ink Platform Core
  │
 Device Adapter
  │
@@ -1086,31 +939,22 @@ Hardware
 
 战略理由：
 
-- 能覆盖大量存量 Kindle；
-- 能利用现有 Android E-Paper 设备；
+- 覆盖大量存量 Kindle；
+- 利用现有 Android E-Paper 设备；
 - 不承担完整 OS 的巨大维护成本；
-- 厂商合作门槛更低；
-- 更容易吸引开发者；
-- 可以保持 Runtime 足够轻量。
+- 降低厂商合作门槛；
+- 保持 Platform 足够轻量。
 
 ---
 
-# 20. Runtime / Core 的轻量原则
+# 20. Platform Core 的轻量原则
 
-Baga Ink Runtime 不是：
+Platform Core 不是一个单独产品，也不要求用户额外安装第二套中间系统。
 
-```text
-Chromium
-Electron
-完整 JVM 替代品
-完整 Android Runtime
-Heavy Web Runtime
-```
-
-第一阶段核心组成原则上只是：
+第一阶段核心组成：
 
 ```text
-Lua VM
+Embedded Lua Interpreter
 +
 Baga Ink API
 +
@@ -1123,25 +967,27 @@ IKP Package Manager
 Device Adapter
 ```
 
-高性能或系统层模块 MAY 使用 Rust / C / C++。
+其中 Kindle 可以尽量复用现有 KOReader / Homebrew 组件；Android 可以把这些能力直接集成进 Baga Ink Platform APK。
 
-目标不是制造新的庞大 Runtime，而是提供一条稳定、轻量的跨设备应用边界。
+高性能或系统层组件可以使用 Rust / C / C++。
+
+目标是：
+
+> **尽量少造轮子、尽量复用成熟组件，只增加真正用于统一设备与开发者接口的薄平台代码。**
+
+LifeBook 同样遵循这一原则，不引入额外的通用执行层。
 
 ---
 
-# 21. 开放生态与平台控制的平衡
+# 21. 开放生态与平台控制
 
-Baga Ink 的开放性不能以失去标准为代价。
-
-平台 SHOULD 允许：
+平台允许：
 
 - 第三方开发 App；
 - 第三方贡献 Device Adapter；
 - 第三方开发 Capability Provider；
-- 第三方参与 SDK / Runtime；
+- 第三方参与 SDK / Platform Core；
 - 厂商实现官方设备适配。
-
-但 Universal 标准不能退化为“什么都允许”。
 
 根本原则：
 
@@ -1158,29 +1004,27 @@ OS 层：可以完全不同
 
 ---
 
-# 22. Baga Ink 的长期护城河
-
-Baga Ink 的长期价值不只来自代码。
+# 22. 长期护城河
 
 真正形成生态壁垒的是：
 
 ```text
 统一标准
-    +
++
 设备兼容层
-    +
++
 开发者 SDK
-    +
++
 IKP 应用包格式
-    +
++
 兼容测试
-    +
++
 应用市场
-    +
++
 存量设备覆盖
-    +
++
 第三方开发者
-    +
++
 硬件厂商支持
 ```
 
@@ -1200,13 +1044,9 @@ IKP 应用包格式
 更多厂商主动兼容
 ```
 
-最终目标不是：
+最终目标不是“Baga Ink 团队能适配多少墨水屏”，而是：
 
-> “Baga Ink 团队能适配多少墨水屏。”
-
-而是：
-
-> **“新的墨水屏设备是否愿意主动声明并实现 Baga Ink Compatible。”**
+> **新的墨水屏设备是否愿意主动声明并实现 Baga Ink Compatible。**
 
 ---
 
@@ -1219,11 +1059,11 @@ IKP 应用包格式
 3. 替换 Kindle OS；
 4. 强迫所有底层模块使用 Lua；
 5. 强迫 Platform Core 只使用一种语言；
-6. 将现有 Kindle Homebrew 全部从零重写；
+6. 将 Kindle Homebrew 全部从零重写；
 7. 允许 Universal App 任意穿透设备底层；
 8. 为每个厂商长期维护第三方 App 分叉；
 9. 把 LifeBook 私有 API 当作平台标准；
-10. 仅仅做一个聚合 APK / KUAL 应用的下载站。
+10. 创建庞大、重复、需要额外维护的中间系统。
 
 ---
 
@@ -1231,12 +1071,12 @@ IKP 应用包格式
 
 ## Phase 0 — Specification First
 
-优先定义：
+定义：
 
 - Baga Ink App Standard；
-- Baga Ink API v0；
+- Baga Ink API；
 - Baga Lua Profile；
-- Baga Ink IKP Package Specification；
+- IKP Package Specification；
 - Capability Model；
 - App Lifecycle；
 - Display / Refresh Model；
@@ -1253,13 +1093,11 @@ Kindle Reference Adapter
 Android E-Paper Reference Adapter
 ```
 
-目标不是先支持最多设备，而是证明：
+证明：
 
 > **同一个 `.ikp` App 可以运行在两个完全不同的系统上。**
 
 ## Phase 2 — LifeBook Reference App
-
-LifeBook 作为第一批旗舰 / Reference App：
 
 ```text
 LifeBook for Kindle
@@ -1296,7 +1134,7 @@ Developer Documentation
 
 ## Phase 5 — OEM Adoption
 
-允许并鼓励硬件厂商：
+鼓励硬件厂商：
 
 - 官方实现 Adapter；
 - 预装 Baga Ink Platform；
@@ -1317,6 +1155,7 @@ Developer Documentation
 | API | **Baga Ink API** |
 | API namespace | **`baga.*`** |
 | 官方 Universal App 语言 | **Lua / Baga Lua Profile** |
+| Lua 实现 | **Platform Core 内部嵌入或复用轻量 Lua 解释器** |
 | Platform Core 新代码方向 | **Rust 优先，允许 C/C++ 等成熟组件** |
 | Android Adapter | **Kotlin / Java / JNI / Rust / C/C++ 按需使用** |
 | Kindle Adapter | **Rust / C/C++ / Shell 等按实际设备需要** |
@@ -1329,13 +1168,11 @@ Developer Documentation
 | LifeBook 定位 | **Baga Ink 旗舰 App，而非 Platform 本身** |
 | Kindle 产品描述 | **LifeBook for Kindle** |
 | 是否自研新 OS | **否** |
-| 是否引入重型 Runtime | **否** |
+| 是否引入额外庞大中间层 | **否** |
 
 ---
 
 # 26. 战略成功标准
-
-Baga Ink Platform 是否成功，不能只看支持了多少设备、Market 有多少应用。
 
 真正的验收标准是：
 
@@ -1352,11 +1189,11 @@ iReader 一套代码
 Bigme 一套代码
 ```
 
-那么即使拥有应用市场、客户端和大量兼容脚本，Baga Ink 仍然只是一个聚合层，而不是统一平台。
+那么即使拥有应用市场、客户端和大量兼容脚本，Baga Ink 仍然只是聚合层，而不是统一平台。
 
 ---
 
-# 27. 项目的长期方向
+# 27. 长期方向
 
 Baga Ink 的最终战略不是成为“另一个 Kindle 工具”，也不是成为“另一个 Android 墨水屏 Launcher”。
 
@@ -1366,7 +1203,7 @@ Baga Ink 的最终战略不是成为“另一个 Kindle 工具”，也不是成
 
 Baga Ink 不要求所有硬件相同，不要求所有操作系统相同，也不要求底层实现语言相同。
 
-它只要求一件最重要的事情：
+它只要求最重要的一件事：
 
 > **第三方应用面对同一个稳定平台。**
 
