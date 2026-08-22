@@ -14,14 +14,14 @@
     "created_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
     "added": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/appRef"}},
     "updated": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/appRef"}},
-    "removed": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160}}
+    "removed": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160}}
   },
   "$defs": {
     "appRef": {
       "type": "object", "additionalProperties": false,
       "required": ["app_id", "path", "length", "sha256"],
       "properties": {
-        "app_id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160},
+        "app_id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160},
         "path": {"type": "string", "minLength": 1, "maxLength": 512},
         "length": {"type": "integer", "minimum": 0},
         "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
