@@ -9,7 +9,7 @@
     "type": {"const": "baga.catalog-app"},
     "format": {"const": "0.1"},
     "repository_id": {"type": "string", "pattern": "^repo1_[a-z2-7]{52}$"},
-    "app_id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160},
+    "app_id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160},
     "publisher_id": {"type": "string", "pattern": "^pub1_[a-z2-7]{52}$"},
     "publisher_display_name": {"type": "string", "minLength": 1, "maxLength": 120},
     "title": {"$ref": "#/$defs/localeMap"},
