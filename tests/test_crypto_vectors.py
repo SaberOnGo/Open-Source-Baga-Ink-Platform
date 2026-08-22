@@ -14,9 +14,9 @@ from baga_spec.errors import SignatureError
 
 ROOT_SEED = bytes.fromhex("01" * 32)
 ROOT_PUBLIC_B64 = "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w"
-ROOT_KEY_ID = "ed25519:34750f98bd59fcfc946da45aaabe933be154a4b5094e1c4abf42866505f3c97e"
-OWNERSHIP_CANONICAL = b'{"app_id":"com.example.reader","created_at":"2026-08-22T00:00:00Z","format":"0.1","ownership_sequence":1,"publisher_id":"pub1_ofsqstwjfebj4g44rz4fxuo27b3vpnetx2z3uumfpvagrkhups2q","type":"baga.app-ownership"}'
-OWNERSHIP_SIGNATURE_B64 = "vESfhYCTlHYOQqGMFdR069v2gLmyy2Y-CCn60tEZZxYUSby0JcmcS9ZLbAwxo0eUVrRxAcHeb7DYgiMsnzNSCw"
+ROOT_KEY_ID = "ed25519:NHUPmL1Z_PyUbaRaqr6TO-FUpLUJThxKv0KGZQXzyX4"
+OWNERSHIP_CANONICAL = b'{"app_id":"com.example.reader","created_at":"2026-08-22T00:00:00Z","format":"0.1","ownership_sequence":1,"publisher_id":"pub1_fy3xxqegf6r7ns6e3x3nuxhcqvpcrrn3nue72jvfmzhf6c2kutmq","status":"active","type":"baga.app-ownership"}'
+OWNERSHIP_SIGNATURE_B64 = "xo_3WL2fzimT8pCNgprNGbnBzVQL0dR0Tv-8bilETeBqBYm2PUGutt_2L55I6G9A8gYAHhrYyWCua6xWGlkMCg"
 
 
 def _b64u_decode(value: str) -> bytes:
