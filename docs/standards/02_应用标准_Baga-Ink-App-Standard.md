@@ -1,9 +1,10 @@
-# Baga Ink App Standard
+# Baga Ink 应用标准 / Baga Ink App Standard
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.2**  
+> **状态：Draft v0.3**  
 > **日期：2026-08-22**  
-> **上位文档：`BAGA_INK_PLATFORM_STRATEGY.md`**
+> **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
+> **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`、`06_IKP应用包规范_IKP-Package-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`**
 
 ---
 
@@ -51,8 +52,8 @@ Device Enhanced App 仍以 Baga Ink API 为主要开发边界，但 MAY 使用�
 例如：
 
 ```text
-pen.low_latency
-display.vendor_fast_mode
+input.pen.low_latency
+display.fast_refresh
 audio.tts
 ```
 
@@ -433,7 +434,7 @@ App → KOReader internals
 
 # 15. 依赖规则
 
-为了避免早期生态出现 dependency hell，Universal App v0.2 SHOULD 默认自包含。
+为了避免早期生态出现 dependency hell，Universal App v0.3 SHOULD 默认自包含。
 
 第一阶段：
 
