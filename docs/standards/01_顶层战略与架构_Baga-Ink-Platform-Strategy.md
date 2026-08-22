@@ -1,8 +1,8 @@
 # Baga Ink 顶层战略与架构 / Baga Ink Platform Strategy & Architecture
 
 > **文档级别：Strategic Source of Truth / 项目最高层级定义**  
-> **状态：Strategic Baseline v0.3**  
-> **日期：2026-08-22**  
+> **状态：Strategic Baseline v0.4**  
+> **日期：2026-08-23**  
 > **规范入口：`00_规范总览_Baga-Ink-Standards-Index.md`**
 
 ---
@@ -38,6 +38,46 @@ Baga Ink Platform
 Lua 解释器只是 Platform Core 内部嵌入或复用的一项轻量能力，不是独立产品层。
 
 项目不得把 Baga Ink 描述成需要用户额外安装、独立理解和独立维护的庞大中间执行系统。
+
+### 0.3 成熟实现复用原则 / Mature Implementation Reuse
+
+Baga Ink 标准定义的是：
+
+```text
+公开 API
+跨设备语义
+Capability / Permission
+兼容性与安全边界
+```
+
+标准 **不规定 Platform 内部必须采用何种软件分层，也不要求已经存在成熟实现的能力重新从零开发。**
+
+Platform Core、Device Adapter 与官方设备实现 SHOULD 优先评估并复用成熟、持续维护、许可证兼容且经过实际验证的开源组件。复用方式 MAY 包括：
+
+```text
+整体采用
+组合使用
+抽取稳定模块
+调用其已有协议/算法
+包装其成熟设备能力
+```
+
+例如 Kindle 实现可以复用 KOReader / koreader-base / FBInk；结构化本地数据可以复用 SQLite 等成熟存储；需要并发离线编辑与合并的具体场景可以评估 Automerge 等成熟 Local-first / CRDT 实现。
+
+但这些项目的存在：
+
+- MUST NOT 自动形成新的 Baga Ink 公共架构层；
+- MUST NOT 因为“用了一个库”就创造对应的 `Provider / Engine / Runtime` 层；
+- MUST NOT 自动把该库的私有对象、术语、文件格式或 API 变成 `baga.*` 标准；
+- MUST NOT 要求 IKP App 知道底层具体使用了哪个项目；
+- MUST NOT 绕过 BICTS、Permission、Sandbox 与 Compatibility 要求。
+
+原则：
+
+> **Reuse before reimplement. Standardize semantics, not internal implementation layering.**  
+> **优先复用，不重复造轮子；标准化语义，不标准化内部软件分层。**
+
+如果 Baga Ink 未来需要把某个外部协议或数据格式提升为跨实现互操作标准，必须通过正式规范明确其版本、兼容范围和迁移策略；“当前使用某个开源库”本身不等于该库全部成为 Baga Ink 标准。
 
 ---
 
@@ -109,6 +149,8 @@ Baga Ink 的战略是：
 
 > **应用不适配设备；设备通过 Baga Ink Device Adapter 适配平台。**
 
+内部复用 KOReader、SQLite、Automerge、FBInk 或其他组件时，上图不因此增加新的公共层级。
+
 ---
 
 # 4. Baga Ink 品牌与产品层级
@@ -163,7 +205,7 @@ Baga Ink Platform 包括：
 - Baga Lua Profile；
 - Baga Ink API；
 - App Lifecycle；
-- UI / Display / Input / Storage / Network / Power / Reader 等标准能力；
+- UI / Display / Input / Storage / Data / Library / Network / Power / Reader / Sync 等标准能力；
 - Capability Model；
 - Permission / Sandbox；
 - IKP Package Manager；
@@ -173,6 +215,8 @@ Baga Ink Platform 包括：
 这些共同组成一个轻量设备端平台。
 
 **Baga Ink Platform 不等于 Baga Ink Client，也不等于 Baga Ink Market。**
+
+具体能力内部可以复用成熟开源实现；这些实现不是额外的产品层。
 
 ---
 
@@ -219,6 +263,8 @@ Capability Provider
 Platform 内部允许 Rust、C/C++、Kotlin/Java、JNI、Shell 等按实际设备使用。
 
 **语言统一发生在第三方 App 边界，不发生在所有底层代码。**
+
+同理，内部实现所选开源库也不构成第三方 App 必须理解的新边界。
 
 ---
 
@@ -335,7 +381,7 @@ Capability: network.wifi
 Permission: network
 ```
 
-权限必须由 Manifest 预声明，并遵守最小权限原则。
+权限必须由 Manifest 预声明，并遵循最小权限原则。
 
 正式定义见：
 
@@ -355,6 +401,8 @@ baga.display
 baga.input
 baga.device
 baga.storage
+baga.data
+baga.library
 baga.network
 baga.power
 baga.reader
@@ -372,14 +420,16 @@ Baga Ink MUST 不提供一个任意执行 Shell、获取 Android Context、直�
 ```text
 真实需求
   ↓
-Capability 语义
+Capability / API 语义
   ↓
-API
+Baga Ink API
   ↓
-Device Adapter / Capability Provider
+Platform Core / Device Adapter 内部实现
   ↓
 BICTS
 ```
+
+这里的“内部实现”可以直接复用成熟开源组件，不要求先人为增加一个新的公共 `Provider / Engine` 架构层。
 
 ---
 
@@ -439,6 +489,8 @@ Firmware differences
 
 Adapter MUST 不成为第二套应用 API。
 
+这里的 Vendor Provider 是 Android Adapter 内部对厂商私有能力的 specialization，不代表所有 Baga Ink API 都必须经过通用 Provider 层。
+
 ---
 
 # 13. Kindle 战略
@@ -448,14 +500,17 @@ Kindle 现有 Homebrew 生态是重要基础，不是要从零推翻的对象。
 Baga Ink SHOULD 尽量复用：
 
 ```text
-KOReader device / reader / display / input knowledge
+KOReader device / reader / display / input / annotation knowledge
+koreader-base / MuPDF / CREngine 等已有阅读基础
 KUAL / PEKI 类启动基础
-MRPI 类安装基础
-FBInk / framebuffer 相关成熟能力
+MRPI / KPM / Hotfix 类安装与 Homebrew 基础
+FBInk / framebuffer 相关显示能力
 Kindle 系统服务桥接
+SQLite 等成熟本地数据组件（适合处）
+Automerge 等成熟 Local-first / CRDT 实现（确有并发合并需求时）
 ```
 
-但这些全部属于 Kindle Adapter / Baga Ink Client 的实现细节。
+这些全部属于 **Baga Ink Platform on Kindle 的内部实现选择**；它们可以位于 Platform Core、Kindle Adapter 或两者协作的实现代码中，不因此形成新的公共架构层。
 
 第三方 IKP App 不需要知道它们存在。
 
@@ -486,6 +541,8 @@ Baga Ink Platform.apk
 Generic Android 负责公共 Android 能力；Vendor Provider 负责 E-Paper 私有刷新、Pen、前光等能力。
 
 Android 的版本差异与厂商碎片化必须停在 Adapter 以下。
+
+Android 实现同样 SHOULD 优先复用成熟系统能力和开源组件，而不是为了保持“代码看起来统一”重新实现数据库、网络、文档引擎或同步算法。
 
 ---
 
@@ -592,7 +649,7 @@ LifeBook 如果遇到通用能力缺失，应推动标准 API / Capability，而
 
 具体实现规范位于：
 
-`docs/reference-apps/01_LifeBook墨水屏参考应用实现规范_LifeBook-Ink-Reference-App-Implementation-Specification.md`
+`docs/reference-apps/01_LifeBook参考实现_LifeBook-Reference-App.md`
 
 ---
 
@@ -620,6 +677,8 @@ Adapter 层       允许设备差异
 OS 层            可以完全不同
 Hardware 层      可以完全不同
 ```
+
+内部依赖树、第三方库组合方式与具体源码目录不属于上述公共层级模型。
 
 ---
 
@@ -730,7 +789,9 @@ Baga Ink 当前不以以下为目标：
 7. 允许 Universal App 任意穿透系统；
 8. 为每个品牌维护一套 App 分支；
 9. 把 LifeBook 私有需求当作平台标准；
-10. 建造重复、庞大、需要额外维护的平台中间系统。
+10. 建造重复、庞大、需要额外维护的平台中间系统；
+11. 因采用一个开源库而人为增加一个新的公共 `Provider / Engine / Runtime` 架构层；
+12. 在已有成熟、许可证兼容且可验证的实现可复用时，仅为了“完全自研”而重新实现 Reader、数据库、同步合并算法或设备基础设施。
 
 ---
 
