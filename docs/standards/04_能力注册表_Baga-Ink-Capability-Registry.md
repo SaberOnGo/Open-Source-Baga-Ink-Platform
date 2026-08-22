@@ -1,8 +1,8 @@
 # Baga Ink 能力注册表 / Baga Ink Capability Registry
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.1**  
-> **日期：2026-08-22**  
+> **状态：Draft v0.2**  
+> **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`、`08_兼容性标准_Baga-Ink-Compatibility-Standard.md`**
 
@@ -14,9 +14,9 @@ Capability Registry 是 Baga Ink 防止设备碎片化的核心注册表。
 
 它回答：
 
-> **设备具有什么能力，应用应该用什么统一名称查询，以及这个名称的语义到底是什么。**
+> **设备或 Platform 具有什么能力，应用应该用什么统一名称查询，以及这个名称的语义到底是什么。**
 
-Baga Ink Universal App MUST 查询 Capability，而不是把厂商、型号或固件写进业务逻辑。
+Baga Ink Universal App MUST 查询 Capability，而不是把厂商、型号、固件或内部开源组件名称写进业务逻辑。
 
 例如：
 
@@ -29,9 +29,8 @@ end
 而不是：
 
 ```lua
-if vendor == "BOOX" then
-    enable_pen()
-end
+if vendor == "BOOX" then ... end
+if reader_impl == "KOReader" then ... end
 ```
 
 ---
@@ -51,6 +50,7 @@ category.feature.variant
 display.partial_refresh
 input.pen.pressure
 light.frontlight.temperature
+reader.anchor
 ```
 
 规则：
@@ -58,16 +58,28 @@ light.frontlight.temperature
 - MUST 使用小写 ASCII；
 - MUST 使用 `.` 分层；
 - MUST 不包含厂商品牌名作为标准 Capability；
-- MUST 描述能力语义，而不是底层 API 名；
+- MUST 不包含内部实现库名作为标准 Capability；
+- MUST 描述能力语义，而不是底层 API / Library 名；
 - 已发布稳定 Capability SHOULD 不重命名；
 - 被替代的 Capability SHOULD 先 deprecated，再删除；
 - Vendor 私有实验能力 MUST 不进入 Universal Registry，除非经过标准化。
+
+因此：
+
+```text
+reader.anchor          ✓
+reader.koreader        ✕
+data.sqlite             ✕
+sync.automerge         ✕
+```
+
+KOReader、SQLite、Automerge 等可以用于实现这些能力，但不是 Capability 名称本身。
 
 ---
 
 # 2. Capability 与 Permission 的区别
 
-Capability：设备**能不能做**。
+Capability：设备 / Platform **能不能做**。
 
 Permission：App **允不允许做**。
 
@@ -106,6 +118,8 @@ platform.lifecycle
 - 设备上的其他标准导航输入。
 
 Base Profile 的目标不是要求相同硬件，而是保证最基本的 IKP App 可操作、可显示、可保存状态、可休眠恢复。
+
+`baga.data` 这类 Platform Core 标准服务不因为底层使用 SQLite 等实现就成为硬件 Capability；其可用性主要由 Baga API 版本约束。
 
 ---
 
@@ -281,7 +295,9 @@ Compatible Base Profile MUST 支持。
 
 ## 7.2 `storage.user_library`
 
-Platform 可以以标准方式读取设备上的用户书库索引或经授权访问书籍。
+Platform 可以以标准方式桥接设备上的用户书库索引或经授权访问书籍 / 文档，并通过 `baga.library` 暴露。
+
+该 Capability 不代表某一种具体书库数据库、文件路径或文档格式。
 
 ## 7.3 `storage.user_files`
 
@@ -392,11 +408,35 @@ reader.selection
 reader.highlight
 reader.note
 reader.position
+reader.anchor
 ```
 
 这些 Capability 用于细粒度 API feature detection。
 
-应用不应查询 KOReader、MuPDF 等实现名称。
+应用不应查询 KOReader、MuPDF、CREngine 等实现名称。
+
+## 12.1 `reader.anchor`
+
+表示当前 Reader implementation 可以通过 `baga.reader`：
+
+```text
+create_anchor
+serialize/pass anchor as Baga data
+goto_anchor / resolve_anchor
+```
+
+将正文位置或范围表达为对 App opaque 的标准 Anchor 对象。
+
+关键语义：
+
+- Anchor 不限定 EPUB；
+- Anchor 不限定 PDF；
+- Anchor 不要求所有格式共享同一种底层 locator；
+- Reader 可以为不同文档类别使用不同成熟原生定位机制；
+- App 不能解析或依赖 KOReader XPointer、PDF pboxes、EPUB CFI 等私有/外部字段；
+- 跨实现恢复可以使用标准化 fallback evidence，但不能把近似定位伪报为精确定位。
+
+实现可以直接复用 KOReader 已有 annotation / position 能力，或其他 Reader 已有成熟 locator；Capability 名称仍然只叫 `reader.anchor`。
 
 ---
 
@@ -451,6 +491,8 @@ removed
 
 只允许在明确的主版本升级中移除。
 
+`reader.anchor` 在 v0.2 Registry 中属于 provisional，待跨 Kindle/Android、多格式 BICTS 验证后再升级 stable。
+
 ---
 
 # 15. Capability 注册流程
@@ -462,7 +504,9 @@ removed
   ↓
 确认无法由现有 Capability 表达
   ↓
-定义跨设备语义，而不是 Vendor API
+定义跨设备语义，而不是 Vendor API / Library API
+  ↓
+优先研究是否有成熟实现可复用
   ↓
 至少验证两种不同实现路径，或证明具有通用抽象价值
   ↓
@@ -479,6 +523,14 @@ removed
 某厂商新增接口
   ↓
 直接把厂商接口名塞进 baga.*
+```
+
+也禁止：
+
+```text
+采用某开源库
+  ↓
+把库名直接注册成 Capability
 ```
 
 ---
@@ -500,7 +552,7 @@ x.vendor.feature
 
 ---
 
-# 17. v0.1 初始 Registry 摘要
+# 17. v0.2 Registry 摘要
 
 ```text
 Base
@@ -560,12 +612,21 @@ Bluetooth
 ├─ bluetooth.available
 ├─ bluetooth.input_device
 └─ bluetooth.audio
+
+Reader
+├─ reader.open
+├─ reader.search
+├─ reader.selection
+├─ reader.highlight
+├─ reader.note
+├─ reader.position
+└─ reader.anchor        provisional
 ```
 
 ---
 
 # 18. 核心原则 / Core Rule
 
-> **Capability Registry 不是硬件功能清单，而是跨设备语义契约。**
+> **Capability Registry 不是硬件功能清单，也不是开源库清单，而是跨设备语义契约。**
 
-只要这个注册表保持稳定，Baga Ink 就可以不断接入新设备，而不要求第三方 App 认识新的品牌与型号。
+只要这个注册表保持稳定，Baga Ink 就可以不断接入新设备、替换或复用不同成熟实现，而不要求第三方 App 认识新的品牌、型号或内部库。
