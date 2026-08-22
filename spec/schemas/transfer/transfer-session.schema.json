@@ -18,7 +18,7 @@
         "required": ["kind", "path", "length", "sha256", "app_id", "release_sequence"],
         "properties": {
           "kind": {"enum": ["ikp", "metadata", "statement", "catalog", "asset"]},
-          "path": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!/)(?!.*(?:^|/)\.\.(?:/|$)).+$"},
+          "path": {"type": "string", "minLength": 1, "maxLength": 512},
           "length": {"type": "integer", "minimum": 0},
           "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
           "app_id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160},
