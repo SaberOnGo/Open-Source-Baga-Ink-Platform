@@ -9,7 +9,7 @@
     "type": {"const": "baga.update-journal"},
     "format": {"const": "0.1"},
     "operation_id": {"type": "string", "minLength": 8, "maxLength": 128},
-    "app_id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160},
+    "app_id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160},
     "from_release": {"type": ["integer", "null"], "minimum": 1},
     "candidate_release": {"type": "integer", "minimum": 1},
     "state": {"enum": ["idle", "metadata_verified", "candidate_selected", "awaiting_user_approval", "downloading", "package_verified", "staged", "activating", "probation", "active", "rolling_back", "previous_active", "failed"]},
