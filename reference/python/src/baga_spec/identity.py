@@ -5,7 +5,7 @@ import hashlib
 from datetime import datetime, timezone
 from typing import Any
 
-from .canonical import canonicalize
+from .canonical import canonical_sha256, canonicalize
 from .crypto import b64u_decode, ed25519_key_id, verify_ed25519
 from .errors import IdentityError, SignatureError
 from .schemas import validate_schema
@@ -36,6 +36,8 @@ def _root_keys(genesis: dict[str, Any]) -> tuple[dict[str, bytes], int]:
         actual = ed25519_key_id(public)
         if actual != item["key_id"]:
             raise IdentityError("root key_id does not match public key")
+        if item["key_id"] in keys:
+            raise IdentityError("duplicate root key_id")
         keys[item["key_id"]] = public
     threshold = genesis["root_threshold"]
     if threshold > len(keys):
@@ -46,18 +48,18 @@ def _root_keys(genesis: dict[str, Any]) -> tuple[dict[str, bytes], int]:
 def _verify_root_threshold(
     genesis: dict[str, Any],
     statement: dict[str, Any],
-    envelope: dict[str, Any],
+    signature_set: dict[str, Any],
 ) -> None:
     validate_schema("publisher-genesis", genesis)
-    validate_schema("signature-envelope", envelope)
-    signed_type = statement.get("type")
-    if envelope["signed_type"] != signed_type:
-        raise IdentityError("signature envelope signed_type mismatch")
+    validate_schema("signature-set", signature_set)
+    expected_digest = canonical_sha256(statement)
+    if signature_set["signed_object_sha256"] != expected_digest:
+        raise IdentityError("signature set object digest mismatch")
 
     keys, threshold = _root_keys(genesis)
     message = canonicalize(statement)
     accepted: set[str] = set()
-    for signature_item in envelope["signatures"]:
+    for signature_item in signature_set["signatures"]:
         key_id = signature_item["key_id"]
         if key_id in accepted or key_id not in keys:
             continue
@@ -80,20 +82,22 @@ def _verify_root_threshold(
 def verify_app_ownership(
     genesis: dict[str, Any],
     ownership: dict[str, Any],
-    envelope: dict[str, Any],
+    signature_set: dict[str, Any],
 ) -> None:
     validate_schema("publisher-genesis", genesis)
     validate_schema("app-ownership", ownership)
     expected_publisher = publisher_id(genesis)
     if ownership["publisher_id"] != expected_publisher:
         raise IdentityError("app ownership publisher_id mismatch")
-    _verify_root_threshold(genesis, ownership, envelope)
+    if ownership["status"] != "active":
+        raise IdentityError("app ownership is not active")
+    _verify_root_threshold(genesis, ownership, signature_set)
 
 
 def verify_app_key_delegation(
     genesis: dict[str, Any],
     delegation: dict[str, Any],
-    envelope: dict[str, Any],
+    signature_set: dict[str, Any],
     *,
     app_id: str,
     channel: str,
@@ -107,18 +111,20 @@ def verify_app_key_delegation(
         raise IdentityError("app key delegation publisher_id mismatch")
     if delegation["app_id"] != app_id:
         raise IdentityError("app key delegation app_id mismatch")
+    if delegation["status"] != "active":
+        raise IdentityError("app key delegation is not active")
 
     public_key = b64u_decode(delegation["public_key"])
     if ed25519_key_id(public_key) != delegation["key_id"]:
         raise IdentityError("delegated key_id does not match public key")
 
-    _verify_root_threshold(genesis, delegation, envelope)
+    _verify_root_threshold(genesis, delegation, signature_set)
 
-    if channel not in delegation["channels"]:
+    if channel not in delegation["allowed_channels"]:
         raise IdentityError(f"channel {channel!r} is outside delegation scope")
-    if release_sequence < delegation["release_sequence_min"]:
+    if release_sequence < delegation["min_release_sequence"]:
         raise IdentityError("release sequence is below delegation scope")
-    if release_sequence > delegation["release_sequence_max"]:
+    if release_sequence > delegation["max_release_sequence"]:
         raise IdentityError("release sequence is above delegation scope")
 
     if at.tzinfo is None:
@@ -126,5 +132,5 @@ def verify_app_key_delegation(
     check_time = at.astimezone(timezone.utc)
     if check_time < _parse_utc(delegation["valid_from"]):
         raise IdentityError("delegation is not yet valid")
-    if check_time >= _parse_utc(delegation["expires"]):
+    if check_time >= _parse_utc(delegation["valid_until"]):
         raise IdentityError("delegation expired")
