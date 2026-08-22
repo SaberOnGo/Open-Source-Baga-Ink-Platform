@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:publisher-genesis:0.1",
+  "title": "Baga Publisher Genesis",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "display_name", "root_threshold", "root_keys", "recovery_threshold", "recovery_keys", "created_at"],
+  "properties": {
+    "type": {"const": "baga.publisher-genesis"},
+    "format": {"const": "0.1"},
+    "display_name": {"type": "string", "minLength": 1, "maxLength": 120},
+    "root_threshold": {"type": "integer", "minimum": 1},
+    "root_keys": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/key"}
+    },
+    "recovery_threshold": {"type": "integer", "minimum": 1},
+    "recovery_keys": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/key"}
+    },
+    "created_at": {"$ref": "#/$defs/timestamp"}
+  },
+  "$defs": {
+    "timestamp": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "key": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "algorithm", "public_key"],
+      "properties": {
+        "key_id": {"type": "string", "pattern": "^ed25519:[0-9a-f]{64}$"},
+        "algorithm": {"const": "ed25519"},
+        "public_key": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$"}
+      }
+    }
+  }
+}
