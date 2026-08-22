@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:transparency-checkpoint:0.1",
+  "title": "Baga Transparency Checkpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "log_id", "tree_size", "root_hash", "timestamp", "previous_checkpoint_digest", "signing_key_id"],
+  "properties": {
+    "type": {"const": "baga.transparency-checkpoint"},
+    "format": {"const": "0.1"},
+    "log_id": {"type": "string", "pattern": "^log1_[a-z2-7]{52}$"},
+    "tree_size": {"type": "integer", "minimum": 0},
+    "root_hash": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$"},
+    "timestamp": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "previous_checkpoint_digest": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$"},
+    "signing_key_id": {"type": "string", "pattern": "^ed25519:[0-9a-f]{64}$"}
+  }
+}
