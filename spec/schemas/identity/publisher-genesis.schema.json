@@ -10,15 +10,9 @@
     "format": {"const": "0.1"},
     "display_name": {"type": "string", "minLength": 1, "maxLength": 120},
     "root_threshold": {"type": "integer", "minimum": 1},
-    "root_keys": {
-      "type": "array", "minItems": 1, "uniqueItems": true,
-      "items": {"$ref": "#/$defs/key"}
-    },
+    "root_keys": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/key"}},
     "recovery_threshold": {"type": "integer", "minimum": 1},
-    "recovery_keys": {
-      "type": "array", "minItems": 1, "uniqueItems": true,
-      "items": {"$ref": "#/$defs/key"}
-    },
+    "recovery_keys": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/key"}},
     "created_at": {"$ref": "#/$defs/timestamp"}
   },
   "$defs": {
@@ -27,7 +21,7 @@
       "type": "object", "additionalProperties": false,
       "required": ["key_id", "algorithm", "public_key"],
       "properties": {
-        "key_id": {"type": "string", "pattern": "^ed25519:[0-9a-f]{64}$"},
+        "key_id": {"type": "string", "pattern": "^ed25519:[A-Za-z0-9_-]{43}$"},
         "algorithm": {"const": "ed25519"},
         "public_key": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$"}
       }
