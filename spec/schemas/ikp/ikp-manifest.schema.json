@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:ikp-manifest:0.4",
+  "title": "Baga IKP Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ikp_format", "id", "name", "version_name", "release_sequence", "channel", "entry", "baga_api", "permissions", "capabilities", "data_schema_version", "rollback"],
+  "properties": {
+    "ikp_format": {"const": "0.4"},
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160},
+    "name": {"type": "string", "minLength": 1, "maxLength": 120},
+    "version_name": {"type": "string", "minLength": 1, "maxLength": 64},
+    "release_sequence": {"type": "integer", "minimum": 1},
+    "channel": {"enum": ["stable", "beta", "nightly"]},
+    "entry": {"type": "string", "minLength": 1, "maxLength": 512},
+    "baga_api": {
+      "type": "object", "additionalProperties": false,
+      "required": ["min", "max_exclusive"],
+      "properties": {
+        "min": {"type": "string", "pattern": "^[0-9]+[.][0-9]+$"},
+        "max_exclusive": {"type": "string", "pattern": "^[0-9]+[.][0-9]+$"}
+      }
+    },
+    "permissions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 96}},
+    "capabilities": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required", "optional"],
+      "properties": {
+        "required": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 96}},
+        "optional": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 96}}
+      }
+    },
+    "data_schema_version": {"type": "integer", "minimum": 0},
+    "rollback": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "minimum_compatible_schema"],
+      "properties": {
+        "mode": {"enum": ["safe", "snapshot-required", "forward-only"]},
+        "minimum_compatible_schema": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
