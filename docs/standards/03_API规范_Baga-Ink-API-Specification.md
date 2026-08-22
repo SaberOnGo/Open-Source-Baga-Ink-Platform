@@ -1,10 +1,10 @@
-# Baga Ink API Specification
+# Baga Ink API 规范 / Baga Ink API Specification
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.1**  
+> **状态：Draft v0.2**  
 > **日期：2026-08-22**  
-> **上位文档：`BAGA_INK_PLATFORM_STRATEGY.md`**  
-> **配套规范：`BAGA_INK_APP_STANDARD.md`、`IKP_PACKAGE_SPECIFICATION.md`**
+> **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
+> **配套规范：`02_应用标准_Baga-Ink-App-Standard.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`、`06_IKP应用包规范_IKP-Package-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`**
 
 ---
 
@@ -23,7 +23,7 @@
 
 的统一应用接口。
 
-本文档为 v0.1 Draft。函数名称和细节可以在实现验证中调整，但顶层命名空间、Capability-first 原则、沙箱原则、无 Vendor API 穿透原则属于稳定方向。
+本文档为 v0.2 Draft。函数名称和细节可以在实现验证中调整，但顶层命名空间、Capability-first 原则、沙箱原则、无 Vendor API 穿透原则属于稳定方向。
 
 ---
 
@@ -57,7 +57,7 @@ baga.log
 
 ## 1.2 没有 `baga.system` 万能逃生口
 
-v0.1 不提供一个可以执行任意系统命令、获取 Android Context、调用 Kindle Shell 的通用 `baga.system` API。
+v0.2 不提供一个可以执行任意系统命令、获取 Android Context、调用 Kindle Shell 的通用 `baga.system` API。
 
 原因是这样的 API 会立即破坏跨设备边界。
 
@@ -87,7 +87,7 @@ Vendor-specific implementation
 
 # 2. Baga Lua Profile
 
-Universal App 运行于受限的 Lua 环境。
+Universal App 面向受限、可移植的 Baga Lua Profile。
 
 ## 2.1 默认可用基础库
 
@@ -184,7 +184,7 @@ internal_error
 
 网络、同步、耗时 Reader 操作等不应阻塞 UI。
 
-v0.1 使用轻量 Task 模型。
+v0.2 使用轻量 Task 模型。
 
 概念接口：
 
@@ -328,21 +328,7 @@ end
 
 但 Universal App 的核心业务逻辑 SHOULD 不依赖 `family` / `model`。
 
-Capability 命名必须稳定且语义化。
-
-初始类别：
-
-```text
-display.*
-input.*
-audio.*
-network.*
-light.*
-storage.*
-bluetooth.*
-power.*
-reader.*
-```
+Capability 命名以 `04_能力注册表_Baga-Ink-Capability-Registry.md` 为唯一注册来源。
 
 ---
 
@@ -387,14 +373,7 @@ view:invalidate()
 view:focus()
 ```
 
-具体布局系统需要单独 UI Specification 定义。
-
-v0.1 原则：
-
-- App 描述 UI 状态；
-- UI engine 决定实际绘制；
-- Display layer 决定刷新策略；
-- App 不直接操作 framebuffer。
+具体布局、Focus、刷新行为以 `09_UI规范_Baga-Ink-UI-Specification.md` 为准。
 
 ---
 
@@ -539,15 +518,7 @@ baga.permissions.list()
 
 应用 MUST 先在 IKP Manifest 声明权限；运行时 request 不能申请 Manifest 中不存在的权限。
 
-示例：
-
-```lua
-if not baga.permissions.check("network") then
-    local task = baga.permissions.request("network")
-end
-```
-
-在某些 Kindle 环境中没有系统级 permission dialog 时，Baga Ink Platform MAY 自己实现统一授权 UI。
+权限正式定义以 `05_权限模型_Baga-Ink-Permission-Model.md` 为准。
 
 ---
 
@@ -582,7 +553,7 @@ local task = baga.network.request({
 }
 ```
 
-v0.1 SHOULD 支持 HTTPS。
+v0.2 SHOULD 支持 HTTPS。
 
 App MUST 不自行绕过 Platform 的 TLS / proxy / connectivity policy。
 
@@ -599,12 +570,6 @@ baga.power.battery()
 baga.power.is_charging()
 baga.power.request_keep_awake(opts)
 baga.power.release_keep_awake(token)
-```
-
-示例：
-
-```lua
-local battery = baga.power.battery()
 ```
 
 Keep-awake 是请求，不是命令。
@@ -645,7 +610,7 @@ Reader implementation MAY 来自 KOReader、MuPDF 或其他组件，但这些内
 
 # 16. `baga.sync`
 
-Sync API 为离线优先应用提供平台级触发与策略，不在 v0.1 定义复杂 CRDT 协议。
+Sync API 为离线优先应用提供平台级触发与策略，不在 v0.2 定义复杂 CRDT 协议。
 
 建议接口：
 
@@ -666,8 +631,6 @@ manual
 
 真正的数据合并语义由 App 或后续独立同步标准定义。
 
-Platform SHOULD 提供可靠的任务调度和网络状态桥接，而不是强制所有 App 使用同一种数据模型。
-
 ---
 
 # 17. `baga.log`
@@ -683,8 +646,6 @@ baga.log.error(message, fields)
 
 日志 MAY 被 Baga Ink Client / Developer Tools 收集。
 
-Universal App MUST 不依赖厂商日志系统作为正常功能的一部分。
-
 敏感用户数据 SHOULD 不写入普通日志。
 
 ---
@@ -698,56 +659,23 @@ category.feature
 category.feature.variant
 ```
 
-例如：
+正式 Capability 集合由 `04_能力注册表_Baga-Ink-Capability-Registry.md` 维护。
+
+禁止标准 Capability 使用：
 
 ```text
-display.partial_refresh
-display.fast_refresh
-display.color
-input.touch
-input.pen
-input.physical_page_key
-light.frontlight
-audio.output
-network.wifi
-bluetooth
-power.battery_level
+boox.*
+kindle.*
+ireader.*
 ```
 
-Capability 名称描述“能力”，而不是实现来源。
-
-禁止把以下形式作为标准 Capability：
-
-```text
-boox.fast_refresh
-kindle.page_key
-ireader.pen
-```
-
-如果厂商特性最终值得成为平台能力，应抽象成中立语义名称。
+如果厂商特性值得成为平台能力，应抽象成中立语义名称。
 
 ---
 
 # 19. Permission 命名规范
 
-Permission 同样使用稳定、语义化名称。
-
-第一阶段候选：
-
-```text
-network
-library.read
-library.write
-notes.read
-notes.write
-user_files.read
-user_files.write
-clipboard
-audio.output
-bluetooth
-```
-
-权限 SHOULD 尽量面向用户可理解的资源类别，而不是底层 OS permission 名称。
+Permission 同样使用稳定、语义化名称，正式注册表由 `05_权限模型_Baga-Ink-Permission-Model.md` 维护。
 
 ---
 
@@ -759,7 +687,7 @@ IKP Manifest MUST 声明 API compatibility。
 
 ```json
 "baga_api": {
-  "min": "0.1",
+  "min": "0.2",
   "max_exclusive": "1.0"
 }
 ```
@@ -783,7 +711,7 @@ Baga Ink 不要求 App 理解底层线程模型。
 
 App SHOULD 把 UI handler 视为轻量事件回调。
 
-耗时任务必须使用 Task /异步机制。
+耗时任务必须使用 Task / 异步机制。
 
 Platform MAY 在 Kindle 和 Android 使用完全不同的线程实现，但必须保持上层语义一致。
 
@@ -814,7 +742,7 @@ App 永远不应该看到最后一层。
 
 ---
 
-# 23. v0.1 API 最小闭环
+# 23. v0.2 API 最小闭环
 
 Reference Implementation 的第一阶段不需要一次实现全部 API。
 
@@ -850,8 +778,6 @@ power
 reader
 sync
 ```
-
-这种顺序可以优先验证“统一平台是否真的成立”，而不是先堆功能。
 
 ---
 
