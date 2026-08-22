@@ -21,7 +21,7 @@
           "path": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!/)(?!.*(?:^|/)\.\.(?:/|$)).+$"},
           "length": {"type": "integer", "minimum": 0},
           "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-          "app_id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160},
+          "app_id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160},
           "release_sequence": {"type": "integer", "minimum": 1}
         }
       }
