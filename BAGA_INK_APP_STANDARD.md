@@ -1,7 +1,7 @@
 # Baga Ink App Standard
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.1**  
+> **状态：Draft v0.2**  
 > **日期：2026-08-22**  
 > **上位文档：`BAGA_INK_PLATFORM_STRATEGY.md`**
 
@@ -36,7 +36,8 @@ Universal App MUST：
 - 遵守标准生命周期；
 - 遵守权限与沙箱；
 - 不直接访问 Vendor / OS 私有 API；
-- 不携带平台相关 native binary；
+- 不携带平台相关 native binary 作为正常应用逻辑；
+- 不携带针对某一设备的 Lua 解释器、设备桥或私有执行组件；
 - 不要求开发者为 Kindle、BOOX、iReader 等分别维护应用逻辑分支。
 
 符合全部要求并通过兼容测试的应用 MAY 标记：
@@ -98,22 +99,14 @@ Application ID：
 - MUST 不因为运行设备不同而改变；
 - SHOULD 与开发者控制的域名或命名空间相关。
 
-例如 LifeBook 可拥有独立 ID，但第三方开发者无需成为 Baga Ink 品牌命名空间的一部分。
-
 ---
 
-# 3. 版本
+# 3. 版本与兼容范围
 
 应用版本 SHOULD 使用语义化版本形式：
 
 ```text
 MAJOR.MINOR.PATCH
-```
-
-例如：
-
-```text
-1.4.2
 ```
 
 应用 MUST 在 IKP Manifest 中声明：
@@ -130,7 +123,17 @@ Platform MUST 在启动应用前完成兼容检查。
 
 # 4. Baga Lua Profile
 
-Universal App 的第一官方语言为 Lua，但应用不是运行在“任意 Lua”上，而是运行于 **Baga Lua Profile**。
+Universal App 的第一官方语言为 Lua，但应用不是面向“任意 Lua 环境”，而是面向 **Baga Lua Profile**。
+
+Baga Lua Profile 是语言与 API 的规范边界，不是一个需要用户单独安装或管理的产品层。
+
+Platform Core 内部 MAY：
+
+- 在 Kindle 上复用 KOReader 等现有项目已经验证过的 Lua 解释器能力；
+- 在 Android 上直接嵌入轻量 Lua 解释器；
+- 未来替换底层 Lua 实现，只要保持 Baga Lua Profile 兼容。
+
+第三方 App 不得依赖具体 Lua 解释器品牌、编译方式或设备实现。
 
 ## 4.1 允许的基础能力
 
@@ -148,7 +151,7 @@ coroutine
 
 ## 4.2 默认禁止的系统逃逸能力
 
-Universal App MUST 不依赖以下能力：
+Universal App MUST 不依赖：
 
 ```text
 os.execute
@@ -168,7 +171,7 @@ direct vendor SDK
 
 `os`、`io`、`package`、`debug` 等 Lua 标准库中的危险部分 MAY 被 Platform 删除、替换或限制。
 
-应用不得假设标准桌面 Lua 环境完整存在。
+应用不得假设标准桌面 Lua 的完整库集合存在。
 
 ---
 
@@ -176,7 +179,7 @@ direct vendor SDK
 
 Baga Ink App MUST 使用统一生命周期模型。
 
-第一阶段语义事件包括：
+第一阶段语义事件：
 
 ```text
 install
@@ -192,13 +195,13 @@ uninstall
 
 应用 MUST：
 
-- 能够在 `sleep` 前快速保存必要状态；
+- 在 `sleep` 前快速保存必要状态；
 - 不假设网络长期在线；
-- 不假设进程会永久驻留；
-- 不依赖某一 Android Activity 或 Kindle 私有进程模型；
-- 在 `wake` 后重新验证网络和设备能力状态。
+- 不假设进程永久驻留；
+- 不依赖 Android Activity 或 Kindle 私有进程模型；
+- 在 `wake` 后重新验证网络与设备能力状态。
 
-平台 MAY 因设备限制合并某些底层事件，但对 App 暴露的语义必须保持一致。
+Platform MAY 因设备限制合并某些底层事件，但对 App 暴露的语义必须保持一致。
 
 ---
 
@@ -252,9 +255,7 @@ Capability: network.wifi
 Permission: network
 ```
 
-一个设备可以有 Wi-Fi，但应用没有 network permission。
-
-第一阶段权限类别可包括：
+第一阶段权限类别 MAY 包括：
 
 ```text
 network
@@ -297,7 +298,7 @@ downloads/
 - SHOULD 使用 Baga Ink Storage API；
 - MUST 通过显式权限访问用户书库或用户选择的外部文件。
 
-卸载应用时，Platform SHOULD 明确区分：
+卸载应用时，Platform SHOULD 区分：
 
 - 可安全删除的 cache；
 - app private data；
@@ -315,7 +316,7 @@ downloads/
 - 不把网络在线作为正常启动前提；
 - 不持续高频轮询；
 - 不因同步失败破坏本地数据；
-- 使用 Baga Ink Network / Sync API，而不是直接依赖平台私有网络接口。
+- 使用 Baga Ink Network / Sync API，而不是直接依赖设备私有网络接口。
 
 长时间任务 SHOULD 支持重试、取消以及睡眠/唤醒后的恢复。
 
@@ -366,7 +367,7 @@ Platform / Device Adapter 负责把语义模式映射到：
 
 # 12. Input 规则
 
-应用应该围绕语义动作设计交互，例如：
+应用 SHOULD 围绕语义动作设计交互，例如：
 
 ```text
 page_next
@@ -378,7 +379,7 @@ menu
 
 而不是将核心操作硬编码成某个物理键码。
 
-Platform 负责将：
+Platform 负责把：
 
 ```text
 touch
@@ -426,23 +427,23 @@ App → Baga Ink Reader API → Reader implementation
 App → KOReader internals
 ```
 
-这保证未来 Reader Engine 可替换或演进。
+这样未来 Reader Engine 可以替换或演进。
 
 ---
 
 # 15. 依赖规则
 
-为了避免早期生态出现传统包管理器式 dependency hell，Universal App v0.1 SHOULD 默认自包含。
+为了避免早期生态出现 dependency hell，Universal App v0.2 SHOULD 默认自包含。
 
 第一阶段：
 
 - App MAY 使用 Baga Ink Platform 标准库；
 - App MAY 将纯 Lua 第三方库打入自己的 IKP；
-- App MUST 不依赖某个用户另行安装的随机 native library；
+- App MUST 不依赖用户另行安装的随机 native library；
 - App MUST 不依赖某个厂商系统中“碰巧存在”的动态库；
-- 跨 App shared dependency 暂不作为 v0.1 核心能力。
+- 跨 App shared dependency 暂不作为第一阶段核心能力。
 
-后续如引入共享组件，应由独立版本化规范定义。
+这里的“自包含”指**应用代码与应用资源自包含**，不代表 App 自带一套平台核心、Lua 解释器、设备适配层或系统桥。
 
 ---
 
@@ -454,7 +455,7 @@ App → KOReader internals
 - 不篡改 Platform；
 - 不修改其他 App 私有数据；
 - 不通过未声明接口访问敏感资源；
-- 不假设可执行任意 native code；
+- 不假设可以执行任意 native code；
 - 对来自网络、文件和用户输入的数据做基本验证。
 
 Platform MAY 因安全原因终止违反规则的 App。
@@ -467,7 +468,7 @@ Platform MAY 因安全原因终止违反规则的 App。
 
 应用更新 MUST 保持 Application ID，并 SHOULD 保持发布者签名连续性。
 
-如果签名密钥发生变化，应通过明确的 key rotation / recovery 机制处理，而不是允许任意新签名覆盖原应用。
+如果签名密钥发生变化，应通过明确的 key rotation / recovery 机制处理。
 
 具体规则由 IKP Package Specification 和 Market Policy 定义。
 
@@ -499,85 +500,75 @@ Experimental
 1. 使用 `.ikp`；
 2. 使用 Baga Lua Profile；
 3. 只使用公开 Baga Ink API；
-4. 不携带设备相关 native binary；
-5. 不调用 raw shell / vendor SDK；
-6. 使用 Capability Model；
-7. 权限完整声明；
-8. 使用标准生命周期；
-9. 通过 Compatibility Test；
-10. 至少通过两个不同平台家族的 Reference Test（目标为 Kindle + Android E-Paper）。
-
-第 10 条是非常重要的反碎片化原则：Universal 不应只因为“理论上用了统一 API”就获得认证，而应证明真正跨平台。
-
----
-
-# 20. 向后兼容原则
-
-在 Baga Ink API 进入稳定版本后：
-
-- Patch / Minor 更新 SHOULD 不破坏已发布的兼容 API；
-- 废弃 API 应先标记 deprecated，并提供迁移周期；
-- Platform SHOULD 在合理范围内继续运行旧 IKP；
-- Breaking change 应通过新的 major API version 引入。
-
-在 `v0.x` 阶段允许更快演进，但所有不兼容变更 MUST 明确记录。
+4. 不携带设备相关 native binary 作为正常应用逻辑；
+5. 不携带自己的 Lua 解释器、设备适配层或系统桥；
+6. 不调用 raw shell / vendor SDK；
+7. 使用 Capability Model；
+8. 权限完整声明；
+9. 使用标准生命周期；
+10. 通过 Compatibility Test；
+11. 至少在 Kindle 与 Android E-Paper 两个平台家族的参考实现上通过验证，才可使用跨平台 Universal 宣传。
 
 ---
 
-# 21. 开发者的核心心智模型
+# 20. 不能进入 Universal 边界的能力
 
-Baga Ink App 开发者应该只需要理解：
+以下能力不得成为普通 Universal App 默认开发方式：
 
-```text
-Lua
-+
-Baga Ink SDK
-+
-Baga Ink API
-+
-Capability
-+
-Permission
-+
-IKP
-```
-
-而不需要先学习：
-
-```text
-KUAL
-MRPI
-Kindle framebuffer
-BOOX refresh SDK
-iReader private API
-Android vendor differences
-```
-
-如果普通 Baga Ink App 开发仍然必须学习后一组知识，本标准的目标就没有实现。
-
----
-
-# 22. v0.1 明确不做的事情
-
-本版本暂不把以下能力定义为 Universal App 标准：
-
-- 任意 native binary；
 - 任意 Shell；
 - 任意 Java / JNI bridge；
 - 自定义 Kernel / Driver；
 - 跨 App 共享 native dependency；
 - Vendor-specific API 直接调用；
-- WebView / Chromium 作为默认 App Runtime；
-- 每个 App 自己实现系统级更新机制。
+- WebView / Chromium 作为平台默认应用执行方式；
+- 每个 App 自己实现系统级更新机制；
+- 每个 App 自带另一套 Lua 解释器或设备兼容代码。
 
 这些能力如未来需要，应位于受控扩展层，而不是侵蚀 Universal App 边界。
 
 ---
 
-# 23. 合规判断
+# 21. LifeBook 的参考应用地位
 
-Baga Ink App Standard 的最终判断问题只有一个：
+LifeBook 是第一批 Reference App，用于验证 Baga Ink 标准能否真正跨 Kindle 与 Android 墨水屏工作。
 
-> **这个应用是否真正面向 Baga Ink Platform 开发，而不是借 Baga Ink Market 分发一个仍然绑定某台设备的应用？**
+LifeBook MUST 遵循与第三方应用相同的核心规则，不能因为它是官方旗舰 App 就大量使用私有捷径，否则 Baga Ink 标准无法被真实验证。
 
-只有前者，才能构成长期统一的 Baga Ink 生态。
+允许 LifeBook 在早期存在少量内部实验接口，但这些接口：
+
+- MUST 明确标记为 internal / experimental；
+- MUST 不被第三方依赖；
+- 成熟后要么进入正式 Baga Ink API，要么删除。
+
+LifeBook 本身不依赖额外通用中间层；它直接基于 Baga Ink Platform 已有的 Platform Core、API 与可复用组件实现。
+
+---
+
+# 22. 最终目标
+
+Baga Ink App Standard 的目标不是限制创造力，而是把跨设备最痛苦、最容易重复造轮子的部分收敛到平台。
+
+开发者应该把时间花在：
+
+```text
+阅读体验
+笔记
+RSS
+AI
+知识管理
+教育
+工具
+创作
+```
+
+而不是花在：
+
+```text
+Kindle framebuffer
+BOOX refresh API
+iReader private SDK
+Android vendor differences
+不同设备的安装脚本
+```
+
+这就是 Baga Ink Universal App 标准存在的根本价值。
