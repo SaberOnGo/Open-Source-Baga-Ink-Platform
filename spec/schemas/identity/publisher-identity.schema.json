@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:publisher-identity:0.1",
+  "title": "Baga Publisher Identity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "publisher_id", "sequence", "previous_digest", "root_threshold", "root_keys", "recovery_threshold", "recovery_keys", "effective_at"],
+  "properties": {
+    "type": {"const": "baga.publisher-identity"},
+    "format": {"const": "0.1"},
+    "publisher_id": {"type": "string", "pattern": "^pub1_[a-z2-7]{52}$"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "previous_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "root_threshold": {"type": "integer", "minimum": 1},
+    "root_keys": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/key"}},
+    "recovery_threshold": {"type": "integer", "minimum": 1},
+    "recovery_keys": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/key"}},
+    "effective_at": {"$ref": "#/$defs/timestamp"}
+  },
+  "$defs": {
+    "timestamp": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "key": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "algorithm", "public_key"],
+      "properties": {
+        "key_id": {"type": "string", "pattern": "^ed25519:[A-Za-z0-9_-]{43}$"},
+        "algorithm": {"const": "ed25519"},
+        "public_key": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$"}
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "baga-spec"
+version = "0.0.1"
+description = "Reference implementation for the Baga Ink executable specification"
+requires-python = ">=3.12"
+dependencies = [
+  "cryptography>=44,<46",
+  "jsonschema>=4.23,<5",
+  "rfc8785>=0.1.4,<0.2",
+  "tuf>=5,<7",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.3,<9",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/baga_spec"]
+
+[tool.pytest.ini_options]
+testpaths = ["../../tests"]
+addopts = "-ra"

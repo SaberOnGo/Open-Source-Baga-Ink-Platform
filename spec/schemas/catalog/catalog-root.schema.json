@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:catalog-root:0.1",
+  "title": "Baga Catalog Root",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "repository_id", "catalog_sequence", "generated_at", "index", "shards", "diffs", "supported_locales", "default_locale"],
+  "properties": {
+    "type": {"const": "baga.catalog-root"},
+    "format": {"const": "0.1"},
+    "repository_id": {"type": "string", "pattern": "^repo1_[a-z2-7]{52}$"},
+    "catalog_sequence": {"type": "integer", "minimum": 1},
+    "generated_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "index": {"$ref": "#/$defs/target"},
+    "shards": {"type": "array", "items": {"$ref": "#/$defs/target"}},
+    "diffs": {"type": "array", "items": {"$ref": "#/$defs/target"}},
+    "supported_locales": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"}},
+    "default_locale": {"type": "string", "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"}
+  },
+  "$defs": {
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "length", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "maxLength": 512},
+        "length": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

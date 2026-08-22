@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:update-journal:0.1",
+  "title": "Baga Update Journal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "operation_id", "app_id", "from_release", "candidate_release", "state", "staging_path", "expected_digest", "previous_active_path", "started_at", "last_updated_at"],
+  "properties": {
+    "type": {"const": "baga.update-journal"},
+    "format": {"const": "0.1"},
+    "operation_id": {"type": "string", "minLength": 8, "maxLength": 128},
+    "app_id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160},
+    "from_release": {"type": ["integer", "null"], "minimum": 1},
+    "candidate_release": {"type": "integer", "minimum": 1},
+    "state": {"enum": ["idle", "metadata_verified", "candidate_selected", "awaiting_user_approval", "downloading", "package_verified", "staged", "activating", "probation", "active", "rolling_back", "previous_active", "failed"]},
+    "staging_path": {"type": "string", "minLength": 1, "maxLength": 512},
+    "expected_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "previous_active_path": {"type": ["string", "null"], "maxLength": 512},
+    "started_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "last_updated_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"}
+  }
+}

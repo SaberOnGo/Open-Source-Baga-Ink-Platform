@@ -1,0 +1,11 @@
+{
+  "format": "0.1",
+  "cases": [
+    {"id": "duplicate-json-key", "kind": "strict-json", "path": "json/duplicate-key.json", "expected_error_code": "json_duplicate_key"},
+    {"id": "non-finite-number", "kind": "strict-json", "path": "json/non-finite.json", "expected_error_code": "json_non_finite"},
+    {"id": "ownership-unknown-field", "kind": "schema", "schema": "app-ownership", "path": "schema/app-ownership-unknown-field.json", "expected_error_code": "schema_validation_error"},
+    {"id": "ownership-uppercase-app-id", "kind": "schema", "schema": "app-ownership", "path": "schema/app-ownership-uppercase-app-id.json", "expected_error_code": "schema_validation_error"},
+    {"id": "zip-path-traversal", "kind": "generated-ikp", "mutation": "path-traversal", "expected_error_code": "ikp_error"},
+    {"id": "zip-duplicate-entry", "kind": "generated-ikp", "mutation": "duplicate-entry", "expected_error_code": "ikp_error"}
+  ]
+}
