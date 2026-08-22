@@ -6,6 +6,11 @@ class BagaSpecError(ValueError):
 
     code = "baga_spec_error"
 
+    def __init__(self, message: str, *, code: str | None = None) -> None:
+        super().__init__(message)
+        if code is not None:
+            self.code = code
+
 
 class StrictJSONError(BagaSpecError):
     code = "strict_json_error"
