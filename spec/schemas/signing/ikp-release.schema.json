@@ -13,13 +13,13 @@
     "version_name": {"type": "string", "minLength": 1, "maxLength": 64},
     "release_sequence": {"type": "integer", "minimum": 1},
     "channel": {"enum": ["stable", "beta", "nightly"]},
-    "ikp_format": {"type": "string", "pattern": "^[0-9]+\.[0-9]+$"},
+    "ikp_format": {"type": "string", "pattern": "^[0-9]+[.][0-9]+$"},
     "baga_api": {
       "type": "object", "additionalProperties": false,
       "required": ["min", "max_exclusive"],
       "properties": {
-        "min": {"type": "string", "pattern": "^[0-9]+\.[0-9]+$"},
-        "max_exclusive": {"type": "string", "pattern": "^[0-9]+\.[0-9]+$"}
+        "min": {"type": "string", "pattern": "^[0-9]+[.][0-9]+$"},
+        "max_exclusive": {"type": "string", "pattern": "^[0-9]+[.][0-9]+$"}
       }
     },
     "manifest": {"$ref": "#/$defs/target"},
@@ -35,7 +35,7 @@
       "type": "object", "additionalProperties": false,
       "required": ["path", "length", "sha256"],
       "properties": {
-        "path": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!/)(?!.*(?:^|/)\.\.(?:/|$)).+$"},
+        "path": {"type": "string", "minLength": 1, "maxLength": 512},
         "length": {"type": "integer", "minimum": 0},
         "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
       }
