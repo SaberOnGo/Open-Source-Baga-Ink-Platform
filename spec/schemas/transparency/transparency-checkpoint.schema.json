@@ -13,6 +13,6 @@
     "root_hash": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$"},
     "timestamp": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
     "previous_checkpoint_digest": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$"},
-    "signing_key_id": {"type": "string", "pattern": "^ed25519:[0-9a-f]{64}$"}
+    "signing_key_id": {"type": "string", "pattern": "^ed25519:[A-Za-z0-9_-]{43}$"}
   }
 }
