@@ -1,16 +1,14 @@
 # Baga Ink 规范总览 / Baga Ink Standards Index
 
 > **目录级别：规范入口 / Standards Entry Point**  
-> **状态：Living Index v0.2**  
+> **状态：Living Index v0.3**  
 > **日期：2026-08-22**
 
 ---
 
 ## 0. 目的 / Purpose
 
-`docs/standards/` 是 Baga Ink Platform 的正式规范目录。
-
-所有战略级、平台级、兼容性、设备适配、市场分发和安全规范统一放在这里；仓库根目录不再堆放规范文档。
+`docs/standards/` 是 Baga Ink Platform 的唯一正式规范目录。
 
 编号表达**规范重要性、依赖顺序和领域分组**，不是创建时间。
 
@@ -177,8 +175,7 @@ Reference App 不属于 Baga Ink Standards，不得覆盖上位规范。
 
 ```text
 docs/reference-apps/
-└── 01_LifeBook墨水屏参考应用实现规范_
-    LifeBook-Ink-Reference-App-Implementation-Specification.md
+└── 01_LifeBook参考实现_LifeBook-Reference-App.md
 ```
 
 LifeBook 是第一个旗舰 Reference App，用真实产品验证：
@@ -314,8 +311,6 @@ Lua 解释器只是 Platform Core 内部的一项轻量实现能力，不是独�
 
 # 10. 规范权威边界 / Authority Boundaries
 
-为避免规则重复和漂移，各文件拥有不同权威范围。
-
 ```text
 02 负责：什么是合规 Baga Ink App
 03 负责：公开 baga.* API
@@ -339,8 +334,6 @@ Lua 解释器只是 Platform Core 内部的一项轻量实现能力，不是独�
 ---
 
 # 11. 变更治理 / Change Governance
-
-原则：
 
 - 修改 `01–03` 应经过架构级讨论；
 - 新 Capability 必须先进入 `04`；
