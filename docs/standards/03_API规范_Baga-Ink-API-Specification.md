@@ -1,8 +1,8 @@
 # Baga Ink API 规范 / Baga Ink API Specification
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.2**  
-> **日期：2026-08-22**  
+> **状态：Draft v0.3**  
+> **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`02_应用标准_Baga-Ink-App-Standard.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`、`06_IKP应用包规范_IKP-Package-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`**
 
@@ -23,7 +23,7 @@
 
 的统一应用接口。
 
-本文档为 v0.2 Draft。函数名称和细节可以在实现验证中调整，但顶层命名空间、Capability-first 原则、沙箱原则、无 Vendor API 穿透原则属于稳定方向。
+本文档为 v0.3 Draft。函数名称和细节可以在实现验证中调整，但顶层命名空间、Capability-first 原则、沙箱原则、无 Vendor API 穿透原则以及“公开语义与内部实现分离”属于稳定方向。
 
 ---
 
@@ -37,7 +37,7 @@
 baga.*
 ```
 
-第一阶段核心 namespace：
+核心 namespace：
 
 ```lua
 baga.api
@@ -47,6 +47,8 @@ baga.display
 baga.input
 baga.device
 baga.storage
+baga.data
+baga.library
 baga.network
 baga.power
 baga.reader
@@ -57,7 +59,7 @@ baga.log
 
 ## 1.2 没有 `baga.system` 万能逃生口
 
-v0.2 不提供一个可以执行任意系统命令、获取 Android Context、调用 Kindle Shell 的通用 `baga.system` API。
+v0.3 不提供一个可以执行任意系统命令、获取 Android Context、调用 Kindle Shell 的通用 `baga.system` API。
 
 原因是这样的 API 会立即破坏跨设备边界。
 
@@ -66,11 +68,11 @@ v0.2 不提供一个可以执行任意系统命令、获取 Android Context、�
 ```text
 需求
  ↓
-标准 Capability
+标准 Capability / API 语义
  ↓
 Baga Ink API
  ↓
-Device Adapter / Capability Provider
+Platform Core / Device Adapter 内部实现
 ```
 
 而不是：
@@ -82,6 +84,34 @@ App
  ↓
 Vendor-specific implementation
 ```
+
+## 1.3 公开 API 与内部实现复用
+
+Baga Ink API 定义**开发者可依赖的行为契约**，不定义 Platform 内部必须使用多少层软件，也不要求底层能力重新实现。
+
+Platform MAY 直接、组合或拆分复用成熟开源项目，例如：
+
+```text
+KOReader / koreader-base
+FBInk
+SQLite
+Automerge
+MuPDF / CREngine
+Android / Vendor SDK
+其他经过验证的成熟组件
+```
+
+但：
+
+- 使用某个组件 MUST NOT 自动产生新的公开 `Provider / Engine / Runtime` 层；
+- App MUST NOT 因内部采用 KOReader 而依赖 KOReader Lua 对象；
+- App MUST NOT 因内部采用 SQLite 而依赖 SQL、数据库路径或 SQLite-specific pragma；
+- App MUST NOT 因内部采用 Automerge 而被强制理解 Automerge change graph、binary format 或 Sync Protocol；
+- 只有被本规范或其他正式 Baga Ink 标准明确采纳并版本化的外部协议，才属于稳定跨实现契约。
+
+原则：
+
+> **`baga.*` 是稳定边界；成熟开源库是实现工具，不是自动新增的架构层。**
 
 ---
 
@@ -184,7 +214,7 @@ internal_error
 
 网络、同步、耗时 Reader 操作等不应阻塞 UI。
 
-v0.2 使用轻量 Task 模型。
+v0.3 使用轻量 Task 模型。
 
 概念接口：
 
@@ -468,6 +498,8 @@ Universal App SHOULD 优先监听语义动作，而不是硬编码平台 keycode
 
 # 11. `baga.storage`
 
+`baga.storage` 负责文件 / 字节级逻辑存储；它不是结构化数据库 API。
+
 所有路径均为 Baga Ink 逻辑路径，不等价于真实 OS 路径。
 
 建议接口：
@@ -500,11 +532,102 @@ documents/
 downloads/
 ```
 
-用户书库等共享资源 SHOULD 通过专门 API / Permission 暴露，而不是映射成可任意遍历的真实系统目录。
+用户书库等共享资源 SHOULD 通过 `baga.library` / 专门 API 与 Permission 暴露，而不是映射成可任意遍历的真实系统目录。
 
 ---
 
-# 12. `baga.permissions`
+# 12. `baga.data`
+
+`baga.data` 为 offline-first App 提供**应用私有的结构化、事务型、可靠本地数据**。
+
+它解决的是：
+
+> **数据在当前设备上如何可靠落盘、原子修改和崩溃恢复。**
+
+它不等于：
+
+```text
+云同步
+CRDT
+冲突合并
+远程数据库
+文件系统
+```
+
+概念接口：
+
+```lua
+local store = baga.data.open("main")
+
+store:get(collection, key)
+store:put(collection, key, value)
+store:delete(collection, key)
+store:list(collection, opts)
+store:transaction(function(tx)
+    -- tx:get / tx:put / tx:delete
+end)
+```
+
+v0.3 原则：
+
+- `transaction()` SHOULD 提供 all-or-nothing 原子语义；
+- API 返回成功前，平台 SHOULD 保证该事务已经达到平台承诺的持久化边界；
+- App 崩溃或设备重启后，不得出现“半个事务”；
+- Value SHOULD 使用 Baga 可序列化的结构化类型；
+- 大型二进制对象 SHOULD 使用 `baga.storage`，而不是塞入结构化记录；
+- App 数据默认属于自身沙箱，不需要额外用户权限；
+- Platform 更新不得默认清除 App Data。
+
+实现上，Platform SHOULD 优先复用 SQLite 等成熟事务存储，而不是自行发明数据库；Android 与 Kindle 可以使用不同内部实现，只要 API 语义一致。
+
+App MUST NOT 假设底层一定是 SQLite，也不得依赖 SQL、真实数据库路径、WAL 文件或 SQLite-specific 行为。
+
+---
+
+# 13. `baga.library`
+
+`baga.library` 是用户可见书籍 / 文档资源的标准书库接口，用来解决当前 `storage.user_library` Capability 与 `library.read/write` Permission 已存在、但公开 API 缺失的问题。
+
+概念接口：
+
+```lua
+baga.library.list(opts)
+baga.library.get(item_id)
+baga.library.open(item_id)
+baga.library.import(source, opts)
+baga.library.remove(item_id, opts)
+```
+
+书库 Item SHOULD 使用稳定、opaque 的 `item_id`，而不是公开真实系统路径。
+
+概念描述：
+
+```lua
+{
+    id = "opaque-library-id",
+    title = "...",
+    authors = {"..."},
+    media_type = "...",
+    format = "...",
+    size = 123456,
+    modified_at = "..."
+}
+```
+
+规则：
+
+- `list/get/open` 受 `library.read` Permission 控制；
+- `import/remove` 等修改操作受 `library.write` Permission 控制；
+- `open()` SHOULD 返回可传给 `baga.reader.open()` 的逻辑 source / handle；
+- Universal App MUST 不扫描 Kindle `/documents`、Android vendor bookshelf 或真实 filesystem path；
+- Device Adapter 可以在内部索引厂商书库，但 App 只看到统一 Library Item；
+- `storage.user_library` Capability 表示 Platform 可以桥接设备现有用户书库；它不是 `baga.library` namespace 本身是否存在的同义词。
+
+`baga.library` 不限定 EPUB，也不限定任何单一文件格式。实际可打开格式由 Reader implementation 与 `baga.reader.supports()` 判断。
+
+---
+
+# 14. `baga.permissions`
 
 建议接口：
 
@@ -522,7 +645,7 @@ baga.permissions.list()
 
 ---
 
-# 13. `baga.network`
+# 15. `baga.network`
 
 建议接口：
 
@@ -553,7 +676,7 @@ local task = baga.network.request({
 }
 ```
 
-v0.2 SHOULD 支持 HTTPS。
+v0.3 SHOULD 支持 HTTPS。
 
 App MUST 不自行绕过 Platform 的 TLS / proxy / connectivity policy。
 
@@ -561,7 +684,7 @@ Baga Ink MAY 对后台请求实行功耗和频率限制。
 
 ---
 
-# 14. `baga.power`
+# 16. `baga.power`
 
 建议接口：
 
@@ -578,13 +701,16 @@ Platform MAY 因系统策略、电量或设备能力拒绝。
 
 ---
 
-# 15. `baga.reader`
+# 17. `baga.reader`
 
-Reader API 的目的是避免每个 App 重做 EPUB / PDF / 阅读位置 / 标注基础设施。
+Reader API 的目的是避免每个 App 重做**文档打开、格式处理、阅读位置、选择、搜索、标注和锚点定位基础设施**。
+
+Baga Ink Reader 不以 EPUB 为中心，也不把任何单一格式或单一 Locator 体系作为 Reader 抽象本身。
 
 建议接口：
 
 ```lua
+baga.reader.supports(source_or_format)
 baga.reader.open(source, opts)
 ```
 
@@ -597,6 +723,9 @@ session:next_page()
 session:previous_page()
 session:search(query)
 session:get_selection()
+session:create_anchor(target)
+session:goto_anchor(anchor)
+session:resolve_anchor(anchor)
 session:add_highlight(range, opts)
 session:add_note(range, text)
 session:close()
@@ -604,13 +733,65 @@ session:close()
 
 `source` SHOULD 是 Baga Ink 可访问的逻辑资源，而不是任意 OS 文件路径。
 
-Reader implementation MAY 来自 KOReader、MuPDF 或其他组件，但这些内部实现不属于公开 API contract。
+## 17.1 Reader Position 与 Anchor
+
+Reader Position / Anchor 用于：
+
+```text
+恢复阅读位置
+高亮 / 笔记定位
+跨设备阅读同步
+公开笔记关联正文
+重新打开文档后的定位恢复
+```
+
+它的标准原则是：
+
+> **定位算法归 Reader implementation；App 只保存和传递 Baga Reader 返回的可序列化位置对象。**
+
+App MUST 把 Anchor 视为 opaque、可序列化的 Baga 值，不解析其中的 Reader-engine 私有字段。
+
+Platform / Reader implementation MAY 在内部复用最适合当前格式的成熟定位机制，例如：
+
+```text
+KOReader / CREngine XPointer 类位置
+PDF page + page-local position / boxes
+固定页文档 page / region
+其他 Reader 已有原生 locator
+quote / context / progression 等恢复证据
+```
+
+KOReader 当前对 reflowable / rolling 文档与 fixed-page / paging 文档本来就使用不同的成熟位置模型；Baga Ink SHOULD 复用这些既有能力，而不是为 EPUB、PDF、MOBI、FB2、TXT、DjVu、CBZ 等格式分别重新发明定位算法。
+
+Readium Locator、EPUB CFI、W3C Web Annotation 等 MAY 作为数据模型与恢复策略的设计参考，但 **任何单一外部体系都不是 Baga Reader 的默认格式边界或强制实现。**
+
+如果某个 Anchor 在另一 Reader implementation 中无法精确解析，Platform SHOULD 按标准化恢复策略尝试已有 fallback evidence；无法可靠恢复时必须返回明确错误或降级结果，不能伪造“精确定位”。
+
+## 17.2 Reader 实现边界
+
+Reader implementation MAY 来自 KOReader、MuPDF、CREngine 或其他成熟组件，也 MAY 组合复用它们。
+
+这些内部实现不属于公开 API contract。
+
+特别是：
+
+```text
+LifeBook / IKP
+      ↓
+baga.reader
+      ↓
+Baga Ink Platform on current device
+      ↓
+内部复用 KOReader / MuPDF / CREngine / other implementation
+```
+
+内部库不构成一层新的公开架构。
 
 ---
 
-# 16. `baga.sync`
+# 18. `baga.sync`
 
-Sync API 为离线优先应用提供平台级触发与策略，不在 v0.2 定义复杂 CRDT 协议。
+`baga.sync` 为离线优先应用提供平台级同步**触发、调度与设备策略**，不把所有 App 强制到一种 CRDT 或业务合并算法。
 
 建议接口：
 
@@ -629,11 +810,35 @@ when_charging
 manual
 ```
 
-真正的数据合并语义由 App 或后续独立同步标准定义。
+必须区分：
+
+```text
+baga.data
+→ 当前设备上的可靠本地事务数据
+
+baga.sync
+→ 联网状态、同步任务触发、功耗/网络策略和生命周期协调
+
+App Domain Sync Logic
+→ 哪些对象同步、幂等、版本历史、业务冲突规则
+```
+
+对于确实存在**多设备并发离线修改**的数据，Platform / App implementation SHOULD 优先评估 Automerge 等成熟 Local-first / CRDT 实现，而不是自行发明通用 CRDT 算法。
+
+但 Automerge 不适用于所有数据：
+
+- 阅读进度可以采用简单、明确的业务 merge；
+- Server-authoritative Feed / 评论 / 他人公开笔记通常只需要本地 cache；
+- 书籍文件同步适合内容 Hash / 文件传输；
+- 笔记、人生记录、文章草稿等并发可编辑对象才可能真正需要 CRDT。
+
+Baga Ink v0.3 不规定所有 App 必须使用 Automerge，也不把 Automerge 私有对象直接暴露给 IKP。
+
+如果未来需要让多个独立实现直接交换同一种 CRDT wire format，必须通过独立、版本化标准明确采用的外部协议版本与迁移规则；不能用“依赖最新版 Automerge”代替规范。
 
 ---
 
-# 17. `baga.log`
+# 19. `baga.log`
 
 统一日志 API：
 
@@ -650,7 +855,7 @@ baga.log.error(message, fields)
 
 ---
 
-# 18. Capability 命名规范
+# 20. Capability 命名规范
 
 Capability 使用小写点分层级：
 
@@ -673,13 +878,13 @@ ireader.*
 
 ---
 
-# 19. Permission 命名规范
+# 21. Permission 命名规范
 
 Permission 同样使用稳定、语义化名称，正式注册表由 `05_权限模型_Baga-Ink-Permission-Model.md` 维护。
 
 ---
 
-# 20. API 版本兼容
+# 22. API 版本兼容
 
 IKP Manifest MUST 声明 API compatibility。
 
@@ -687,7 +892,7 @@ IKP Manifest MUST 声明 API compatibility。
 
 ```json
 "baga_api": {
-  "min": "0.2",
+  "min": "0.3",
   "max_exclusive": "1.0"
 }
 ```
@@ -705,7 +910,7 @@ Platform MUST 在 App 启动前做版本检查。
 
 ---
 
-# 21. Thread / Event Loop 原则
+# 23. Thread / Event Loop 原则
 
 Baga Ink 不要求 App 理解底层线程模型。
 
@@ -717,9 +922,9 @@ Platform MAY 在 Kindle 和 Android 使用完全不同的线程实现，但必�
 
 ---
 
-# 22. API 与 Device Adapter 的关系
+# 24. API 与 Device Adapter 的关系
 
-每个公开能力都应能映射到 Device Adapter 或 Platform Core。
+每个公开能力都应能映射到 Platform Core、Device Adapter 或二者协作的内部实现。
 
 例如：
 
@@ -727,7 +932,7 @@ Platform MAY 在 Kindle 和 Android 使用完全不同的线程实现，但必�
 baga.display.refresh("FAST")
           │
           ▼
-Baga Ink Display Service
+Baga Ink Platform
           │
      ┌────┴─────┐
      │          │
@@ -738,11 +943,23 @@ Kindle       Vendor / Generic
 refresh      refresh
 ```
 
-App 永远不应该看到最后一层。
+又例如：
+
+```text
+baga.data
+   ↓
+Platform Core
+   ↓
+SQLite / other mature transactional storage
+```
+
+`baga.data` 不需要为了 SQLite 再产生一个公开 “SQLite Provider Layer”。
+
+App 永远不应该看到最后一层具体实现。
 
 ---
 
-# 23. v0.2 API 最小闭环
+# 25. v0.3 API 最小闭环
 
 Reference Implementation 的第一阶段不需要一次实现全部 API。
 
@@ -772,22 +989,26 @@ Android E-Paper Reference Device
 第二批再加入：
 
 ```text
-network
-permissions
-power
-reader
-sync
+baga.data
+baga.library
+baga.network
+baga.permissions
+baga.power
+baga.reader
+baga.sync
 ```
 
 ---
 
-# 24. API 设计的最终判断标准
+# 26. API 设计的最终判断标准
 
-任何新增 API 在进入 Baga Ink 之前，都应该回答四个问题：
+任何新增 API 在进入 Baga Ink 之前，都应该回答：
 
 1. 它表达的是跨设备语义，还是某厂商实现细节？
 2. Kindle 与 Android E-Paper 是否都能合理实现，或至少能明确返回 `not_supported`？
 3. 它是否会成为开发者绕开 Capability / Permission / Sandbox 的后门？
 4. 这个 API 是否值得未来多年承担兼容责任？
+5. 这个需求是否已经有成熟、许可证兼容、可验证的实现可以直接或部分复用，从而避免重新造轮子？
+6. 采用该开源实现时，能否保持 `baga.*` 契约稳定，而不把其私有对象模型泄漏给 App？
 
 如果答案不理想，宁可先做受控 Extension，也不要污染核心 API。
