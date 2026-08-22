@@ -1,7 +1,7 @@
 # IKP Package Specification
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.1**  
+> **状态：Draft v0.2**  
 > **日期：2026-08-22**  
 > **上位文档：`BAGA_INK_PLATFORM_STRATEGY.md`**  
 > **配套规范：`BAGA_INK_APP_STANDARD.md`、`BAGA_INK_API_SPECIFICATION.md`**
@@ -27,7 +27,11 @@ IKP 的目标是提供一种：
 
 的统一应用包。
 
-IKP 是 Baga Ink App Standard 的载体，不是对 APK、IPK、KUAL extension 或任意压缩包的重新命名。
+IKP 是 Baga Ink App Standard 的载体，不是 APK、IPK、KUAL extension 或任意压缩包的改名。
+
+最重要的边界：
+
+> **IKP 只承载应用自身的 Lua 代码、资源、Manifest 和签名信息。Universal IKP 不携带另一套平台核心、Lua 解释器、设备适配层或系统桥。**
 
 ---
 
@@ -59,7 +63,7 @@ application/vnd.baga.ikp
 
 # 2. 容器格式
 
-IKP v0.1 SHOULD 使用 **ZIP-compatible container** 作为物理封装。
+IKP v0.2 SHOULD 使用 **ZIP-compatible container** 作为物理封装。
 
 允许的压缩方式：
 
@@ -68,7 +72,7 @@ STORE
 DEFLATE
 ```
 
-选择 ZIP-compatible container 的原因是：
+选择 ZIP-compatible container 的原因：
 
 - 各平台实现成熟；
 - 开发工具链简单；
@@ -77,7 +81,7 @@ DEFLATE
 
 但是：
 
-> **IKP 的语义由本规范定义，而不是“任何 ZIP 改个扩展名就是 IKP”。**
+> **IKP 的语义由本规范定义，不是“任何 ZIP 改个扩展名就是 IKP”。**
 
 Platform MUST 校验 Manifest、路径、安全规则、版本与签名。
 
@@ -139,9 +143,7 @@ MUST 存在于包根目录。
 
 ## 4.2 Entry Point
 
-Manifest MUST 指定入口。
-
-通常：
+Manifest MUST 指定入口，通常为：
 
 ```text
 main.lua
@@ -155,7 +157,7 @@ Entry MUST 位于 IKP 内部且不得越过包根。
 
 ## 4.4 `locales/`
 
-用于国际化资源，格式由后续 i18n 规范细化。
+用于国际化资源。
 
 ## 4.5 `signature/`
 
@@ -173,7 +175,7 @@ Unsigned developer package MAY 在本地开发模式缺少该目录；进入 Bag
 
 ```json
 {
-  "ikp_format": "0.1",
+  "ikp_format": "0.2",
   "id": "com.example.reader",
   "name": "Example Reader",
   "version": "1.0.0",
@@ -196,17 +198,17 @@ Unsigned developer package MAY 在本地开发模式缺少该目录；进入 Bag
 
 ## 6.1 `ikp_format`
 
-包格式版本。
+包格式版本：
 
 ```json
-"ikp_format": "0.1"
+"ikp_format": "0.2"
 ```
 
-Platform MUST 在解包执行任何 App 代码之前检查该字段。
+Platform MUST 在执行任何 App 代码之前检查该字段。
 
 ## 6.2 `id`
 
-稳定 Application ID。
+稳定 Application ID：
 
 ```json
 "id": "com.example.reader"
@@ -220,7 +222,7 @@ Platform MUST 在解包执行任何 App 代码之前检查该字段。
 
 ## 6.3 `name`
 
-用户可见名称。
+用户可见名称：
 
 ```json
 "name": "Example Reader"
@@ -228,7 +230,7 @@ Platform MUST 在解包执行任何 App 代码之前检查该字段。
 
 ## 6.4 `version`
 
-应用版本。
+应用版本：
 
 ```json
 "version": "1.2.0"
@@ -238,7 +240,7 @@ SHOULD 使用 `MAJOR.MINOR.PATCH`。
 
 ## 6.5 `entry`
 
-Lua 入口文件。
+Lua 入口文件：
 
 ```json
 "entry": "main.lua"
@@ -246,7 +248,7 @@ Lua 入口文件。
 
 ## 6.6 `baga_api`
 
-声明支持的 Baga Ink API 范围。
+声明支持的 Baga Ink API 范围：
 
 ```json
 "baga_api": {
@@ -259,7 +261,7 @@ Platform MUST 在执行 App 前确认当前 API 版本处于允许范围。
 
 ## 6.7 `permissions`
 
-应用可能使用的权限全集。
+应用可能使用的权限全集：
 
 ```json
 "permissions": [
@@ -268,11 +270,11 @@ Platform MUST 在执行 App 前确认当前 API 版本处于允许范围。
 ]
 ```
 
-App 运行时不得申请 Manifest 未声明的权限。
+App 不得申请 Manifest 未声明的权限。
 
 ## 6.8 `capabilities`
 
-设备能力要求。
+设备能力要求：
 
 ```json
 "capabilities": {
@@ -308,13 +310,13 @@ App 运行时不得申请 Manifest 未声明的权限。
 }
 ```
 
-这些字段不能改变核心安全语义。
+这些字段不得改变核心安全语义。
 
 ---
 
-# 8. Universal App 的内容限制
+# 8. Universal IKP 的内容限制
 
-一个声称为 Baga Ink Universal 的 IKP MUST 不携带设备相关 native executable / library 作为正常应用逻辑。
+一个声称为 Baga Ink Universal 的 IKP MUST 不把设备相关 native executable / library 当作正常应用逻辑。
 
 例如不得依赖：
 
@@ -328,9 +330,16 @@ Kindle shell executable
 vendor-specific binary blob
 ```
 
-这里的原则不是禁止包里出现任何具有这些扩展名的静态数据，而是：
+更明确地说，Universal IKP MUST 不携带：
 
-> Universal App MUST 不把设备相关 native code 当作执行依赖。
+- 自己的一套 Lua 解释器；
+- Kindle 专用设备桥；
+- Android 专用设备桥；
+- BOOX / iReader 私有接口封装作为 App 内部执行依赖；
+- 绕过 `baga.*` API 的系统调用层；
+- 针对 CPU ABI 的主业务二进制。
+
+Universal IKP 中 MAY 包含普通静态数据，即使文件扩展名偶然与上述形式相似；真正限制的是**执行依赖和设备私有依赖**。
 
 Native Extension / Capability Provider 应使用受控、单独审核的扩展机制。
 
@@ -338,7 +347,13 @@ Native Extension / Capability Provider 应使用受控、单独审核的扩展�
 
 # 9. 依赖模型
 
-IKP v0.1 默认采用 **self-contained application package**。
+IKP v0.2 默认采用 **self-contained application package**。
+
+这里的 self-contained 只表示：
+
+> **应用自己的代码与资源应尽量自包含。**
+
+它不表示每个 App 自带另一套平台实现。
 
 App MAY：
 
@@ -348,7 +363,7 @@ App MAY：
 
 App MUST 不要求用户另外安装随机共享 native library 才能运行。
 
-v0.1 不定义跨 App 的共享 dependency resolver。
+v0.2 不定义跨 App 的共享 dependency resolver。
 
 这样做是为了：
 
@@ -356,8 +371,6 @@ v0.1 不定义跨 App 的共享 dependency resolver。
 - 提高离线安装可靠性；
 - 提高 Kindle 与 Android 跨平台一致性；
 - 让单个 IKP 尽可能自描述、自包含。
-
-未来如果生态需要共享 Package Registry，应通过独立规范设计。
 
 ---
 
@@ -369,7 +382,7 @@ v0.1 不定义跨 App 的共享 dependency resolver。
 signature/files.json
 ```
 
-`files.json` 列出除 `signature/` 目录自身签名文件之外，需要被保护的包内容。
+`files.json` 列出除签名文件自身之外需要保护的包内容。
 
 建议结构：
 
@@ -403,7 +416,7 @@ signature/files.json
 
 # 11. 数字签名
 
-v0.1 推荐使用：
+v0.2 推荐：
 
 ```text
 SHA-256
@@ -423,7 +436,7 @@ signature/publisher.json
 
 签名 MUST 覆盖 `signature/files.json` 的规范字节表示。
 
-`files.json` 又通过 SHA-256 覆盖所有 payload 文件，因此形成：
+`files.json` 再通过 SHA-256 覆盖所有 payload 文件：
 
 ```text
 Ed25519 Signature
@@ -434,8 +447,6 @@ signature/files.json
         ▼
 SHA-256 of every payload file
 ```
-
-这样避免“签名文件签自己”的循环问题。
 
 ## 11.2 `publisher.json`
 
@@ -457,16 +468,14 @@ Market 发布时 MAY 使用 Market 账户与可信发布者 key registry，而�
 
 为了获得可重复签名，签名输入必须有唯一字节表示。
 
-v0.1 SHOULD 定义一个 canonical JSON profile：
+v0.2 SHOULD 定义 canonical JSON profile：
 
 - UTF-8；
 - object key 按字典序；
 - 无无意义 whitespace；
 - 字符串使用标准 JSON escaping；
 - 不允许 NaN / Infinity；
-- number 表达规则由后续 schema 限定。
-
-第一版实现也可以采用专门 canonical serializer，避免不同语言 JSON serializer 产生不同签名输入。
+- number 表达规则由 schema 限定。
 
 ---
 
@@ -493,15 +502,13 @@ Platform / Baga Ink Client 在安装 IKP 时 MUST 先验证，再执行。
 14. 允许启动
 ```
 
-在任何验证失败时，不得执行 `main.lua`。
+任何验证失败时，不得执行 `main.lua`。
 
 ---
 
 # 14. 原子安装
 
-安装 SHOULD 使用 staged / atomic 模式。
-
-例如：
+安装 SHOULD 使用 staged / atomic 模式：
 
 ```text
 下载或读取 IKP
@@ -544,7 +551,7 @@ Platform SHOULD 保留上一已知可用版本，以便必要时 rollback。
 
 同一 Application ID 的新版本 SHOULD 使用同一可信发布者 key。
 
-如果需要 key rotation，应采用明确的授权链，例如：
+如果需要 key rotation，应采用明确授权链：
 
 ```text
 Old trusted key
@@ -556,7 +563,7 @@ New key authorization
 Future updates signed by New key
 ```
 
-如果旧 key 丢失，应由 Market 的 recovery policy 处理，不能简单允许任意新 key 替换旧应用。
+如果旧 key 丢失，应由 Market recovery policy 处理，不能简单允许任意新 key 替换旧应用。
 
 ---
 
@@ -575,253 +582,237 @@ IKP Validator MUST 防御：
 
 具体数值限制 MAY 根据设备类别不同。
 
-例如 Kindle 与高性能 Android E-Paper 可以拥有不同资源上限，但这类限制应该由 Platform Compatibility Profile 定义，不应该由 App 猜测设备型号。
+资源上限属于 Platform Compatibility Profile，不应由 App 猜测设备型号。
 
 ---
 
-# 18. 资源与图标
+# 18. 安装位置
 
-App SHOULD 在 Manifest 中声明 icon：
+IKP 中不得硬编码真实安装路径。
 
-```json
-"icon": "assets/icon.png"
-```
+App 只面对：
 
-图标资源 SHOULD：
+- 自身包资源；
+- `appdata/`；
+- `cache/`；
+- `documents/`；
+- 经授权共享资源。
 
-- 支持高对比度显示；
-- 不依赖颜色表达唯一信息；
-- 在单色 Kindle 上仍清晰；
-- 避免极细线条和复杂半透明效果。
-
-后续 UI Asset Specification 可定义推荐尺寸和格式。
+实际 Android / Kindle 文件路径由 Platform Core 与 Device Adapter 决定。
 
 ---
 
-# 19. Locale
+# 19. IKP 与 Baga Lua Profile
 
-国际化资源 SHOULD 放在：
+IKP 的入口代码使用 Baga Lua Profile。
+
+同一个 IKP 不应因为设备不同而携带：
 
 ```text
-locales/
+main-kindle.lua
+main-boox.lua
+main-ireader.lua
 ```
 
-例如：
+作为长期标准开发模式。
 
-```text
-locales/en.json
-locales/zh-CN.json
-locales/ja.json
+设备差异应通过：
+
+```lua
+baga.device.has(...)
 ```
 
-App MUST 不因缺失系统 locale 对应翻译而无法启动，应提供默认 locale。
+和标准 API 消化。
+
+在极少数情况下，App MAY 对 Capability 做不同体验分支，但不能把品牌判断演化成多套设备版本。
 
 ---
 
-# 20. 开发包与正式包
+# 20. IKP 与 Baga Ink Platform 的关系
 
-## 20.1 Developer IKP
-
-本地开发模式 MAY：
-
-- unsigned；
-- 包含 source map / debug metadata；
-- 通过 Baga Ink Client 侧载。
-
-设备 MUST 明确标记 Developer Mode。
-
-## 20.2 Market IKP
-
-进入 Baga Ink Market 的正式包 SHOULD：
-
-- 通过 schema validation；
-- 通过 Compatibility Test；
-- 有可信签名；
-- 权限完整声明；
-- 通过安全扫描；
-- 不包含 Universal 规则禁止的 native escape。
-
----
-
-# 21. IKP 与平台的关系
-
-IKP MUST 不包含自己的 Baga Ink Runtime。
-
-这是一个重要原则。
-
-错误方向：
-
-```text
-App A.ikp → 自带 Runtime A
-App B.ikp → 自带 Runtime B
-App C.ikp → 自带不同 Lua VM
-```
-
-正确方向：
+正确关系是：
 
 ```text
 Baga Ink Platform
-       │
-       ├── App A.ikp
-       ├── App B.ikp
-       └── App C.ikp
+├── Platform Core
+│   ├── Embedded Lua Interpreter
+│   ├── Baga Lua Profile
+│   ├── Baga Ink API
+│   ├── Package Manager
+│   └── Device Adapter
+│
+├── App A.ikp
+├── App B.ikp
+└── App C.ikp
 ```
 
-所有 App 共享 Platform 提供的标准 Baga Lua Profile 和 Baga Ink API。
+每个 IKP 只提供自己的应用代码和资源。
 
-这也是防止 Runtime 版本碎片化的重要机制。
+错误方向是：
+
+```text
+App A.ikp → 自带 Lua 解释器 + Kindle bridge
+App B.ikp → 自带另一套 Lua 解释器 + Android bridge
+App C.ikp → 自带厂商私有接口层
+```
+
+如果允许这种模式，设备差异会重新进入 App 包，最终再次形成碎片化。
+
+因此：
+
+> **平台能力共享，应用代码独立；设备适配属于 Platform，不属于 Universal IKP。**
 
 ---
 
-# 22. IKP 与 Android APK 的关系
+# 21. IKP 与 Android APK 的关系
 
-Android E-Paper 上：
+Android 上：
 
 ```text
 Baga Ink Platform.apk
-       │
-       └── *.ikp
+        │
+        ├── Platform Core
+        ├── Baga Ink API
+        ├── Device Adapter
+        └── Embedded Lua Interpreter
+        │
+        ▼
+      *.ikp
 ```
 
-普通 Universal App 不需要再制作独立 APK。
+`.ikp` 不是 APK。
 
-APK 是 Android 上承载 Baga Ink Platform 的系统分发形式；IKP 是 Baga Ink 的应用分发形式。
-
-二者职责不同。
+第三方 Universal App 不需要为了 Android 墨水屏再次生成 APK。
 
 ---
 
-# 23. IKP 与 Kindle 的关系
+# 22. IKP 与 Kindle 的关系
 
 Kindle 上：
 
 ```text
-Kindle OS / Homebrew infrastructure
-       │
-       ▼
-Baga Ink Platform
-       │
-       └── *.ikp
+Kindle OS / Homebrew
+        │
+        ▼
+Baga Ink Platform Core
+        │
+        ├── Kindle Adapter
+        ├── Baga Ink API
+        └── 可复用的 Lua 解释器能力
+        │
+        ▼
+      *.ikp
 ```
 
-IKP 不应该暴露：
+Baga Ink SHOULD 尽量复用 KOReader / Homebrew 已有成熟组件，避免重复造轮子。
+
+第三方 IKP 不需要知道 KUAL、MRPI、Framebuffer 等底层细节。
+
+---
+
+# 23. 开发者本地包
+
+开发阶段允许 unsigned IKP：
 
 ```text
-KUAL extension layout
-MRPI package layout
-Kindle model-specific scripts
+baga pack --dev
 ```
 
-这些属于 Baga Ink Platform / Kindle Adapter 的安装实现。
+Developer Mode MUST 与正式 Market 安装区分。
+
+设备可以要求：
+
+- 用户显式启用 Developer Mode；
+- Baga Ink Client 确认；
+- 显示 unsigned 警告。
+
+正式 Baga Ink Market 不应把 unsigned developer package 当作普通发布包。
 
 ---
 
-# 24. IKP v0.1 Schema 建议
+# 24. Validator
 
-完整示例：
-
-```json
-{
-  "ikp_format": "0.1",
-  "id": "com.example.reader",
-  "name": "Example Reader",
-  "version": "1.0.0",
-  "description": "A sample Baga Ink application",
-  "entry": "main.lua",
-  "icon": "assets/icon.png",
-  "publisher": "Example Studio",
-  "license": "MIT",
-  "baga_api": {
-    "min": "0.1",
-    "max_exclusive": "1.0"
-  },
-  "permissions": [
-    "network",
-    "library.read"
-  ],
-  "capabilities": {
-    "required": [],
-    "optional": [
-      "input.touch",
-      "display.fast_refresh"
-    ]
-  },
-  "locales": [
-    "en",
-    "zh-CN"
-  ]
-}
-```
-
----
-
-# 25. CLI 目标
-
-Baga Ink SDK 最终 SHOULD 提供：
+Baga Ink SDK SHOULD 提供：
 
 ```text
-baga new
-baga validate
-baga pack
-baga sign
-baga inspect
-baga install
-baga test
-baga publish
+baga validate app.ikp
 ```
 
-示例：
+Validator SHOULD 检查：
 
-```bash
-baga validate ./my-app
-baga pack ./my-app --output my-app.ikp
-baga inspect my-app.ikp
+- ZIP/container；
+- Manifest schema；
+- Application ID；
+- API version；
+- capability naming；
+- permission naming；
+- unsafe paths；
+- forbidden executable dependency；
+- 包内是否私带 Lua 解释器或设备桥；
+- hash；
+- signature；
+- resource limits。
+
+这使大量兼容问题在发布前被发现。
+
+---
+
+# 25. LifeBook 的 IKP
+
+LifeBook 应作为第一批 Reference IKP 验证本规范。
+
+目标：
+
+```text
+lifebook.ikp
+     │
+     ├── Kindle
+     └── Android E-Paper
 ```
 
-开发者不应需要手工调用 ZIP 命令才能正确生成正式 IKP。
+同一个 LifeBook IKP 应尽量不含设备私有业务分支。
+
+LifeBook 官方身份不能成为绕过 IKP Standard 的理由。
+
+LifeBook 本身直接使用 Baga Ink Platform 已有 API 与共享组件，不携带另一套通用中间系统。
 
 ---
 
-# 26. 可重复构建
+# 26. v0.2 明确不定义的内容
 
-IKP tooling SHOULD 支持 reproducible build。
+以下暂不锁死：
 
-同一 source tree、同一 toolchain version、同一 build configuration SHOULD 能生成相同 payload hashes。
+- shared dependency registry；
+- native extension package format；
+- delta update format；
+- paid app receipt；
+- DRM；
+- cloud backup format；
+- Market server protocol；
+- multi-process app model。
 
-为实现该目标，packer SHOULD：
-
-- 固定文件排序；
-- 规范化 metadata；
-- 避免把本地绝对路径写入包；
-- 避免无意义时间戳影响签名；
-- 使用 canonical manifest / files manifest。
-
----
-
-# 27. Future Reserved Areas
-
-以下能力保留给未来规范，不在 v0.1 直接开放：
-
-- Shared package dependencies；
-- Native extension payload；
-- Encrypted IKP；
-- Delta update；
-- Multi-package bundle；
-- Paid license receipt；
-- Enterprise private distribution；
-- Capability Provider packaging；
-- Device Adapter packaging。
-
-未来引入这些功能时 MUST 不破坏 v0.1 Universal App 的基本安全和跨设备原则。
+这些应在真实实现需要出现后，以独立规范增加。
 
 ---
 
-# 28. IKP 的最终判断标准
+# 27. 核心原则摘要
 
-IKP 的成功标准不是“能装进去”。
+IKP v0.2 必须守住以下边界：
 
-而是：
+```text
+一个格式：.ikp
+一个 Manifest
+一个 Application ID
+一套 Baga Ink API
+一套 Capability Model
+应用代码与资源自包含
+设备适配不进入 Universal App
+设备私有 executable 不进入 Universal App
+平台核心不在每个 App 中重复携带
+签名可验证
+安装可回滚
+```
 
-> **同一个 IKP 文件，在不重新打包、不加入设备私有代码的前提下，可以由不同 Baga Ink Platform 实现在 Kindle 与 Android E-Paper 上安全验证并运行。**
+IKP 的价值不在扩展名本身，而在于：
 
-这才是 `.ikp` 存在的真正意义。
+> **让同一个应用包真正成为 Kindle 与 Android 墨水屏之间稳定、可验证、可长期兼容的软件分发单位。**
