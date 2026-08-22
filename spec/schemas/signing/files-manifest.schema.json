@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["type", "format", "hash_algorithm", "files"],
   "properties": {
-    "type": {"const": "baga.files-manifest"},
+    "type": {"const": "baga.ikp-files"},
     "format": {"const": "0.1"},
     "hash_algorithm": {"const": "sha256"},
     "files": {
@@ -15,10 +15,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "size", "sha256"],
+        "required": ["path", "length", "sha256"],
         "properties": {
           "path": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!/)(?!.*(?:^|/)\.\.(?:/|$)).+$"},
-          "size": {"type": "integer", "minimum": 0},
+          "length": {"type": "integer", "minimum": 0},
           "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
         }
       }
