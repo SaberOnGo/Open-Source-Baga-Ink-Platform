@@ -10,7 +10,7 @@
     "format": {"const": "0.1"},
     "repository_id": {"type": "string", "pattern": "^repo1_[a-z2-7]{52}$"},
     "publisher_id": {"type": "string", "pattern": "^pub1_[a-z2-7]{52}$"},
-    "app_id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160},
+    "app_id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$", "maxLength": 160},
     "release_sequence": {"type": "integer", "minimum": 1},
     "version_name": {"type": "string", "minLength": 1, "maxLength": 64},
     "channel": {"enum": ["stable", "beta", "nightly"]},
