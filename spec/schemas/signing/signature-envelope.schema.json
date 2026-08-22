@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:signature-envelope:0.1",
+  "title": "Baga Signature Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "signed_type", "signatures"],
+  "properties": {
+    "type": {"const": "baga.signature-envelope"},
+    "format": {"const": "0.1"},
+    "signed_type": {"type": "string", "minLength": 1, "maxLength": 96},
+    "signatures": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["key_id", "algorithm", "signature"],
+        "properties": {
+          "key_id": {"type": "string", "pattern": "^ed25519:[0-9a-f]{64}$"},
+          "algorithm": {"const": "ed25519"},
+          "signature": {"type": "string", "pattern": "^[A-Za-z0-9_-]{86}$"}
+        }
+      }
+    }
+  }
+}
