@@ -2,10 +2,10 @@
 
 > **文档级别：一级平台规范**  
 > **简称：BICTS**  
-> **状态：Draft v0.1**  
-> **日期：2026-08-22**  
+> **状态：Draft v0.2**  
+> **日期：2026-08-23**  
 > **上位文档：`08_兼容性标准_Baga-Ink-Compatibility-Standard.md`**  
-> **配套规范：`04_能力注册表_Baga-Ink-Capability-Registry.md`、`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`**
+> **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`**
 
 ---
 
@@ -28,6 +28,8 @@ BICTS 的目标是把兼容性变成：
 可由 OEM 自测
 ```
 
+BICTS 测试的是 **Baga Ink API / Capability 的公开行为**，不是底层是否使用某个指定开源库。KOReader、SQLite、Automerge、FBInk 等内部实现可以变化，只要相同标准版本的可观察语义保持一致。
+
 ---
 
 # 1. 测试对象
@@ -40,6 +42,7 @@ Device Model
 + Baga Ink Platform Version
 + Device Adapter Version
 + Compatibility Standard Version
++ BICTS Version
 ```
 
 示例：
@@ -48,9 +51,10 @@ Device Model
 {
   "device": "Kindle Paperwhite 5",
   "firmware": "x.y.z",
-  "platform": "0.2.0",
-  "adapter": "kindle-pw5 0.1.0",
-  "standard": "0.1"
+  "platform": "0.3.0",
+  "adapter": "kindle 0.2.0",
+  "standard": "0.2",
+  "bicts": "0.2"
 }
 ```
 
@@ -97,19 +101,23 @@ RECOVERY
 REFERENCE_APP_BASE
 ```
 
-## 3.2 Capability Profile Test
+当 Platform 声明支持 Baga API v0.3 中的 `baga.data` 时，还必须通过对应 DATA suite。
 
-声明某 Capability 后，自动启用对应测试。
+## 3.2 Capability / API Feature Test
+
+声明某 Capability 或 API Feature 后，自动启用对应测试。
 
 例如：
 
 ```text
-input.touch → TOUCH suite
+input.touch             → TOUCH suite
 display.partial_refresh → PARTIAL_REFRESH suite
-input.pen → PEN suite
-network.https → HTTPS suite
-audio.output → AUDIO suite
-light.frontlight → FRONTLIGHT suite
+input.pen               → PEN suite
+network.https            → HTTPS suite
+audio.output             → AUDIO suite
+light.frontlight         → FRONTLIGHT suite
+storage.user_library     → LIBRARY_BRIDGE suite
+reader.anchor            → READER_ANCHOR suite
 ```
 
 原则：
@@ -127,7 +135,7 @@ light.frontlight → FRONTLIGHT suite
 - 获取 API version；
 - 加载标准 IKP；
 - 正确返回统一错误对象；
-- 不向 App 泄漏设备私有接口；
+- 不向 App 泄漏设备私有接口或内部 Library 对象；
 - 在冷启动后稳定工作。
 
 示例测试 ID：
@@ -138,7 +146,20 @@ CORE-002 Adapter loads
 CORE-003 API version readable
 CORE-004 Standard Lua entry executes
 CORE-005 Unsupported API rejected safely
+CORE-006 Internal implementation details do not leak
 ```
+
+`CORE-006` SHOULD 验证 App 无需知道：
+
+```text
+KOReader
+SQLite
+Automerge
+Vendor SDK
+raw system path
+```
+
+等内部实现名称或对象即可使用标准 API。
 
 ---
 
@@ -324,7 +345,46 @@ low_latency → 专门性能与绘制路径验证
 
 ---
 
-# 14. Permission 测试
+# 14. Structured Data / `baga.data` 测试
+
+当 Platform 提供 `baga.data` 时 MUST 验证：
+
+```text
+DATA-001 open isolated store
+DATA-002 put/get round trip
+DATA-003 delete semantics
+DATA-004 transaction commit is atomic
+DATA-005 transaction abort leaves no partial writes
+DATA-006 process crash/restart preserves committed transaction
+DATA-007 platform restart preserves committed data
+DATA-008 app A cannot read app B data
+DATA-009 quota/disk-full returns standard error
+DATA-010 platform update preserves app data
+```
+
+关键原子性测试：
+
+```text
+初始 A=1, B=1
+  ↓
+transaction:
+  A=2
+  B=2
+  ↓
+在提交中间注入失败/中断
+  ↓
+重启后必须是：
+(A=1,B=1) 或 (A=2,B=2)
+
+不得出现：
+(A=2,B=1)
+```
+
+BICTS MUST NOT 通过查询 SQLite 文件、SQL schema 或 WAL 来判断成功；只验证 `baga.data` 的公开语义。
+
+---
+
+# 15. Permission 测试
 
 必须验证：
 
@@ -348,7 +408,36 @@ package native load
 
 ---
 
-# 15. Network 测试
+# 16. Library Bridge / `baga.library` 测试
+
+声明 `storage.user_library` 时 MUST 运行 Library Bridge suite。
+
+至少验证：
+
+```text
+LIBRARY-001 list returns standard Library Item
+LIBRARY-002 item id is usable without exposing raw OS path
+LIBRARY-003 get/open obey library.read permission
+LIBRARY-004 import/remove obey library.write permission
+LIBRARY-005 open handle can be passed to baga.reader when supported
+LIBRARY-006 unsupported document is reported cleanly
+LIBRARY-007 device library rescan does not corrupt app state
+```
+
+测试 MUST 不要求：
+
+```text
+EPUB-only
+Kindle /documents path
+Android vendor bookshelf path
+某一种厂商数据库 schema
+```
+
+测试出版物/文档格式应从当前 Reader implementation 声明支持的格式集合中选择。
+
+---
+
+# 17. Network 测试
 
 声明网络能力时：
 
@@ -363,7 +452,64 @@ package native load
 
 ---
 
-# 16. Power 测试
+# 18. Reader 基础与 Anchor 测试
+
+## 18.1 Reader Base
+
+声明 `reader.open` 时，至少使用一个当前实现声明支持的测试文档验证：
+
+```text
+open
+next_page / previous_page
+position
+close
+reopen
+restore position
+```
+
+**测试不得把 EPUB 作为 Baga Ink Reader 的固定或默认格式要求。**
+
+## 18.2 `reader.anchor`
+
+声明 `reader.anchor` 时 MUST 验证：
+
+```text
+READER-ANCHOR-001 create anchor from current position/selection
+READER-ANCHOR-002 anchor is Baga-serializable
+READER-ANCHOR-003 close/reopen then goto_anchor
+READER-ANCHOR-004 resolve_anchor returns explicit accuracy/result state
+READER-ANCHOR-005 invalid/stale anchor fails safely
+READER-ANCHOR-006 app need not inspect reader-private fields
+```
+
+如果当前 Reader 实现同时声明支持：
+
+```text
+reflowable/rolling 类文档
++
+fixed-page/paging 类文档
+```
+
+BICTS SHOULD 至少各选一种真实支持格式执行 Anchor round-trip，以验证公开 Anchor 语义没有被错误绑定到某一格式。
+
+例如 Kindle/KOReader 实现可以内部使用：
+
+```text
+rolling → XPointer-like native position
+paging  → page + local position / boxes
+```
+
+但测试只观察：
+
+```text
+create → serialize → reopen → resolve/goto
+```
+
+不把 XPointer、pboxes、EPUB CFI 或 Readium Locator 本身作为 Baga 公共测试输入。
+
+---
+
+# 19. Power 测试
 
 必须验证：
 
@@ -377,7 +523,7 @@ package native load
 
 ---
 
-# 17. Frontlight 测试
+# 20. Frontlight 测试
 
 声明 `light.frontlight`：
 
@@ -391,7 +537,7 @@ package native load
 
 ---
 
-# 18. Audio / Bluetooth 测试
+# 21. Audio / Bluetooth 测试
 
 能力存在才运行。
 
@@ -418,7 +564,26 @@ input mapping（如声明）
 
 ---
 
-# 19. UI Reference Test
+# 22. Sync / Offline-first 行为测试
+
+`baga.sync` 测试的是调度和设备策略语义，不强制某一种 CRDT。
+
+SHOULD 验证：
+
+```text
+offline state does not block local app startup
+when_online trigger resumes after reconnect
+sleep does not corrupt queued work
+wake can resume/retry safely
+wifi_only respects network policy
+cancel/retry returns standard state
+```
+
+如果某 Reference App 声称支持并发离线编辑，应另行测试其业务合并结果；底层可以使用 Automerge 或其他成熟实现，但 BICTS 不因库名决定 PASS/FAIL。
+
+---
+
+# 23. UI Reference Test
 
 官方维护一组小型 IKP Reference Apps：
 
@@ -427,6 +592,8 @@ HelloInk
 ListNavigation
 ReaderMini
 StorageProbe
+DataProbe
+LibraryProbe
 PermissionProbe
 DisplayProbe
 LifecycleProbe
@@ -434,11 +601,11 @@ LifecycleProbe
 
 它们只使用公开 Baga Ink API。
 
-任何 Base Compatible 设备 MUST 能运行规定的 Reference Apps。
+任何 Base Compatible 设备 MUST 能运行规定的 Base Reference Apps；API/Capability 相关 Probe 按对应版本和声明运行。
 
 ---
 
-# 20. LifeBook Reference Smoke Test
+# 24. LifeBook Reference Smoke Test
 
 LifeBook 是旗舰 Reference App，但不能成为认证的唯一依据。
 
@@ -447,20 +614,23 @@ Smoke Test MAY 包括：
 ```text
 启动
 打开书库
-打开一本 EPUB
+打开一个当前 Reader implementation 声明支持的测试文档/出版物
 翻页
 保存阅读位置
 创建笔记
+创建并恢复 Reader Anchor（若声明 reader.anchor）
 sleep/wake
 恢复阅读位置
 离线启动
 ```
 
+测试文档不得固定为 EPUB；应根据被测 Reader 的真实支持能力选择，并在支持多类文档时覆盖代表性类别。
+
 如果 LifeBook 通过而基础 Probe 失败，设备仍不能认证 Compatible。
 
 ---
 
-# 21. 数据安全测试
+# 25. 数据安全测试
 
 尤其针对 Baga Ink Client / Kindle 安装流程，必须验证：
 
@@ -477,7 +647,7 @@ sleep/wake
 
 ---
 
-# 22. Firmware Regression
+# 26. Firmware Regression
 
 固件升级后最少运行：
 
@@ -487,26 +657,29 @@ LIFECYCLE
 DISPLAY
 INPUT
 STORAGE
+DATA（如果 API 版本包含 baga.data）
 IKP
 RECOVERY
 ```
 
-如果厂商固件改动显示或系统服务，还必须执行相关 Capability suite。
+如果厂商固件改动 Reader、书库、显示或系统服务，还必须执行相关 Capability / API suite。
 
 认证对象 SHOULD 记录经过验证的固件范围。
 
 ---
 
-# 23. 自动化与人工测试边界
+# 27. 自动化与人工测试边界
 
 尽量自动化：
 
 ```text
 API semantics
 file integrity
+data transaction atomicity
 permission
 lifecycle
 input events
+reader anchor round-trip
 network errors
 update rollback
 capability truth
@@ -525,7 +698,7 @@ frontlight physical response
 
 ---
 
-# 24. 测试报告
+# 28. 测试报告
 
 标准报告 SHOULD 包含：
 
@@ -536,6 +709,7 @@ frontlight physical response
   "platform_version": "...",
   "adapter_version": "...",
   "standard_version": "...",
+  "bicts_version": "0.2",
   "capabilities": [],
   "tests": {
     "passed": 120,
@@ -558,20 +732,21 @@ repro steps
 
 ---
 
-# 25. Certification Gate
+# 29. Certification Gate
 
 正式 **Baga Ink Compatible**：
 
 - Base Mandatory Tests MUST 100% PASS；
 - 所声明 Stable Capability 对应 Mandatory Test MUST PASS；
+- Platform 所声明 API 版本的 mandatory service tests MUST PASS；
 - 不得存在 Critical data-loss issue；
 - 不得通过伪造 capability 跳过测试；
 - WARNING 必须记录；
-- Experimental Capability 不影响 Base certification，但不得标记为 Stable Profile。
+- Experimental / Provisional Capability 不得伪装为 Stable Profile。
 
 ---
 
-# 26. BICTS 版本
+# 30. BICTS 版本
 
 BICTS 自己必须版本化：
 
@@ -592,12 +767,14 @@ BICTS version
 
 ---
 
-# 27. OEM Self-Test
+# 31. OEM Self-Test
 
 未来厂商 SHOULD 可以：
 
 ```text
-实现 Adapter
+实现 Adapter / Platform integration
+  ↓
+复用适合的成熟组件
   ↓
 本地运行 BICTS
   ↓
@@ -606,12 +783,12 @@ BICTS version
 提交 Baga Ink certification
 ```
 
-这样 Baga Ink 才可能从团队主动适配，逐渐转为 OEM 主动兼容。
+BICTS 不要求 OEM 使用某个指定内部 Library，只要求公开行为满足标准。
 
 ---
 
-# 28. 核心原则 / Core Rule
+# 32. 核心原则 / Core Rule
 
-> **Compatible 不是营销词，而是可重复执行的测试结果。**
+> **Compatible 不是营销词，而是可重复执行的公开语义测试结果。**
 
-只要 BICTS 足够严格，Baga Ink 才能允许大量设备与 Adapter 进入生态而不重新碎片化。
+只要 BICTS 足够严格，Baga Ink 就可以允许大量设备、不同内部实现和成熟开源组件进入生态，而不重新碎片化。
