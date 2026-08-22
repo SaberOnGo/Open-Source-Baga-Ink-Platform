@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:app-transfer:0.1",
+  "title": "Baga App Transfer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "app_id", "from_publisher_id", "to_publisher_id", "transfer_sequence", "previous_ownership_sha256", "effective_at"],
+  "properties": {
+    "type": {"const": "baga.app-transfer"},
+    "format": {"const": "0.1"},
+    "app_id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160},
+    "from_publisher_id": {"type": "string", "pattern": "^pub1_[a-z2-7]{52}$"},
+    "to_publisher_id": {"type": "string", "pattern": "^pub1_[a-z2-7]{52}$"},
+    "transfer_sequence": {"type": "integer", "minimum": 1},
+    "previous_ownership_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "effective_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"}
+  }
+}
