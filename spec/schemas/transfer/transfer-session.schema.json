@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baga:schema:transfer-session:0.1",
+  "title": "Baga Transfer Session",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "format", "session_id", "repository_id", "created_at", "items"],
+  "properties": {
+    "type": {"const": "baga.transfer-session"},
+    "format": {"const": "0.1"},
+    "session_id": {"type": "string", "minLength": 8, "maxLength": 128},
+    "repository_id": {"type": "string", "pattern": "^repo1_[a-z2-7]{52}$"},
+    "created_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "items": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["kind", "path", "length", "sha256", "app_id", "release_sequence"],
+        "properties": {
+          "kind": {"enum": ["ikp", "metadata", "statement", "catalog", "asset"]},
+          "path": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!/)(?!.*(?:^|/)\.\.(?:/|$)).+$"},
+          "length": {"type": "integer", "minimum": 0},
+          "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "app_id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)+$", "maxLength": 160},
+          "release_sequence": {"type": "integer", "minimum": 1}
+        }
+      }
+    }
+  }
+}
