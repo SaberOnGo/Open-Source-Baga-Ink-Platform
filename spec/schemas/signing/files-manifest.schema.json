@@ -17,7 +17,7 @@
         "additionalProperties": false,
         "required": ["path", "length", "sha256"],
         "properties": {
-          "path": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!/)(?!.*(?:^|/)\.\.(?:/|$)).+$"},
+          "path": {"type": "string", "minLength": 1, "maxLength": 512},
           "length": {"type": "integer", "minimum": 0},
           "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
         }
