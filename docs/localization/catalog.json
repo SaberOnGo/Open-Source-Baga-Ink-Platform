@@ -5,6 +5,7 @@
   "documents": [
     {"id":"docs.index.00","category":"index","number":"00","legacy_path":null,"zh_cn_path":"docs/zh-CN/00_项目文档入口.md","en_path":"docs/en/00_baga-ink-documentation-index.md","status":"current"},
     {"id":"governance.localization.01","category":"governance","number":"01","legacy_path":null,"zh_cn_path":"docs/zh-CN/governance/01_文档国际化与本地化规范.md","en_path":"docs/en/governance/01_documentation-internationalization-policy.md","status":"current"},
+    {"id":"governance.licensing.02","category":"governance","number":"02","legacy_path":null,"zh_cn_path":"docs/zh-CN/governance/02_Baga-Ink授权策略.md","en_path":"docs/en/governance/02_baga-ink-licensing-policy.md","status":"current"},
     {"id":"standards.00","category":"standards","number":"00","legacy_path":null,"zh_cn_path":"docs/zh-CN/standards/00_规范总览.md","en_path":"docs/en/standards/00_baga-ink-standards-index.md","status":"current"},
     {"id":"standards.01","category":"standards","number":"01","legacy_path":null,"zh_cn_path":"docs/zh-CN/standards/01_顶层战略与架构.md","en_path":"docs/en/standards/01_baga-ink-platform-strategy.md","status":"current"},
     {"id":"standards.02","category":"standards","number":"02","legacy_path":null,"zh_cn_path":"docs/zh-CN/standards/02_应用标准.md","en_path":"docs/en/standards/02_baga-ink-app-standard.md","status":"current"},
