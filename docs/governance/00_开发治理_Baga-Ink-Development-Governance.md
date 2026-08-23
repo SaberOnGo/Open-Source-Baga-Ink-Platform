@@ -1,7 +1,7 @@
 # Baga Ink 开发治理 / Baga Ink Development Governance
 
 > **文档级别：项目治理规范 / Project Governance**  
-> **状态：Governance Baseline v0.1**  
+> **状态：Governance Baseline v0.2**  
 > **日期：2026-08-23**
 
 ---
@@ -280,9 +280,63 @@ LICENSE
 CONTRIBUTING.md
 ```
 
+`docs/plans/platform-ports/` 是大规模任务资料的特殊治理区域，使用更严格的四位规则：
+
+```text
+NNNN_中文名称_English-Name.md
+```
+
+具体以：
+
+```text
+docs/plans/platform-ports/0000_平台移植计划目录与文件命名规则_Baga-Ink-Platform-Port-Plan-Naming.md
+```
+
+为准。
+
 ---
 
-# 11. Branch 清理验收
+# 11. Platform Port Task / Execution Prompt 强制 Gate
+
+为了防止长期 AI 开发过程中出现任意目录、日期目录、无序 prompt、`v1/v10`、错误镜像或无法追溯来源的执行文档，`docs/plans/platform-ports/` 采用机器校验。
+
+AI / 开发者 MUST 遵守：
+
+```text
+AGENTS.md
+        ↓
+platform-ports naming rule
+        ↓
+platform-specific task/execution guides
+        ↓
+tools/new_platform_port_task.py
+        ↓
+tools/check_platform_port_plans.py
+        ↓
+.github/workflows/platform-port-plan-guard.yml
+```
+
+任何涉及 `docs/plans/platform-ports/` 的修改，在完成前 MUST 通过：
+
+```bash
+python3 tools/check_platform_port_plans.py
+```
+
+不得为了让错误结构通过而削弱 validator、扩大 allowlist 或绕过 CI。
+
+GitHub Repository Settings SHOULD 将 workflow job：
+
+```text
+Validate task/prompt layout
+```
+
+配置为 `main` 分支的 Required Status Check，使不合规 PR 无法合并。
+
+如果 `main` 暂未开启 Branch Protection，则 workflow 仍 MUST 在 `push` 和 `pull_request` 上运行并把违规提交标红；但这不等同于物理阻止 direct push。开启 Required Status Check 是最终的服务器侧强制 Gate。
+
+---
+
+# 12. Branch 清理验收
 
 每次完成一项较大的临时 Branch 工作时，应确认：
 
@@ -298,7 +352,7 @@ CONTRIBUTING.md
 
 ---
 
-# 12. 最终原则
+# 13. 最终原则
 
 Baga Ink 是一个长期项目，可能由不同人、不同 AI、不同工具持续维护。
 
