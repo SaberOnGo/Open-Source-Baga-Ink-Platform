@@ -5,6 +5,7 @@ on:
     paths:
       - 'docs/plans/platform-ports/**'
       - 'tools/check_platform_port_plans.py'
+      - 'tools/new_platform_port_task.py'
       - '.github/workflows/platform-port-plan-guard.yml'
       - 'AGENTS.md'
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - 'docs/plans/platform-ports/**'
       - 'tools/check_platform_port_plans.py'
+      - 'tools/new_platform_port_task.py'
       - '.github/workflows/platform-port-plan-guard.yml'
       - 'AGENTS.md'
 
@@ -26,6 +28,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Compile plan guard tools
+        run: python3 -m py_compile tools/check_platform_port_plans.py tools/new_platform_port_task.py
 
       - name: Validate platform-port plan structure
         run: python3 tools/check_platform_port_plans.py
