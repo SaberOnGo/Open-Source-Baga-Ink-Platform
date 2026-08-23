@@ -1,7 +1,7 @@
 # Baga Ink API 规范 / Baga Ink API Specification
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.4**  
+> **状态：Draft v0.5**  
 > **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`02_应用标准_Baga-Ink-App-Standard.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`、`06_IKP应用包规范_IKP-Package-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
@@ -33,7 +33,9 @@ Baga Lua Profile Standard Libraries
 → 直接采用成熟通用软件能力
 ```
 
-例如 SQLite 已经是成熟跨平台数据库，因此 Baga 不再定义 `baga.data`。
+SQLite 作为成熟跨平台数据库，通过 Baga Lua Profile Standard Library `lsqlite3` 直接提供给应用。
+
+正式正文只描述当前有效 API；历史方案由 Git 保存。
 
 ---
 
@@ -66,17 +68,15 @@ baga.permissions
 baga.log
 ```
 
-**`baga.data` 已撤销，不属于正式 API。**
-
 结构化关系数据直接使用 Baga Lua Profile Standard Library：
 
 ```lua
 local sqlite3 = require("lsqlite3")
 ```
 
-## 1.2 没有 `baga.system` 万能逃生口
+## 1.2 没有万能系统逃生口
 
-v0.4 不提供一个可以执行任意系统命令、获取 Android Context、调用 Kindle Shell 的通用 `baga.system` API。
+v0.5 不提供可以执行任意系统命令、获取 Android Context、调用 Kindle Shell 的通用公开系统接口。
 
 真正需要的新能力应该先判断性质：
 
@@ -88,15 +88,7 @@ v0.4 不提供一个可以执行任意系统命令、获取 Android Context、�
   └─ 否，且是设备/平台差异 → Capability / Baga Ink API
 ```
 
-而不是：
-
-```text
-App
- ↓
-万能 system escape hatch
- ↓
-Vendor-specific implementation
-```
+设备私有能力不得成为 App 绕过 Platform 的捷径。
 
 ## 1.3 公开 API 与成熟库复用
 
@@ -136,7 +128,7 @@ SQLite / lsqlite3
 - Baga 不把 SQLite 降级成自研 KV / collection API；
 - Baga 只补平台必须统一的 path sandbox、version profile、compile options 与测试。
 
-Automerge core 已正式采用为 Local-first / CRDT 优先基础，但 developer-facing Lua binding 尚未冻结，因此不生造 `baga.automerge` / `baga.crdt`。
+Automerge core 已正式采用为 Local-first / CRDT 优先基础；developer-facing Lua binding 尚未冻结，当前通过受控集成按需整体或拆模块使用。
 
 ---
 
@@ -195,16 +187,9 @@ C FFI
 patches / cursors
 ```
 
-但当前没有冻结 developer-facing Lua module。
+当前没有冻结 developer-facing Lua module。
 
-因此 Universal App Standard 目前不提供：
-
-```text
-baga.automerge
-baga.crdt
-```
-
-LifeBook / Platform 可以通过受控内部集成使用 Automerge；未来若形成成熟 Lua binding，应尽量沿用 Automerge 上游概念与格式。
+LifeBook / Platform 可以通过 Rust core、C FFI、LuaJIT FFI 或其他受控内部集成使用 Automerge；未来若形成成熟 Lua binding，应尽量沿用 Automerge 上游概念与格式。
 
 ## 2.4 受限库
 
@@ -289,7 +274,7 @@ SQLite 自身错误可由 `lsqlite3` 按其成熟 API 暴露；App 不应把 SQL
 
 网络、同步、耗时 Reader 操作等不应阻塞 UI。
 
-v0.4 使用轻量 Task 模型。
+v0.5 使用轻量 Task 模型。
 
 概念接口：
 
@@ -582,7 +567,7 @@ baga.network.request(opts)
 baga.network.is_online()
 ```
 
-v0.4 SHOULD 支持 HTTPS。
+v0.5 SHOULD 支持 HTTPS。
 
 App MUST 不自行绕过 Platform 的 TLS / proxy / connectivity policy。
 
@@ -696,7 +681,7 @@ App Domain Logic
 
 Automerge core 可整体或拆模块采用。
 
-Baga v0.4 不规定所有 App 必须使用 Automerge，也不把 `automerge-repo` 的 Storage/Network Adapter 架构变成 Baga 公共架构。
+Baga v0.5 不规定所有 App 必须使用 Automerge，也不把 `automerge-repo` 的 Storage/Network Adapter 架构变成 Baga 公共架构。
 
 如果未来需要多个独立实现直接交换 Automerge binary/sync protocol，必须锁定明确版本和迁移规则。
 
@@ -723,15 +708,9 @@ Capability 使用小写点分层级。
 
 正式 Capability 集合由 Capability Registry 维护。
 
-禁止标准 Capability 使用：
+禁止标准 Capability 使用厂商品牌名或内部库名。
 
-```text
-boox.*
-kindle.*
-ireader.*
-```
-
-SQLite / lsqlite3 / Automerge 不应作为 Device Capability 名称。
+SQLite / lsqlite3 / Automerge 不作为 Device Capability 名称。
 
 ---
 
@@ -749,7 +728,7 @@ IKP Manifest MUST 声明 API compatibility。
 
 ```json
 "baga_api": {
-  "min": "0.4",
+  "min": "0.5",
   "max_exclusive": "1.0"
 }
 ```
@@ -787,25 +766,16 @@ baga.display
 lsqlite3
 → 成熟通用数据库库
 → 直接使用上游 API
-→ Platform 只提供 pinned runtime + safe path
+→ Platform 提供 pinned runtime + safe path
 
 Automerge core
 → Adopted mature foundation
 → Platform/App 按需整用或拆用
-→ 当前不定义 baga.automerge
-```
-
-因此不再出现：
-
-```text
-baga.data
-  ↓
-SQLite Provider
 ```
 
 ---
 
-# 24. v0.4 API 最小闭环
+# 24. v0.5 API 最小闭环
 
 第一批：
 
@@ -851,8 +821,8 @@ Automerge core 的采用范围按具体功能和硬件验证逐步扩大。
 4. 是否会成为绕开 Capability / Permission / Sandbox 的后门？
 5. 是否值得未来多年承担兼容责任？
 6. 是否有成熟、许可证兼容、可验证的实现可以整体或部分复用？
-7. 采用成熟实现时，是否可以保持它优秀的上游语义，而不是发明更弱的 Baga 私有对象模型？
+7. 采用成熟实现时，是否可以保持它优秀的上游语义，而不是发明更弱的平台私有对象模型？
 
 原则：
 
-> **能直接采用成熟标准库的，不生造 `baga.*`；真正需要统一设备差异的，才进入 Baga Ink API。**
+> **能直接采用成熟标准库的，就直接采用；真正需要统一设备差异的，才进入 Baga Ink API。**
