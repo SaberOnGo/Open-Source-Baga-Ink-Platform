@@ -1,9 +1,10 @@
 # Baga Ink 平台移植计划目录与文件命名规则 / Baga Ink Platform Port Plan Naming
 
 > **文档级别：Implementation Plan Directory Rule / 平台移植计划目录规则**  
-> **状态：Mandatory Naming Rule v0.3**  
+> **状态：Mandatory Naming Rule v0.4**  
 > **日期：2026-08-23**  
-> **适用范围：`docs/plans/platform-ports/` 及未来所有设备/OS 平台子目录**
+> **适用范围：`docs/plans/platform-ports/` 及未来所有设备/OS 平台子目录**  
+> **公共文档国际化规则：`docs/zh-CN/governance/01_文档国际化与本地化规范.md` / `docs/en/governance/01_documentation-internationalization-policy.md`**
 
 ---
 
@@ -46,7 +47,60 @@ Task.md
 
 ---
 
-# 1. Platform Port 的两层实施资料
+# 1. Platform Port 是 Operational Engineering Docs，不强制全文双语镜像
+
+`docs/plans/platform-ports/` 属于工程施工区，而不是 Baga Ink 公共协议本身。
+
+因此它明确是 Public Localized Docs 规则的例外：
+
+```text
+docs/en/
+docs/zh-CN/
+```
+
+不会各复制一套：
+
+```text
+Task Design
+AI Execution Prompt
+调试日志
+真机步骤
+一次性 PoC
+回归执行记录
+```
+
+原因是这些材料会达到数百、数千份，并且持续快速变化；强制全文双语会形成巨大的重复和同步成本。
+
+当前默认：
+
+```text
+正文
+→ 中文优先，方便主要维护者工作
+
+文件名
+→ 数字 + 中文语义名 + English semantic name
+→ 方便中文维护者与国际协作者通过目录快速识别
+```
+
+但必须遵守一个更重要的边界：
+
+> **任何外部开发者、OEM、第三方 App/Adapter 实现者需要长期依赖的稳定结论，MUST 从 Plan / Task / Prompt 提升回 Public Localized Docs。**
+
+也就是最终进入：
+
+```text
+docs/en/standards/            + docs/zh-CN/standards/
+docs/en/design/               + docs/zh-CN/design/
+docs/en/reference-apps/       + docs/zh-CN/reference-apps/
+docs/en/governance/           + docs/zh-CN/governance/
+docs/en/status/               + docs/zh-CN/status/
+```
+
+不得让国际开发者必须阅读中文 AI Prompt 才能知道一个正式 API / Contract / Architecture Rule。
+
+---
+
+# 2. Platform Port 的两层实施资料
 
 每个大型 Platform Port SHOULD 采用两层结构：
 
@@ -75,7 +129,7 @@ execution-prompts/
 
 ---
 
-# 2. Task 与 Execution Prompt 必须镜像
+# 3. Task 与 Execution Prompt 必须镜像
 
 推荐结构：
 
@@ -111,7 +165,7 @@ execution-prompts/
 
 ---
 
-# 3. Task 目录命名
+# 4. Task 目录命名
 
 真正代表一个功能/模块/验证目标的 Task 目录 MUST 采用：
 
@@ -143,7 +197,7 @@ v002/
 
 ---
 
-# 4. Version 目录统一使用 `vNNN`
+# 5. Version 目录统一使用 `vNNN`
 
 为了避免：
 
@@ -178,7 +232,7 @@ Task 新版本表示**任务设计发生了值得保留的变化**，例如：
 
 ---
 
-# 5. Markdown 文件默认四位数字前缀
+# 6. Markdown 文件默认四位数字前缀
 
 预计长期增长的 `task/` 与 `execution-prompts/` 目录 MUST 使用：
 
@@ -227,7 +281,7 @@ Task 新版本表示**任务设计发生了值得保留的变化**，例如：
 
 ---
 
-# 6. 编号作用域
+# 7. 编号作用域
 
 编号不要求整个仓库全局唯一，而是在当前目录 / 当前 Task 语境中稳定。
 
@@ -260,7 +314,7 @@ TASK-0030 / v002 / PROMPT-0140
 
 ---
 
-# 7. Execution Prompt 必须声明来源
+# 8. Execution Prompt 必须声明来源
 
 每份 execution prompt SHOULD 在文档开头记录：
 
@@ -279,7 +333,7 @@ Acceptance / verification
 
 ---
 
-# 8. 完成状态不通过改文件名表达
+# 9. 完成状态不通过改文件名表达
 
 不要创建：
 
@@ -295,14 +349,14 @@ COMPLETE_0020_....md
 ```text
 execution prompt 自身的 Result / Evidence
 Task 版本的验收记录
-docs/status/00_当前项目状态_Baga-Ink-Project-Status.md
+current catalog-resolved Project Status
 代码 / 测试 / Commit
 Compatibility / BICTS evidence
 ```
 
 ---
 
-# 9. 对所有未来 Platform Port 生效
+# 10. 对所有未来 Platform Port 生效
 
 未来创建：
 
@@ -334,7 +388,20 @@ Status / Compatibility
 
 ---
 
-# 10. 自动化强制校验
+# 11. Public Doc 引用与国际协作者
+
+在国际化迁移期间，Task / Execution Prompt 如果要引用 Standard / Design / Reference App，SHOULD：
+
+1. 通过 `docs/localization/catalog.json` 确认当前有效路径；
+2. 中文维护者优先引用 `zh-CN` 当前版本（尚未迁移时引用 Catalog 中的 legacy path）；
+3. 给国际开发者的 Handoff / Issue / PR SHOULD 同时给出对应 English path 或明确标注 `translation-pending`；
+4. 不得因为英文翻译尚未完成，就在 Task 中重新发明一套英文 Contract 摘要作为正式权威。
+
+真正稳定的国际协作入口永远是 Public Localized Docs，而不是 AI Prompt。
+
+---
+
+# 12. 自动化强制校验
 
 本规则不是仅靠人工或 AI 自觉遵守。
 
@@ -373,6 +440,14 @@ execution-prompts 是否精确镜像已有 Task + Version
 是否出现 README.md、v1、v10、日期式任务目录、handoff 平铺等非标准结构
 ```
 
+公共文档国际化结构由：
+
+```text
+python3 tools/check_docs_i18n.py
+```
+
+独立校验。两个 Guard 都必须通过。
+
 AI MUST NOT：
 
 ```text
@@ -386,7 +461,7 @@ AI MUST NOT：
 如果确实需要引入新的正式目录类型或修改命名模型，正确流程是：
 
 ```text
-先讨论并修改本规则
+先讨论并修改治理规则
         ↓
 同步修改 AGENTS.md
         ↓
