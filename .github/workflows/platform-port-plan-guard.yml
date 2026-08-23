@@ -1,0 +1,31 @@
+name: Platform Port Plan Guard
+
+on:
+  pull_request:
+    paths:
+      - 'docs/plans/platform-ports/**'
+      - 'tools/check_platform_port_plans.py'
+      - '.github/workflows/platform-port-plan-guard.yml'
+      - 'AGENTS.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/plans/platform-ports/**'
+      - 'tools/check_platform_port_plans.py'
+      - '.github/workflows/platform-port-plan-guard.yml'
+      - 'AGENTS.md'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-platform-port-plans:
+    name: Validate task/prompt layout
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate platform-port plan structure
+        run: python3 tools/check_platform_port_plans.py
