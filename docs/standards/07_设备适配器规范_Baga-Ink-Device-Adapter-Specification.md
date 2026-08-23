@@ -1,7 +1,7 @@
 # Baga Ink 设备适配器规范 / Baga Ink Device Adapter Specification
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.4**  
+> **状态：Draft v0.5**  
 > **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`08_兼容性标准_Baga-Ink-Compatibility-Standard.md`、`10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
@@ -16,7 +16,9 @@ Device Adapter 是 Baga Ink Platform 与具体设备 / OS / Vendor SDK 之间的
 
 > **设备实现可以不同，但上层 `baga.*` 的设备/平台语义保持统一。**
 
-它不负责重新包装 SQLite、Automerge 等成熟通用软件库。
+SQLite、Automerge 等成熟通用软件能力由 Standard Libraries / Adopted Components 规范管理，不属于 Device Adapter 的数据库或 CRDT 抽象。
+
+正式正文只描述当前有效设计。
 
 ---
 
@@ -82,7 +84,7 @@ Adapter 最重要的责任是准确表达真实设备能力。
 → Standard Library / Adopted Component
 ```
 
-例子：
+当前典型映射：
 
 ```text
 Kindle framebuffer / touch / power
@@ -92,46 +94,17 @@ BOOX Pen / refresh
 → Adapter，可复用 Vendor SDK
 
 SQLite relational DB
-→ Standard Library，不属于 Adapter，不存在 baga.data
+→ Standard Library
 
 Automerge CRDT
-→ Adopted Foundation，不属于 Adapter，不等于 baga.sync
+→ Adopted Foundation
 ```
 
-MUST NOT 因采用一个 library 而机械增加：
-
-```text
-Generic Provider Layer
-Engine Layer
-Runtime Layer
-Library Adapter Layer
-```
+MUST NOT 因采用一个 library 而机械增加通用 Provider、Engine、Runtime 或 Library Adapter 层。
 
 ---
 
 # 4. Adapter 不负责什么
-
-禁止：
-
-```text
-App → adapter.boox.fastRefresh()
-App → adapter.kindle.shell()
-App → adapter.koreader.xpointer()
-App → adapter.sqlite.query()
-App → adapter.automerge.merge()
-```
-
-设备能力正确方向：
-
-```text
-App → baga.* → Platform Core → Device Adapter → Device/OS
-```
-
-成熟标准库正确方向：
-
-```text
-App → lsqlite3 / adopted standard library
-```
 
 Device Adapter 不负责：
 
@@ -140,7 +113,16 @@ Device Adapter 不负责：
 - LifeBook 私有功能；
 - SQLite database semantics；
 - CRDT algorithm；
-- 将第三方库私有对象变成 Baga API。
+- 将第三方库私有对象变成 Baga API；
+- 把 Vendor / OS 私有对象直接暴露给 IKP。
+
+设备能力的正式调用链保持：
+
+```text
+App → baga.* → Platform Core → Device Adapter → Device / OS
+```
+
+成熟 Standard Library 则由 Baga Lua Profile 直接提供给应用。
 
 ---
 
@@ -295,9 +277,7 @@ Platform / Adapter 共同保证：
 
 `baga.storage.resolve_path()` MAY 为 `lsqlite3` 等正式 Standard Library 提供当前 App 被授权的运行时路径。
 
-但：
-
-> **`resolve_path()` 不是弱 OS sandbox 平台的完整安全边界。**
+但 `resolve_path()` 不是弱 OS sandbox 平台的完整安全边界。
 
 在 Kindle 等系统上，SQLite 还必须通过 sandbox-aware VFS / 等价 I/O confinement 约束 `ATTACH`、journal、WAL、temp DB 等所有文件访问。
 
@@ -388,7 +368,7 @@ Event SHOULD：
 - 先进入 Platform Core；
 - 不让 Vendor/library callback 直接进入 App。
 
-Adapter MAY 复用 Android main thread、KOReader event loop 等，无需再造 “Baga Event Engine”。
+Adapter MAY 复用 Android main thread、KOReader event loop 等成熟机制，不需要重新实现事件引擎。
 
 ---
 
@@ -458,15 +438,7 @@ Capability Provider 只用于**确实需要受控扩展的设备/厂商高级能
 - MUST 不用于 SQLite、Automerge、KOReader 仅仅因为它们是库；
 - MUST 不泛化为所有 Baga API 的必经层。
 
-错误机械分层：
-
-```text
-KOReaderProvider
-SQLiteProvider
-AutomergeProvider
-```
-
-如果这些名字只是“用了某库”，它们不属于 Baga 公共架构。
+成熟库仅作为实现依赖时，不为其额外定义公共 Provider 概念。
 
 ---
 
@@ -541,16 +513,7 @@ DeviceAdapter
 └─ Bluetooth     optional
 ```
 
-不包含：
-
-```text
-SQLite
-Automerge
-Reader database
-CRDT engine
-```
-
-这些不是 Device Adapter 层次。
+SQLite、Automerge 与 Reader 数据库不属于 Device Adapter 顶层模块。
 
 ---
 
