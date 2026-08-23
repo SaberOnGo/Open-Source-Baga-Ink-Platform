@@ -28,9 +28,13 @@ jobs:
           tools/new_platform_port_task.py
           tools/check_docs_i18n.py
           tools/new_localized_doc.py
+          tools/check_readme_languages.py
 
       - name: Validate public documentation internationalization
         run: python3 tools/check_docs_i18n.py
+
+      - name: Validate README language switch registry
+        run: python3 tools/check_readme_languages.py
 
       - name: Validate platform-port plan structure
         run: python3 tools/check_platform_port_plans.py
