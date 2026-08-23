@@ -3,7 +3,7 @@
 > **Document level:** Canonical Project Status  
 > **Document ID:** `status.00`  
 > **Locale:** English (`en`)  
-> **Status:** Living Status v0.5  
+> **Status:** Living Status v0.6  
 > **Date:** 2026-08-23  
 > **Counterpart:** `docs/zh-CN/status/00_当前项目状态.md`  
 > **Authoritative branch:** `main`
@@ -12,20 +12,20 @@
 
 ## 0. Current summary
 
-> **Baga Ink is in Standards + Executable Conformance + Reference Platform implementation preparation. All public Standards 00–13 and 20–28 now have maintained English and Simplified Chinese editions, but production Platform / Kindle / Android E-Paper / Client / Market implementations and formal device Compatibility evidence are not complete.**
+> **Baga Ink is in the Standards + Executable Conformance + Reference Platform implementation-preparation phase. Its long-lived public documentation has completed the English / Simplified Chinese migration, but production Platform / Kindle / Android E-Paper / Client / Market implementations and formal device Compatibility evidence are not complete.**
 
 Current baselines include:
 
 ```text
-complete Draft/Baseline Standards 00–28 in both maintained locales
+Draft/Baseline Standards 00–28 in both maintained locales
+Design 01–02 in both maintained locales
+Reference Apps / Kindle Architecture Freeze in both maintained locales
 machine-readable distribution/signing/repository specification foundation
 Python reference implementation + conformance tests
-Device Adapter Contract
-Kindle / Android E-Paper adapter standards
-Kindle Implementation Architecture Freeze
-Device Adapter executable-contract / SDK design
+Baga Device Adapter Contract
+Kindle / Android E-Paper Adapter Standards
 Kindle implementation plans + governed Task/Execution Prompt model
-English-default README + scalable locale switching
+English-default README + scalable language switching
 Apache-2.0 + explicit third-party licensing boundary
 protected main + required CI
 ```
@@ -34,9 +34,50 @@ The project cannot yet claim production completeness or formal device compatibil
 
 ---
 
-## 1. Standards
+## 1. Public documentation architecture — COMPLETE
 
-All current public Standards are now localized and marked `current` in `docs/localization/catalog.json`.
+The permanent public-document structure is:
+
+```text
+docs/en/
+├── standards/
+├── design/
+├── reference-apps/
+├── governance/
+└── status/
+
+docs/zh-CN/
+├── standards/
+├── design/
+├── reference-apps/
+├── governance/
+└── status/
+```
+
+All maintained public documents are registered in:
+
+```text
+docs/localization/catalog.json
+```
+
+The former mixed-language public trees have been removed. CI now rejects recreation of:
+
+```text
+docs/standards/
+docs/design/
+docs/reference-apps/
+docs/governance/
+docs/status/
+old mixed-language root documentation index
+```
+
+Engineering plans remain separate. In particular, `docs/plans/platform-ports/kindle/` remains Chinese-first operational material under its strict bilingual filename / Task / Execution Prompt rules.
+
+---
+
+## 2. Standards status
+
+All current Standards are available in maintained English and Simplified Chinese editions and are `current` in the localization catalog.
 
 ### Platform / App / Device — 00–13
 
@@ -71,15 +112,37 @@ All current public Standards are now localized and marked `current` in `docs/loc
 28 Catalog and App Discovery Specification
 ```
 
-This does **not** mean the standards are Stable. Stable still requires executable evidence where applicable.
+Complete documentation does **not** mean Stable. Standards that require executable evidence must still pass their Stable Gates.
 
 ---
 
-## 2. Executable distribution-specification status
+## 3. Design / Reference implementation documentation
+
+Current Design:
+
+```text
+01 Executable Specification Design
+02 Device Adapter Executable Contract / SDK Design
+```
+
+Current Reference Apps:
+
+```text
+01 LifeBook Reference App
+02 LifeBook Kindle Product Behavior / Accessory Design
+03 Kindle Implementation Architecture Freeze
+99 Superseded Kindle compatibility entry
+```
+
+For Kindle implementation, Reference App 03 is the current frozen implementation baseline subordinate to Standards.
+
+---
+
+## 4. Executable distribution-specification status
 
 Implemented foundations include strict JSON/JCS, SHA-256/Ed25519, JSON Schema, Publisher Identity, App Ownership, App Signing Delegation, IKP payload/signature validation, ZIP/path safety, invalid fixtures, and Python CI.
 
-Still required for Stable distribution claims:
+Still required before Stable distribution claims:
 
 ```text
 Reference Repository / Client completion
@@ -94,11 +157,9 @@ Stable Gate evidence
 
 ---
 
-## 3. Device Adapter / SDK status
+## 5. Device Adapter / SDK status
 
-Standard 07 defines the device porting contract. The frozen principle is:
-
-> **Define what the device must provide; reuse proven OS, Vendor SDK, Homebrew, and mature open-source mechanisms instead of reimplementing the device.**
+The Device Adapter Contract defines what a device port must provide while allowing concrete implementations to reuse proven OS, Vendor SDK, Homebrew, and mature open-source mechanisms.
 
 Still missing:
 
@@ -112,30 +173,31 @@ reusable Adapter Contract Test Harness
 
 ---
 
-## 4. Kindle status
+## 6. Kindle status
 
 Kindle is the first Reference Platform Port.
 
-Frozen implementation direction includes:
+Frozen direction:
 
 ```text
 Client / bootstrap
 → Homebrew-ready device
-→ KPM or validated legacy installer envelope
+→ KPM where compatible, validated legacy envelope where required
 → Baga Ink Platform
 → IKP Package Manager
 → lifebook.ikp / other Baga Apps
 → Kindle Home Entry
 ```
 
-Important boundaries remain:
+Key boundaries remain:
 
-- `.ikp` is not converted to `.kpkg`;
-- KPM manages native Platform, IKP Package Manager manages Baga Apps;
-- KOReader / koreader-base / FBInk are mature internal mechanisms, not LifeBook APIs;
-- Kindle Adapter should remain thin and reuse them;
-- Reader/UI, jailbreak routes, KPM/MRPI, and Home Entry are not Device Adapter root subsystems;
-- first real bring-up targets a representative `kindlehf` path and a Probe IKP before full LifeBook.
+- `.ikp` is never converted to `.kpkg`;
+- KPM manages native Platform packages; IKP Package Manager manages Baga Apps;
+- KPM missing != KPM incompatible;
+- KOReader / koreader-base / FBInk are mature internal implementation sources, not LifeBook APIs;
+- Kindle Adapter should remain thin and reuse mature mechanisms;
+- Reader/UI, jailbreak routes, KPM/MRPI, Home Entry, and build tooling are outside the Device Adapter root contract;
+- first bring-up should use a representative `kindlehf` path and a Probe IKP before full LifeBook product work.
 
 Not yet implemented:
 
@@ -152,35 +214,13 @@ baga-probe.ikp on real Kindle
 
 ---
 
-## 5. Android E-Paper status
+## 7. Android E-Paper status
 
-The standard defines Generic Android Base + Vendor Specialization. A production Android Reference Adapter and real BICTS evidence are still pending.
-
----
-
-## 6. Documentation internationalization
-
-Completed:
-
-```text
-M0    locale architecture / README / licensing / guards
-M1-A  Governance + Status + Index
-M1-B1 Standards 00–06
-M1-B2 Standards 07–13
-M1-C  Standards 20–28
-```
-
-Next:
-
-```text
-M1-D  Design
-M1-E  Reference Apps
-M4    remove Legacy Public Trees and forbid them in CI
-```
+The Standard defines Generic Android Base + Vendor Specialization. A production Android Reference Adapter and real BICTS evidence are still pending.
 
 ---
 
-## 7. Governance / license
+## 8. Governance and license
 
 `main` is protected by GitHub Ruleset. Required documentation job:
 
@@ -188,9 +228,13 @@ M4    remove Legacy Public Trees and forbid them in CI
 Validate task/prompt layout
 ```
 
-It covers public-doc i18n, README locale switching, and Platform Port task/prompt structure.
+It validates public-doc localization structure, README locale switching, and Platform Port task/prompt structure.
 
-Baga-authored material defaults to Apache License 2.0. Third-party projects retain their upstream licenses. See:
+Baga-authored material defaults to:
+
+> **Apache License 2.0**
+
+Third-party projects retain their upstream licenses. See:
 
 ```text
 LICENSE
@@ -200,15 +244,15 @@ THIRD_PARTY_NOTICES.md
 
 ---
 
-## 8. Compatibility claim boundary
+## 9. Compatibility claim boundary
 
-There is currently no formal claim that a specific Kindle, BOOX, iReader, or Android E-Paper combination is `Baga Ink Compatible`.
+There is currently no formal claim that a specific Kindle, BOOX, iReader, or other Android E-Paper combination is `Baga Ink Compatible`.
 
 A formal record must bind exact Device / Firmware / Platform / Adapter / Profile / Quirk / Contract / Lua Profile / BICTS evidence.
 
 ---
 
-## 9. Current priorities
+## 10. Current priorities
 
 ```text
 A. Distribution Conformance
@@ -217,19 +261,22 @@ A. Distribution Conformance
    Cross-language vectors
    E2E / offline / rollback
 
-B. Documentation
-   Design → Reference Apps → Legacy removal
-
-C. Device Adapter / Kindle
+B. Device Adapter / Kindle
    IDL → generated interfaces → Mock Adapter → Contract Tests
    → kindlehf bring-up → Base Kindle Adapter → Probe IKP → BICTS
+
+C. Public documentation maintenance
+   keep current English / zh-CN pairs synchronized
+   add future locales only through governed locale registration
 ```
 
 Do not begin with full LifeBook feature work or automated jailbreak Client flow before the substrate is proven.
 
 ---
 
-## 10. Entry points
+## 11. Entry points
+
+English:
 
 ```text
 README.md
@@ -249,8 +296,8 @@ docs/zh-CN/status/00_当前项目状态.md
 
 ---
 
-## 11. Final status rule
+## 12. Final status rule
 
-> **A document existing does not mean the implementation is complete; code compiling does not mean a device is Compatible; one successful launch does not mean Stable.**
+> **A document existing does not mean implementation is complete; code compiling does not mean a device is Compatible; one successful launch does not mean Stable.**
 
 Project state must ultimately be supported by code, machine-readable specs, tests, device evidence, conformance, and approved public documentation.
