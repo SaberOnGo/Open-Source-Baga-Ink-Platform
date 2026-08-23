@@ -1,7 +1,7 @@
 # Baga Ink 当前项目状态 / Baga Ink Project Status
 
 > **文档级别：项目状态唯一入口 / Canonical Project Status**  
-> **状态：Living Status v0.1**  
+> **状态：Living Status v0.2**  
 > **日期：2026-08-23**  
 > **权威分支：`main`**
 
@@ -23,21 +23,23 @@
 
 当前阶段：
 
-> **平台标准体系已经建立；分发安全规范已经进入“可执行规范 / Conformance Kit”实施阶段；Kindle Reference Implementation 的具体架构已经形成 FROZEN BASELINE，但 Kindle 产品代码尚未进入正式实现完成阶段。**
+> **平台标准体系已经建立；分发安全规范已经进入“可执行规范 / Conformance Kit”实施阶段；Kindle Reference Implementation 架构与 Device Adapter Contract 已形成明确基线，但真实 Kindle Platform / Adapter 产品代码尚未进入实现完成阶段。**
 
 还没有进入：
 
 - Baga Ink Platform 正式产品实现完成；
+- Baga Ink Device Adapter SDK / IDL / Codegen 实现完成；
+- Kindle Reference Adapter 实现完成；
 - Baga Ink Client 正式产品实现完成；
 - Baga Ink Market 正式产品实现完成；
 - LifeBook 在真实 Kindle + Android E-Paper 上的完整跨设备产品闭环完成；
 - Standards Stable 发布。
 
-当前重点仍是：
+当前主线仍是：
 
-> **先证明 21–28 号身份、签名、Repository、更新与分发规范能够被机器严格执行，再继续扩大实现。**
+> **完成 21–28 号身份、签名、Repository、更新与分发规范的机器可执行验证。**
 
-Kindle 代码未来开工时，必须以已经落库的 Kindle Architecture Freeze 为实现与模块选型基线，不再从历史聊天恢复架构。
+同时，Kindle Platform 开工所需的 Device Adapter 标准边界已经补齐，不再需要从历史聊天推断“Adapter 到底是什么”。
 
 ---
 
@@ -55,17 +57,18 @@ Kindle 代码未来开工时，必须以已经落库的 Kindle Architecture Free
 04 Capability 能力注册表
 05 Permission 权限模型
 06 IKP 应用包规范
-07 Device Adapter 设备适配器规范
+07 Device Adapter Contract
 08 Compatibility 兼容性标准
 09 UI 规范
 ```
 
-## 测试与设备适配 10–12
+## 测试、设备适配与标准库 10–13
 
 ```text
 10 BICTS 兼容性测试套件
-11 Kindle Adapter
+11 Kindle Device Adapter
 12 Android E-Paper Adapter
+13 Standard Libraries / Adopted Components
 ```
 
 ## Market / Distribution / Signing 20–28
@@ -86,7 +89,9 @@ Kindle 代码未来开工时，必须以已经落库的 Kindle Architecture Free
 
 ---
 
-# 3. 已完成：Reference App 与 Kindle 实现架构冻结
+# 3. 已完成：Reference App、Kindle Freeze 与 Device Adapter Contract
+
+## 3.1 LifeBook Reference App
 
 Reference App 主入口：
 
@@ -95,7 +100,7 @@ docs/reference-apps/
 01_LifeBook参考实现_LifeBook-Reference-App.md
 ```
 
-已经锁定的核心关系：
+已经锁定核心关系：
 
 ```text
 LifeBook
@@ -106,14 +111,14 @@ Baga Ink API / Baga Lua Profile
    ↓
 Baga Ink Platform
    ↓
-Device Adapter
+Device Adapter Contract
    ↓
 Kindle / Android E-Paper
 ```
 
 LifeBook 是旗舰 / Reference App，不是 Baga Ink Platform 本身。
 
-## 3.1 Kindle Reference Implementation Architecture Freeze
+## 3.2 Kindle Reference Implementation Architecture Freeze
 
 已建立：
 
@@ -124,17 +129,17 @@ docs/reference-apps/
 
 状态：
 
-> **FROZEN BASELINE v1.0**
+> **FROZEN BASELINE v1.0.1**
 
-该文档已经冻结后续 Kindle 代码开工必须遵守的关键实现边界，包括：
+该文档冻结：
 
 ```text
 Client → jailbreak/bootstrap → Homebrew foundation
 → native Platform installer → Baga Ink Platform
-→ IKP Package Manager → lifebook.ikp → Kindle Home launch
+→ IKP Package Manager → lifebook.ikp → Kindle Home Entry
 ```
 
-以及：
+核心边界包括：
 
 - `.ikp` 不转换成 `.kpkg`；
 - KPM 管 Platform native package，IKP Package Manager 管 Baga App；
@@ -145,30 +150,137 @@ Client → jailbreak/bootstrap → Homebrew foundation
 - Platform Core 保持最小职责；
 - KOReader / koreader-base 由 Baga 私有、锁版本复用，LifeBook 不直接依赖 private API；
 - sh_integration 作为第一阶段 Home/Library 入口；AppMgr 深化集成后续验证；
-- KUAL / PEKI 为 legacy/admin/bootstrap fallback，不是正常 LifeBook 路径；
+- KUAL / PEKI 为 legacy/admin/bootstrap fallback；
 - KindleTool 是 build/package tooling；
 - WinterBreak / SpringBreak / Sanctuary / Véra 只属于 Client Installation Route DB；
 - Mesquito 不作为 Baga 直接采用模块；
-- 同一个 `lifebook.ikp` 不随 `kindlepw2` / `kindlehf` 等 native target 分叉；
+- 同一个 `lifebook.ikp` 不随 native target 分叉；
 - Platform update 与 IKP App update 分离；
 - USB Mass Storage 使用文件式 handshake/mailbox，不假设 remote exec；
-- 用户书籍、Kindle 笔记、App data / SQLite DB 必须受到保护。
+- 用户书籍、Kindle 笔记、App data / SQLite DB 必须受到保护；
+- 用户产品路径是 `Kindle Home → LifeBook`，内部才经过 `LifeBook Home Entry → baga-launch → Platform → active lifebook.ikp`。
 
-旧：
+旧架构兼容入口已经移动为：
 
 ```text
-02_LifeBook架构与Kindle兼容实现_LifeBook-Architecture-and-Kindle-Compatibility.md
+99_旧版LifeBook架构与Kindle兼容实现_LifeBook-Architecture-and-Kindle-Compatibility-Superseded.md
 ```
 
-已标记 `SUPERSEDED / 兼容入口`，只指向 `03`，不再作为独立 Kindle implementation baseline。
+它不再作为独立 Kindle implementation baseline。
 
-`01_LifeBook参考实现...` 已同步修正其 Kindle Homebrew / KPM / MRPI / KUAL / KOReader 角色表述，避免与 `03` 竞争。
+## 3.3 Device Adapter Contract
 
-**注意：架构冻结完成不等于 Kindle Platform 产品实现完成，也不等于任何具体 Kindle model/firmware 已通过 BICTS。**
+`07` 已从“职责说明”升级为真正的：
+
+> **Baga Ink Device Adapter Contract / Device Porting Contract**
+
+已定义：
+
+```text
+AdapterFactory / probe / create
+Root Adapter lifecycle
+DeviceDescriptor
+Capability Snapshot vs Runtime State
+AdapterHost + typed event model
+stable error model
+Display/Input/Storage/Lifecycle/Power contracts
+Optional Network/Light/Audio/Bluetooth/UserLibrary contracts
+Native Build Target vs Device Profile vs Quirk
+self-test
+contract versioning
+Adapter Contract Tests vs BICTS
+Mock/Headless Adapter requirement
+OEM/第三方移植流程
+```
+
+核心原则已经明确：
+
+> **Device Adapter Contract 定义“设备要提供什么”，不要求重新实现已有设备能力。具体 Adapter SHOULD 最大复用 OS、Vendor SDK、Homebrew 和成熟开源项目。**
+
+## 3.4 Kindle Device Adapter Reference Port
+
+`11 Kindle Device Adapter` 已同步升级。
+
+冻结 Kindle Adapter 的主要参考结构：
+
+```text
+common/
+display/
+input/
+storage/
+lifecycle/
+power/
+network/
+light/
+library/
+device_profiles/
+quirks/
+build_targets/
+```
+
+明确：
+
+```text
+KOReader / FBInk / Kindle OS mechanisms
+→ 可被 Device Adapter 复用
+
+KOReader UIManager / ReaderUI / CREngine / MuPDF
+→ Platform UI/Reader shared implementation，不是 Device Adapter 根契约
+
+KPM / MRPI / sh_integration / Hotfix
+→ install/bootstrap/Homebrew foundation，不是 Device Adapter
+
+KindleTool
+→ build/package tooling
+
+Jailbreak routes
+→ Client Installation Route DB
+```
+
+**注意：标准与架构完成不等于 Kindle Adapter 代码完成，也不等于任何具体 Kindle model/firmware 已通过 Contract Tests / BICTS。**
 
 ---
 
-# 4. 已完成：Executable Specification 设计与实施计划
+# 4. 已完成：Device Adapter Executable Contract / SDK Design
+
+新增：
+
+```text
+docs/design/
+02_设备适配器可执行契约与SDK设计_Baga-Ink-Device-Adapter-Executable-Contract-and-SDK-Design.md
+```
+
+Design Baseline 已确定下一阶段方向：
+
+```text
+spec/adapter machine-readable IDL
+        ↓
+codegen
+        ├── Rust interfaces
+        ├── C interfaces
+        └── Kotlin interfaces
+        ↓
+Mock/Headless Adapter
+        ↓
+Adapter Contract Test harness
+        ↓
+Kindle / Android Adapter skeleton
+```
+
+第一阶段明确不做：
+
+```text
+dynamic native Adapter plugin ABI
+Binder/RPC/JSON bridge
+Adapter daemon
+arbitrary dlopen third-party native module
+```
+
+目标是 direct typed call + compile/package-time Adapter implementation。
+
+---
+
+# 5. 已完成：Executable Specification 设计与实施计划
 
 正式 Design：
 
@@ -190,7 +302,7 @@ docs/plans/
 
 ---
 
-# 5. 已完成：机器可读规范基础
+# 6. 已完成：机器可读规范基础
 
 当前 `main` 已包含 `spec/`，正在将 21–28 转换为可执行规范。
 
@@ -206,9 +318,11 @@ docs/plans/
 
 机器格式不能长期与 `docs/standards/` 漂移成另一套协议；实现阶段发现的冲突必须回写文字标准。
 
+`spec/adapter/` 尚未实现，只在 Design 中定义了目标结构。
+
 ---
 
-# 6. 已完成：Python Reference Implementation 基础
+# 7. 已完成：Python Reference Implementation 基础
 
 当前存在：
 
@@ -225,7 +339,7 @@ reference/python/src/baga_spec/
 └── ikp.py
 ```
 
-目前已经实现的能力包括：
+目前已经实现：
 
 ## Strict JSON
 
@@ -273,7 +387,7 @@ reference/python/src/baga_spec/
 
 ---
 
-# 7. 已完成：自动化测试基础
+# 8. 已完成：自动化测试基础
 
 当前 `tests/` 包含：
 
@@ -294,7 +408,7 @@ CI 基础：
 .github/workflows/conformance.yml
 ```
 
-已经观察到的验证里程碑：
+已经观察到：
 
 - Strict JSON / JCS / Schema / Identity / Signing 第一阶段通过 Python CI；
 - IKP Validator 阶段通过 Python CI；
@@ -304,111 +418,58 @@ CI 基础：
 
 ---
 
-# 8. 尚未完成：Executable Specification 关键剩余项
+# 9. 尚未完成：关键剩余项
 
-以下是当前最重要的未完成工作。
+## 9.1 Distribution Executable Specification
 
-## 8.1 TUF Repository / Client
-
-尚未完成正式 Reference Implementation：
+尚未完成：
 
 ```text
 reference/python/src/baga_spec/repository.py
 reference/python/src/baga_spec/client.py
-```
-
-需要：
-
-- 使用当前 `python-tuf` 官方 API；
-- 真实生成 Root / Targets / Snapshot / Timestamp；
-- Repository Target / Baga custom metadata；
-- 客户端 Refresh / Download；
-- Rollback / Freeze / Mix-and-match 负向测试。
-
-## 8.2 TUF Official Conformance
-
-尚未完成：
-
-```text
 tools/tuf-client-under-test
 .github/workflows/tuf-conformance.yml
-```
-
-必须实现官方 Harness 要求的：
-
-```text
-init
-refresh
-download
-```
-
-并运行 TUF 官方 Conformance Suite。
-
-## 8.3 Rust Independent Verifier
-
-尚未完成：
-
-```text
 reference/rust/baga-verifier/
+Python ↔ Rust cross-language vectors
+Repository → Client → Device E2E
+Offline Transfer prototype
+Stable Gate
 ```
-
-目标不是重写 Market，而是独立验证设备关键安全语义：
-
-- Strict JSON；
-- JCS；
-- SHA-256；
-- Ed25519；
-- Publisher Identity；
-- Ownership；
-- Delegation；
-- Release Signature；
-- IKP Payload Hash。
-
-## 8.4 Cross-language Test Vectors
-
-尚未完成完整 Python ↔ Rust 双实现一致性 Gate。
-
-要求：
-
-```text
-same valid vectors  → both ACCEPT
-same invalid vectors → both REJECT
-same canonical bytes → exact byte equality
-```
-
-## 8.5 Minimal Repository → Client → Device E2E
-
-尚未完成完整闭环：
-
-```text
-Publisher
-  ↓
-Signed IKP
-  ↓
-TUF Repository
-  ↓
-Reference Client
-  ↓
-Device Verifier
-  ↓
-Stage / Activate / Rollback
-```
-
-## 8.6 Offline Transfer
-
-26 号标准已经存在，但最小 Portable Repository Snapshot / USB transfer 原型尚未完成。
-
-## 8.7 Stable Gate
-
-尚未达到。
 
 21–28 不能提升为 Stable。
 
+## 9.2 Device Adapter Executable Contract
+
+尚未完成：
+
+```text
+spec/adapter/
+tools/baga-adapter-codegen/
+sdk/adapter/generated/
+Mock Device Adapter
+Adapter Contract Test harness
+```
+
+## 9.3 Kindle Reference Adapter
+
+尚未完成：
+
+```text
+platform/adapters/kindle/
+KindleAdapterFactory
+Kindle Device Profiles
+Kindle Quirk Sets
+Display/Input/Storage/Lifecycle/Power bindings
+pinned KOReader/FBInk integration
+real-device Contract Tests
+Base BICTS
+```
+
 ---
 
-# 9. 当前下一步 / Next
+# 10. 当前下一步 / Next
 
-当前工程优先级仍然是：
+## 主线 A：完成已有 Distribution Conformance 工作
 
 ```text
 1. 完成 python-tuf Reference Repository
@@ -418,23 +479,37 @@ Stage / Activate / Rollback
 5. 跑 Python ↔ Rust Test Vectors
 6. 跑 Repository → Client → Device E2E
 7. 跑离线 Transfer / Update / Rollback
-8. 修正文档与机器格式之间剩余漂移
-9. Stable Gate 全绿后再评审 21–28 Stable
+8. Stable Gate
 ```
 
-在此之前，不应优先扩展 Market UI、付费、DRM 等非核心功能。
+## 设备平台线 B：Device Adapter / Kindle 开工顺序
 
-当进入 Kindle 产品实现阶段时，第一入口不是重新做架构讨论，而是直接按：
+当开始设备端实现时，已经不需要继续重新设计 Adapter 概念，按以下顺序：
+
+```text
+1. 建立 spec/adapter IDL schema
+2. 冻结 Adapter Contract machine v0.1
+3. 生成 Rust interface
+4. 实现 Mock/Headless Adapter
+5. 建立 Adapter Contract Test harness
+6. 建立 KindleHF Adapter skeleton
+7. 绑定 pinned KOReader / FBInk / Kindle mechanisms
+8. 跑 Kindle Base Adapter Contract Tests
+9. 跑 Baga Probe IKP
+10. 跑 Base BICTS
+11. 再扩展 network/light/library 与 kindlepw2/legacy
+12. 再生成/验证 Kotlin Android Adapter interface
+```
+
+Kindle 具体模块采用仍必须服从：
 
 ```text
 docs/reference-apps/03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md
 ```
 
-中已经定义的 Compatibility/Bootstrap PoC → Minimum Platform Core → KOReader mapping → LifeBook skeleton → 多设备扩展顺序执行。
-
 ---
 
-# 10. Git / Branch 当前状态
+# 11. Git / Branch 当前状态
 
 本轮 Executable Specification 工作原先在临时：
 
@@ -464,7 +539,7 @@ feat/executable-spec-conformance
 
 ---
 
-# 11. 当前文档入口
+# 12. 当前文档入口
 
 ```text
 总文档入口
@@ -475,6 +550,15 @@ feat/executable-spec-conformance
 
 标准
 → docs/standards/00_规范总览_Baga-Ink-Standards-Index.md
+
+Device Adapter Contract
+→ docs/standards/07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md
+
+Kindle Device Adapter
+→ docs/standards/11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md
+
+Device Adapter executable contract / SDK design
+→ docs/design/02_设备适配器可执行契约与SDK设计_Baga-Ink-Device-Adapter-Executable-Contract-and-SDK-Design.md
 
 开发治理
 → docs/governance/00_开发治理_Baga-Ink-Development-Governance.md
@@ -488,11 +572,13 @@ Kindle Implementation Architecture Freeze
 
 ---
 
-# 12. 什么时候更新本文件
+# 13. 什么时候更新本文件
 
 以下事件发生时 SHOULD / MUST 更新：
 
 - 一个 Standards 区间完成；
+- Device Adapter Contract 正式 revision；
+- Adapter IDL/Codegen/Mock milestone 完成；
 - 一个 Reference Implementation 阶段完成；
 - 重要 CI Gate 通过；
 - 新设备 Adapter 正式支持；
