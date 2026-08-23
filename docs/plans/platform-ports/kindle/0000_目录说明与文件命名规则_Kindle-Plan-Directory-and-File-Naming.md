@@ -1,50 +1,79 @@
 # Kindle 实现计划目录说明与文件命名规则 / Kindle Plan Directory and File Naming
 
 > **文档级别：Implementation Plan Directory Rule / 任务目录规则**  
-> **状态：Mandatory Naming Rule v0.1**  
+> **状态：Mandatory Naming Rule v0.2**  
 > **日期：2026-08-23**  
-> **适用范围：`docs/plans/platform-ports/kindle/` 及其全部子目录**
+> **适用范围：`docs/plans/platform-ports/kindle/` 及其全部子目录**  
+> **上位规则：`../0000_平台移植计划目录与文件命名规则_Baga-Ink-Platform-Port-Plan-Naming.md`**
 
 ---
 
-## 0. 核心规则
+## 0. Kindle 目录的长期结构
 
-本目录未来可能包含数百甚至数千份 Kindle 实现任务、验证记录、PoC 计划和里程碑文档。
-
-因此，从本规则建立起：
-
-> **本目录及其所有子目录中的计划/任务 Markdown 文件名 MUST 使用“数字前缀 + 下划线 + 描述性文件名”的格式。**
-
-即：
+Kindle Port 后续会产生大量功能实现、测试、调试、验证、真机操作、兼容性与恢复任务。为了避免“总计划、任务设计、AI 执行子步骤”混在一起，本目录固定分成三层：
 
 ```text
-<数字前缀>_<文件名>.md
+docs/plans/platform-ports/kindle/
+├── 0000_目录说明与文件命名规则_Kindle-Plan-Directory-and-File-Naming.md
+├── 00_Kindle实现任务总计划_Baga-Ink-Kindle-Implementation-Master-Plan.md
+│
+├── task/
+│   └── ...
+│
+└── execution-prompts/
+    └── ...
 ```
 
-禁止创建没有数字前缀的任务文档，例如：
+其中：
+
+```text
+Kindle Implementation Master Plan
+→ Kindle Port 的长期路线图 / Milestone / 依赖与 Gate
+
+/task
+→ 每次准备真正实现某个功能、模块或验证目标前，人与 AI 先讨论并确定的任务设计总纲
+
+/execution-prompts
+→ AI 根据 /task 中某个精确版本生成的具体执行子步骤文档
+```
+
+`execution-prompts/` 对应旧 LifeBookProject 的 `prompt/ai_prompt` 用途，但这里采用更明确的名称，强调这些文档是**可执行步骤**，不是泛用 Prompt 收藏。
+
+---
+
+# 1. 文件名硬规则
+
+本目录及所有子目录中的 Markdown 文件 MUST 使用：
+
+> **`数字前缀_中文名_英文名.md`**
+
+格式：
+
+```text
+<数字前缀>_<中文名>_<English-Name>.md
+```
+
+正确：
+
+```text
+0000_任务设计总纲_Task-Design-Overview.md
+0010_锁定KOReader上游版本_Pin-KOReader-Upstream-Version.md
+0020_验证kindlehf原生构建_Verify-KindleHF-Native-Build.md
+0030_运行真机睡眠唤醒测试_Run-Device-Sleep-Wake-Test.md
+```
+
+禁止：
 
 ```text
 README.md
-Task.md
-Kindle-Bringup.md
-Adapter-Test-Plan.md
+0010_Task.md
+0010_Pin-KOReader.md
+0010_锁定KOReader.md
 ```
 
-正确形式：
+即：数字、中文名、英文名三部分都必须存在。
 
-```text
-0000_目录说明与文件命名规则_Kindle-Plan-Directory-and-File-Naming.md
-0010_K1里程碑计划_KOReader-Bringup.md
-0020_锁定上游组件与依赖清单_Pin-Upstream-Components.md
-0030_kindlehf构建验证_KindleHF-Build-Bringup.md
-0040_Baga直接入口PoC_Baga-Direct-Entry-PoC.md
-```
-
----
-
-# 1. 默认使用 4 位数字前缀
-
-新的细分任务目录 SHOULD 默认使用四位零填充编号：
+新的大规模目录默认使用四位零填充：
 
 ```text
 0000_
@@ -52,268 +81,326 @@ Adapter-Test-Plan.md
 0020_
 0030_
 ...
-9999_
 ```
 
-原因：
-
-- 文件系统和 GitHub 页面按名称排序时顺序稳定；
-- `0009_`、`0010_`、`0100_`、`1000_` 不会发生字符串排序错乱；
-- 单个目录可容纳大量任务；
-- 搜索、引用、口头沟通和 AI 定位都更容易；
-- 不依赖创建时间或 Git 历史来判断任务顺序。
-
-现有已创建、且已经满足“数字前缀 + `_`”的计划文件可以保留原编号；新创建的细分 Task 文档按本规则使用四位前缀。
+默认按 10 递增，以便后续插入 `0015_` 等步骤。
 
 ---
 
-# 2. 为什么默认按 10 递增
+# 2. `/task` 的职责
 
-新任务正常使用：
+`task/` 保存的是：
+
+> **先通过人与 AI 的讨论、研究和设计，明确“这一次要实现什么、为什么这样实现、怎样验证”的任务设计总纲。**
+
+每次开始一个新的明确工作目标时，先在 `task/` 新建一个 Task 目录。
+
+Task 可以以任何真正工程目标为单位，包括：
 
 ```text
-0010_
-0020_
+实现一个功能
+实现一个模块
+做一次架构 PoC
+修一个复杂问题
+建立一套测试
+调试真实设备问题
+跑一轮兼容性验证
+做真机操作与证据采集
+建立恢复/回滚流程
+```
+
+Task 目录 SHOULD 使用：
+
+```text
+<四位Task编号>_<中文任务名>_<English-Task-Name>/
+```
+
+例如：
+
+```text
+task/
+├── 0000_任务设计目录说明_Task-Design-Directory-Guide.md
+├── 0010_适配器契约可执行化_Executable-Adapter-Contract/
+├── 0020_KOReader-KindleHF启动验证_KOReader-KindleHF-Bringup/
+├── 0030_Kindle基础设备适配器_Kindle-Base-Device-Adapter/
+└── 0040_最小平台与Probe应用_Minimal-Platform-and-Probe-App/
+```
+
+这个四位 Task 编号是稳定 ID；一旦建立不得因为优先级、完成状态或版本变化而重编号。
+
+---
+
+# 3. 一个 Task 可以有多个版本
+
+Task 设计会持续更新，因此 Task 目录内部使用：
+
+```text
+v001/
+v002/
+v003/
+...
+```
+
+而不是：
+
+```text
+v1/
+v2/
+v10/
+```
+
+这样文件系统排序稳定。
+
+推荐结构：
+
+```text
+task/
+└── 0020_KOReader-KindleHF启动验证_KOReader-KindleHF-Bringup/
+    ├── 0000_任务版本索引_Task-Version-Index.md
+    ├── v001/
+    │   ├── 0000_任务设计总纲_Task-Design-Overview.md
+    │   ├── 0010_验收标准_Acceptance-Criteria.md
+    │   └── 0020_真机验证计划_Real-Device-Validation-Plan.md
+    └── v002/
+        ├── 0000_任务设计总纲_Task-Design-Overview.md
+        └── ...
+```
+
+Task Version 应在以下情况新建：
+
+```text
+范围改变
+核心方案改变
+依赖/前置改变
+验收 Gate 改变
+真机实测否定了原方案
+测试/调试/恢复设计发生重要变化
+```
+
+普通执行进度、单个 bug 修复、某个 Prompt 完成，不需要自动创建新 Task Version。
+
+旧版本 MUST 保留，不覆盖历史。
+
+---
+
+# 4. `/execution-prompts` 的职责
+
+`execution-prompts/` 保存 AI 真正执行 Task 时生成的细分步骤。
+
+它不是 Task Design 的替代物。
+
+正确关系：
+
+```text
+讨论 / 研究
+   ↓
+task/<Task-ID>/vNNN
+   ↓
+冻结本轮任务设计
+   ↓
+AI 分解
+   ↓
+execution-prompts/<same-Task-ID>/vNNN/*.md
+   ↓
+逐份执行
+   ↓
+代码 / 测试 / 调试 / 真机证据
+```
+
+每一份 execution prompt SHOULD 足够具体，使新的 AI / Codex 在读取上位 Task 和必要源码后，可以执行一个明确子步骤并得到可验证结果。
+
+执行步骤可以是：
+
+```text
+创建/修改代码
+先写失败测试
+运行构建
+分析日志
+修复一个具体故障
+制作测试 fixture
+执行模拟器验证
+执行 Kindle 真机测试
+采集版本/设备证据
+回归验证
+整理结果与 handoff
+```
+
+---
+
+# 5. `/task` 与 `/execution-prompts` 必须一一镜像
+
+相同 Task MUST 使用相同目录名：
+
+```text
+task/
+└── 0030_Kindle基础设备适配器_Kindle-Base-Device-Adapter/
+
+execution-prompts/
+└── 0030_Kindle基础设备适配器_Kindle-Base-Device-Adapter/
+```
+
+版本也必须镜像：
+
+```text
+task/.../v002/
+        ↕ exact source
+execution-prompts/.../v002/
+```
+
+一个 `v001` prompt 不允许静默改去执行 `v002` 的任务设计。
+
+如果执行过程中发现上位 Task Design 必须变化：
+
+```text
+停止把新架构决定继续塞进 prompt
+        ↓
+回到 task/
+        ↓
+建立 v002 / v003
+        ↓
+重新生成对应 execution-prompts version
+```
+
+这样才能知道任何一份 AI 执行文档究竟基于哪一版任务设计。
+
+---
+
+# 6. Execution Prompt 的目录与编号
+
+推荐：
+
+```text
+execution-prompts/
+├── 0000_AI执行提示目录说明_AI-Execution-Prompt-Directory-Guide.md
+└── 0020_KOReader-KindleHF启动验证_KOReader-KindleHF-Bringup/
+    ├── v001/
+    │   ├── 0000_执行索引_Execution-Index.md
+    │   ├── 0010_锁定KOReader与koreader-base版本_Pin-KOReader-Dependencies.md
+    │   ├── 0020_建立依赖许可证清单_Create-Dependency-License-Manifest.md
+    │   ├── 0030_验证kindlehf原生构建_Verify-KindleHF-Native-Build.md
+    │   ├── 0040_建立Baga启动入口_Create-Baga-Launch-Entry.md
+    │   └── 0050_执行Kindle真机启动测试_Run-Kindle-Device-Launch-Test.md
+    └── v002/
+        └── ...
+```
+
+`0000_` 保留给本版本执行索引；真正执行步骤通常从 `0010_` 开始。
+
+如果中间需要插入新步骤，可以：
+
+```text
 0030_
+0035_新增诊断步骤_Add-Diagnostic-Step.md
 0040_
 ```
 
-而不是连续使用：
-
-```text
-0001_
-0002_
-0003_
-0004_
-```
-
-这是为了给后续插入任务留空间。
-
-例如原来：
-
-```text
-0010_锁定KOReader版本.md
-0020_建立依赖清单.md
-```
-
-后来发现两者中间必须增加一个验证任务，可以直接加入：
-
-```text
-0015_验证上游Commit可构建.md
-```
-
-不需要重命名后面数百份文件。
-
-允许的插入编号包括：
-
-```text
-0011_
-0012_
-0015_
-0018_
-```
-
-只要保证同一目录内编号清晰、唯一、顺序合理即可。
+不用重命名后面几百份文件。
 
 ---
 
-# 3. 每个目录独立编号
+# 7. 每份 Execution Prompt 必须写明上位来源
 
-编号作用域是**当前目录**，不要求整个 Kindle Port 全局唯一。
-
-例如：
+每份执行文档开头 SHOULD 至少记录：
 
 ```text
-docs/plans/platform-ports/kindle/
-├── 0000_目录说明与文件命名规则_....md
-├── 00_Kindle实现任务总计划_....md
-├── K0_adapter-contract/
-│   ├── 0000_K0目录说明与里程碑计划_....md
-│   ├── 0010_定义IDL-Schema_....md
-│   ├── 0020_固化Root-Core-Types_....md
-│   └── 0030_固化Display-Contract_....md
-│
-└── K1_koreader-bringup/
-    ├── 0000_K1目录说明与里程碑计划_....md
-    ├── 0010_锁定上游组件_....md
-    ├── 0020_建立依赖清单_....md
-    └── 0030_kindlehf构建验证_....md
-```
-
-因此即使 Kindle 实现最终产生数千份任务文档，也不需要把所有文件挤在一个巨大平铺目录中。
-
----
-
-# 4. `0000_` 的保留用途
-
-每个任务子目录 SHOULD 把：
-
-```text
-0000_
-```
-
-保留给该目录的：
-
-```text
-目录说明
-Milestone 总计划
-任务索引
-本目录验收 Gate
+Task ID
+Source Task Path
+Source Task Version
+Prompt ID / Path
+Goal
+Dependencies / Preconditions
+Files / Device involved
+Verification / Acceptance
 ```
 
 例如：
 
 ```text
-K2_kindle-adapter/
-└── 0000_K2里程碑计划_Kindle-Base-Device-Adapter.md
+Task: TASK-0020
+Source: docs/plans/platform-ports/kindle/task/0020_KOReader-KindleHF启动验证_KOReader-KindleHF-Bringup/v001/
+Prompt: PROMPT-0030
 ```
 
-具体执行任务从：
-
-```text
-0010_
-```
-
-开始。
+这样即使 AI 只拿到单个 Prompt，也能重新找到它的完整任务设计来源。
 
 ---
 
-# 5. 文件名必须同时表达“编号 + 任务含义”
+# 8. Kindle Master Plan 与 Task 的关系
 
-数字编号只负责：
+K0–K7 继续作为 Kindle 长期 Milestone / Roadmap 语言，但**不再要求直接创建 `K0_adapter-contract/`、`K1_koreader-bringup/` 这类任务文档目录**。
 
-```text
-排序
-快速定位
-引用
-插入新任务
-```
-
-编号不能替代语义名称。
-
-不要创建：
+正确做法是：
 
 ```text
-0010_Task.md
-0020_Todo.md
-0030_Test.md
+Master Plan: K0 / K1 / K2 / ...
+        ↓
+按真正可执行的功能/模块目标
+        ↓
+task/0010_.../
+task/0020_.../
+task/0030_.../
+        ↓
+每个 Task 再有 v001/v002/...
+        ↓
+execution-prompts 镜像生成执行步骤
 ```
 
-应使用可以脱离聊天上下文理解的名字，例如：
+一个 Milestone 可以包含多个 Task；一个 Task SHOULD 尽量有清晰、可验证的单一工程目标。
 
-```text
-0010_锁定KOReader与koreader-base版本_Pin-KOReader-Dependencies.md
-0020_建立Kindle依赖与许可证清单_Kindle-Dependency-License-Manifest.md
-0030_验证kindlehf原生构建_KindleHF-Native-Build-Bringup.md
-0040_比较Baga直接入口与私有插件_Baga-Entry-PoC-Comparison.md
-```
-
-目标是让未来开发者或 AI 只看目录列表，就能大致知道任务是什么。
+因此本文规则覆盖早期 Master Plan 中直接建立 `K0_* / K1_*` 文档目录的示例；K0–K7 保留为逻辑 Milestone，不作为强制物理目录结构。
 
 ---
 
-# 6. Task ID 与文件编号是两个概念
+# 9. 状态与历史
 
-Milestone 中可以继续使用逻辑 Task ID：
+不要通过文件改名表达完成状态：
 
 ```text
-K0-01
-K0-02
-K1-01
-K2-07
+DONE_0030_...
+COMPLETE_0040_...
 ```
 
-它用于架构计划、Issue、Commit、测试记录中的稳定引用。
+禁止。
 
-文件名前缀则用于文件系统排序。
+Task / Prompt 的路径与编号是稳定定位符。
 
-例如：
-
-```text
-Task ID: K1-04
-File:    0040_Baga-Launch开发入口_Baga-Launch-Development-Entry.md
-```
-
-二者 SHOULD 在文档头部同时记录，但不要强迫文件编号与 `K1-04` 数值完全相同。
-
-这样即使后来插入 `K1-03A` 类的新工程任务，也可以通过文件编号顺序自然插入，而无需破坏已有稳定 Task ID。
-
----
-
-# 7. 文档内引用优先使用完整路径
-
-正式 Plan / Task 文档引用另一份任务时 SHOULD 使用：
+完成结果应写入：
 
 ```text
-docs/plans/platform-ports/kindle/K1_koreader-bringup/0030_kindlehf构建验证_KindleHF-Native-Build-Bringup.md
-```
-
-而不是只写：
-
-```text
-0030
-那个构建任务
-前面的任务
-```
-
-Task ID 可以作为辅助引用：
-
-```text
-K1-03 — `0030_kindlehf构建验证_KindleHF-Native-Build-Bringup.md`
+Prompt Result / Evidence
+Task 验收记录
+代码 / 测试 / Commit
+真实 Kindle evidence
+Compatibility / BICTS evidence
+docs/status/00_当前项目状态_Baga-Ink-Project-Status.md
 ```
 
 ---
 
-# 8. 已完成任务不通过重命名改变排序
+# 10. 最终工作流
 
-任务完成后不要把：
-
-```text
-0030_某任务.md
-```
-
-改成：
+以后每次开始一项 Kindle 实现工作，默认流程是：
 
 ```text
-DONE_0030_某任务.md
-completed_0030_某任务.md
+1. 从 Standards / Design / Master Plan 确认边界
+        ↓
+2. 在 task/ 新建一个双语编号 Task 目录
+        ↓
+3. 与 AI 讨论并形成 task/<Task>/v001
+        ↓
+4. 任务设计需要更新时形成 v002 / v003
+        ↓
+5. 选定本轮精确 Task Version
+        ↓
+6. AI 在 execution-prompts/<same Task>/<same version>/ 生成细步骤
+        ↓
+7. 按编号逐步实现 / 测试 / 调试 / 真机验证
+        ↓
+8. 记录 Result / Evidence
+        ↓
+9. 若发现上位设计需改变，回到 task/ 新版本
+        ↓
+10. 完成 Gate 后回写 Status / Compatibility
 ```
 
-也不要为了表示优先级频繁重排已有编号。
-
-完成状态进入：
-
-- Task 文档自身结果/证据；
-- `docs/status/00_当前项目状态_Baga-Ink-Project-Status.md`；
-- 代码、测试与 Commit；
-- 必要时 Compatibility / BICTS evidence。
-
-文件编号表示**稳定的计划/阅读顺序和定位符**，不是动态状态。
-
----
-
-# 9. 适用于未来所有 Kindle 子任务
-
-后续任何 AI / 开发者在以下目录创建 Markdown 文件前：
-
-```text
-docs/plans/platform-ports/kindle/
-```
-
-及其任意子目录，必须先遵守本规则。
-
-最重要的检查只有一句：
-
-> **任务文档文件名如果不是以数字和 `_` 开头，就不应该进入这个目录。**
-
-对于预计长期增长的任务目录，默认采用四位零填充 + 10 步进：
-
-```text
-0000_
-0010_
-0020_
-0030_
-...
-```
-
-这样即使 Kindle Port 后续增长到数百、数千份任务文档，目录仍然可以稳定排序、快速搜索和持续插入。
+这个结构允许 Kindle 实现长期积累数百个 Task、数千份 execution prompt，而不会失去“为什么做、基于哪一版设计、执行到了哪一步”的追踪关系。
