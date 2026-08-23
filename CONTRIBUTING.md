@@ -61,11 +61,45 @@ Do not add new public docs to the legacy mixed-language directories.
 
 Engineering plans under `docs/plans/` are working material and are not required to duplicate every Task or AI execution prompt across languages.
 
+## Translations
+
+The repository homepage is English by default. Every actively maintained README translation is registered in:
+
+```text
+docs/localization/readme-languages.json
+```
+
+Current convention:
+
+```text
+README.md           English / default
+README.zh-CN.md     Simplified Chinese
+README.ja.md        future Japanese example
+README.de.md        future German example
+README.fr.md        future French example
+```
+
+When adding a maintained README language:
+
+1. add the locale to `docs/localization/readme-languages.json`;
+2. create the corresponding `README.<locale>.md`;
+3. update the managed language-switch block in every current README;
+4. if the language also gains full public technical documentation, update the localization governance/catalog rather than inventing a new directory convention;
+5. run `python3 tools/check_readme_languages.py` and `python3 tools/check_docs_i18n.py`.
+
+A translation is another edition of the same project documentation, **not another Baga protocol or architecture**. Preserve canonical API names, identifiers, package names, error codes, schema keys, and terminology defined by `docs/localization/terminology.json`.
+
 ## Code and machine interfaces
 
 Use English for source identifiers, comments/docstrings, public API names, schema keys/IDs, machine error codes, CLI commands/flags, test names, dependency manifests, and commit subjects.
 
 Do not translate stable technical identifiers into incompatible names.
+
+## Licensing contributions
+
+Baga-authored material is accepted under the repository's Apache-2.0 terms unless a narrower directory/file policy explicitly applies. By intentionally submitting a contribution for inclusion in the project, you agree that it may be distributed under the applicable repository license terms.
+
+Do not copy third-party code into Baga without preserving its upstream license/provenance. GPL/AGPL or otherwise restrictively licensed dependencies require an explicit integration and distribution review. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Required checks
 
@@ -73,6 +107,7 @@ Before submitting documentation/plan changes, run as applicable:
 
 ```bash
 python3 tools/check_docs_i18n.py
+python3 tools/check_readme_languages.py
 python3 tools/check_platform_port_plans.py
 ```
 
