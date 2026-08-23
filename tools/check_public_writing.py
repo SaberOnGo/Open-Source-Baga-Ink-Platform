@@ -6,8 +6,9 @@ is to prevent a recurring class of documentation errors: text copied from a
 private owner/assistant discussion into material that is publicly committed.
 
 All tracked Markdown is in scope, including docs/plans, Task Designs and AI
-Execution Prompts. Fenced code blocks and inline code spans are ignored so
-Governance documents may show literal examples of prohibited wording.
+Execution Prompts. Fenced code blocks, inline code spans, and explicitly curly-
+quoted examples are ignored so Governance documents may show literal examples
+of prohibited wording without disabling checks for ordinary prose.
 """
 
 from __future__ import annotations
@@ -73,6 +74,7 @@ ENGLISH_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
 )
 
 INLINE_CODE_RE = re.compile(r"`[^`]*`")
+CURLY_QUOTED_EXAMPLE_RE = re.compile(r"“[^”]*”|‘[^’]*’")
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
 
@@ -110,7 +112,9 @@ def visible_lines(path: Path):
             continue
         if in_fence:
             continue
-        yield lineno, INLINE_CODE_RE.sub("", raw)
+        line = INLINE_CODE_RE.sub("", raw)
+        line = CURLY_QUOTED_EXAMPLE_RE.sub("", line)
+        yield lineno, line
 
 
 def main() -> int:
