@@ -1,10 +1,10 @@
 # Baga Ink 应用标准 / Baga Ink App Standard
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.4**  
+> **状态：Draft v0.5**  
 > **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
-> **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`、`06_IKP应用包规范_IKP-Package-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`**
+> **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`、`06_IKP应用包规范_IKP-Package-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
 
 ---
 
@@ -32,7 +32,8 @@ Universal App MUST：
 
 - 使用 Baga Lua Profile；
 - 以 `.ikp` 包格式发布；
-- 仅通过 Baga Ink API 获取平台能力；
+- 仅通过 Baga Ink API 获取设备 / OS / Platform 能力；
+- 可以直接使用 Baga Lua Profile 正式 Standard Libraries；
 - 使用 Capability Model 判断硬件能力；
 - 遵守标准生命周期；
 - 遵守权限与沙箱；
@@ -122,23 +123,25 @@ MAJOR.MINOR.PATCH
 
 Platform MUST 在启动应用前完成兼容检查。
 
+Standard Libraries 的版本由 Baga Platform / Lua Profile 版本锁定并可查询，不要求每个 IKP 自带 native copy。
+
 ---
 
 # 4. Baga Lua Profile
 
 Universal App 的第一官方语言为 Lua，但应用不是面向“任意 Lua 环境”，而是面向 **Baga Lua Profile**。
 
-Baga Lua Profile 是语言与 API 的规范边界，不是一个需要用户单独安装或管理的产品层。
+Baga Lua Profile 是语言、Standard Libraries 与 API 的规范边界，不是一个需要用户单独安装或管理的产品层。
 
 Platform Core 内部 MAY：
 
-- 在 Kindle 上复用 KOReader 等现有项目已经验证过的 Lua 解释器能力；
-- 在 Android 上直接嵌入轻量 Lua 解释器；
+- 在 Kindle 上复用 KOReader 等现有项目已经验证过的 Lua / LuaJIT 能力；
+- 在 Android 上嵌入轻量 Lua 解释器；
 - 未来替换底层 Lua 实现，只要保持 Baga Lua Profile 兼容。
 
 第三方 App 不得依赖具体 Lua 解释器品牌、编译方式或设备实现。
 
-## 4.1 允许的基础能力
+## 4.1 基础库
 
 Baga Lua Profile SHOULD 提供安全、可移植的基础库，例如：
 
@@ -152,7 +155,39 @@ coroutine
 
 具体 Lua 版本由 SDK 版本定义。
 
-## 4.2 默认禁止的系统逃逸能力
+## 4.2 Adopted Standard Libraries
+
+Baga Ink 不要求所有通用能力都重新包装成 `baga.*`。
+
+如果上游库本身已经具有成熟、稳定、跨平台的抽象，Baga MAY 将其直接纳入 Baga Lua Profile Standard Libraries。
+
+当前正式数据库标准库：
+
+```lua
+local sqlite3 = require("lsqlite3")
+```
+
+开发者直接使用成熟 SQLite 语义：
+
+```text
+SQL
+schema
+prepared statement
+transaction
+index
+foreign key
+BLOB
+FTS
+JSON
+```
+
+Baga 不再定义 `baga.data`，也不在 SQLite 上重新发明 KV / collection 数据库 API。
+
+Automerge core 已被 Baga 正式采纳为 Local-first / CRDT 优先基础；可整体采用，也可拆用 document/merge、binary persistence、sync protocol、C FFI、patch/cursor 等模块。但 developer-facing Lua binding 当前仍为 provisional，因此不得为了表面统一生造 `baga.automerge` 或 `baga.crdt`。
+
+详细规则见 `13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`。
+
+## 4.3 默认禁止的系统逃逸能力
 
 Universal App MUST 不依赖：
 
@@ -175,6 +210,8 @@ direct vendor SDK
 `os`、`io`、`package`、`debug` 等 Lua 标准库中的危险部分 MAY 被 Platform 删除、替换或限制。
 
 应用不得假设标准桌面 Lua 的完整库集合存在。
+
+SQLite loadable native extension 默认不得成为绕过 IKP native-code / sandbox 限制的入口。
 
 ---
 
@@ -233,6 +270,8 @@ if device.vendor == "BOOX" then ... end
 if reader_impl == "KOReader" then ... end
 ```
 
+SQLite / lsqlite3 不是设备 Capability；它是 Baga Lua Profile Standard Library。
+
 ## 6.2 Required Capability
 
 如果应用没有某能力就无法工作，应在 Manifest 中声明 required capability。
@@ -282,9 +321,11 @@ Platform SHOULD 采用最小权限原则。
 
 未声明权限的应用 MUST 不得通过其他方式绕过平台权限系统。
 
+应用自己的 SQLite database 属于 App sandbox private data，不需要额外用户资料权限。
+
 ---
 
-# 8. Storage、Data、Library 与沙箱
+# 8. Storage、SQLite、Library 与沙箱
 
 每个 App MUST 拥有独立应用沙箱。
 
@@ -297,14 +338,14 @@ documents/
 downloads/
 ```
 
-应用 MUST 区分三类接口：
+应用必须区分：
 
 ```text
 baga.storage
-→ 文件 / 字节资源与逻辑路径
+→ 文件 / 字节资源、逻辑路径与平台沙箱桥接
 
-baga.data
-→ App 私有结构化事务本地数据
+lsqlite3 / SQLite
+→ App 自己的结构化关系数据库
 
 baga.library
 → 经权限控制的用户书库 / 文档资源
@@ -315,21 +356,29 @@ baga.library
 - MUST 不假设 Android 或 Kindle 的真实文件路径；
 - MUST 不直接扫描系统目录；
 - SHOULD 使用 `baga.storage` 处理文件/字节；
-- SHOULD 使用 `baga.data` 处理需要可靠事务语义的结构化本地状态；
+- SHOULD 直接使用 `lsqlite3` / SQLite 处理结构化关系数据；
 - MUST 使用 `baga.library` 与 `library.read/write` Permission 访问用户书库；
-- MUST 不直接使用 SQLite/Room/厂商书库数据库作为 Universal App contract。
+- MUST 不直接访问厂商书库数据库作为 Universal App contract。
 
-`baga.data` 的实现可以由 Platform 复用 SQLite 等成熟数据库，但 App 不依赖其 SQL、路径、WAL 或内部 schema。
+数据库路径通过一个很薄的平台路径桥获得，例如：
+
+```lua
+local sqlite3 = require("lsqlite3")
+local path = baga.storage.resolve_path("appdata/app.sqlite3")
+local db = sqlite3.open(path)
+```
+
+`resolve_path()` 的职责只是把当前 App 已授权逻辑路径安全映射为供标准库使用的平台路径；它不重新包装 SQLite。
 
 卸载应用时，Platform SHOULD 区分：
 
 - 可安全删除的 cache；
-- app private data；
+- app private data / SQLite databases；
 - 用户主动创建且可能需要保留的 documents。
 
 ---
 
-# 9. Network、Offline-first 与 Sync
+# 9. Network、Offline-first、SQLite 与 Automerge
 
 墨水屏经常处于断网或低频联网状态，因此 Baga Ink App SHOULD 默认采用 offline-first 思维。
 
@@ -345,19 +394,49 @@ baga.library
 必须区分：
 
 ```text
-baga.data
-→ 本地可靠持久化
+SQLite / lsqlite3
+→ 本地关系数据、事务、查询、索引、FTS、缓存 metadata
 
 baga.sync
 → 网络/电源/生命周期下的同步触发和调度
 
-App business merge
-→ 对象身份、冲突、版本历史和业务合并规则
+Automerge core（适用时）
+→ 多设备并发离线编辑、CRDT merge、change history、可选 sync protocol
+
+App business policy
+→ 哪些对象 authoritative、哪些对象 CRDT、版本历史和产品语义
 ```
 
-对于真正有多设备并发离线编辑需求的数据，App / Platform implementation SHOULD 优先评估 Automerge 等成熟 Local-first / CRDT 实现，而不是自行发明通用 CRDT。
+对于真正有多设备并发离线编辑需求的数据，App / Platform implementation SHOULD 优先采用 Automerge core，而不是自行发明通用 CRDT。
 
-但任何具体 CRDT library 都不是 Universal App 必须学习的 API，也不应被机械用于所有数据。
+采用方式可以是：
+
+```text
+完整 core
+只用 document / merge / history
+Automerge binary 存 SQLite BLOB
+只用 Automerge sync protocol
+通过 automerge-c / Rust core 接入
+只用 patch / cursor 等模块
+```
+
+任何具体模块都不应被机械用于所有数据。
+
+例如：
+
+```text
+Reading Position
+→ 简单业务 merge
+
+Feed / Comments / Public Notes
+→ Server authoritative + local cache / SQLite
+
+Book Files
+→ content hash + file transfer
+
+Notes / Life Records / Drafts
+→ 真正并发编辑时 Automerge 候选
+```
 
 长时间任务 SHOULD 支持重试、取消以及睡眠/唤醒后的恢复。
 
@@ -496,33 +575,37 @@ Platform 可以在内部复用 KOReader 等成熟 Reader 已有的不同格式�
 
 # 15. 依赖与成熟实现复用规则
 
-为了避免早期生态出现 dependency hell，Universal App v0.4 SHOULD 默认自包含应用代码与资源。
+为了避免 dependency hell，Universal App SHOULD 默认自包含应用代码与资源，但 **Baga Lua Profile 正式 Standard Libraries 由 Platform 提供，不要求每个 IKP 重复打包。**
 
-第一阶段：
+App MAY：
 
-- App MAY 使用 Baga Ink Platform 标准库；
-- App MAY 将纯 Lua 第三方库打入自己的 IKP；
-- App MUST 不依赖用户另行安装的随机 native library；
-- App MUST 不依赖某个厂商系统中“碰巧存在”的动态库；
-- 跨 App shared dependency 暂不作为第一阶段核心能力。
+- 使用 Baga Ink Platform 标准库；
+- 直接使用 Baga Lua Profile Standard Libraries，例如 `lsqlite3`；
+- 将纯 Lua 第三方库打入自己的 IKP。
+
+App MUST NOT：
+
+- 依赖用户另行安装的随机 native library；
+- 依赖某个厂商系统中“碰巧存在”的动态库；
+- 自带另一套 SQLite runtime 与 Platform 的 SQLite 冲突；
+- 把 native shared dependency 作为 Universal App 的随机外部前提。
 
 这里的“自包含”指**应用代码与应用资源自包含**，不代表 App 自带一套平台核心、Lua 解释器、设备适配层或系统桥。
 
-同时：
-
-> **Universal App 不直接依赖某个 native library，并不意味着 Baga Ink Platform 不能大量复用成熟 native/open-source 实现。**
-
-例如 Platform MAY 在内部使用：
+成熟组件采用原则：
 
 ```text
-KOReader / koreader-base
-SQLite
-Automerge
-FBInk
-Vendor SDK
-```
+SQLite / lsqlite3
+→ Stable Standard Library
 
-只要 App 面对的仍是稳定 `baga.*`。
+Automerge core
+→ Adopted Local-first Foundation
+→ 可整用 / 拆用
+→ Lua developer binding 尚未冻结
+
+KOReader / FBInk / Vendor SDK
+→ Platform / Adapter implementation detail
+```
 
 ---
 
@@ -538,6 +621,8 @@ Vendor SDK
 - 对来自网络、文件和用户输入的数据做基本验证。
 
 Platform MAY 因安全原因终止违反规则的 App。
+
+`lsqlite3` 只能打开 App 被授权的路径；实现必须防止通过数据库路径或 loadable extension 绕过 sandbox。
 
 ---
 
@@ -578,15 +663,16 @@ Experimental
 
 1. 使用 `.ikp`；
 2. 使用 Baga Lua Profile；
-3. 只使用公开 Baga Ink API；
-4. 不携带设备相关 native binary 作为正常应用逻辑；
-5. 不携带自己的 Lua 解释器、设备适配层或系统桥；
-6. 不调用 raw shell / vendor SDK；
-7. 使用 Capability Model；
-8. 权限完整声明；
-9. 使用标准生命周期；
-10. 通过 Compatibility Test；
-11. 至少在 Kindle 与 Android E-Paper 两个平台家族的参考实现上通过验证，才可使用跨平台 Universal 宣传。
+3. 只使用公开 Baga Ink API 获取设备 / OS / Platform 能力；
+4. 允许使用 Baga Lua Profile 正式 Standard Libraries；
+5. 不携带设备相关 native binary 作为正常应用逻辑；
+6. 不携带自己的 Lua 解释器、设备适配层或系统桥；
+7. 不调用 raw shell / vendor SDK；
+8. 使用 Capability Model；
+9. 权限完整声明；
+10. 使用标准生命周期；
+11. 通过 Compatibility Test；
+12. 至少在 Kindle 与 Android E-Paper 两个平台家族的参考实现上通过验证，才可使用跨平台 Universal 宣传。
 
 ---
 
@@ -597,14 +683,16 @@ Experimental
 - 任意 Shell；
 - 任意 Java / JNI bridge；
 - 自定义 Kernel / Driver；
-- 跨 App 共享 native dependency；
+- 随机跨 App 共享 native dependency；
 - Vendor-specific API 直接调用；
 - WebView / Chromium 作为平台默认应用执行方式；
 - 每个 App 自己实现系统级更新机制；
 - 每个 App 自带另一套 Lua 解释器或设备兼容代码；
-- 每个 App 自己实现一套 Reader/数据库/通用 CRDT 只是为了绕过 Platform API。
+- 每个 App 自带冲突的 SQLite runtime；
+- 自研 SQLite-like KV/Collection API 替代成熟 SQLite；
+- 自研通用 CRDT 仅为了替代 Automerge 这类成熟基础。
 
-这些能力如未来需要，应位于受控扩展层或 Platform 实现层，而不是侵蚀 Universal App 边界。
+这些能力如未来需要，应位于受控扩展层、Standard Library 或 Platform 实现层，而不是侵蚀 Universal App 边界。
 
 ---
 
@@ -614,19 +702,25 @@ LifeBook 是第一批 Reference App，用于验证 Baga Ink 标准能否真正�
 
 LifeBook MUST 遵循与第三方应用相同的核心规则，不能因为它是官方旗舰 App 就大量使用私有捷径，否则 Baga Ink 标准无法被真实验证。
 
+LifeBook：
+
+- 设备能力只通过 `baga.*`；
+- 结构化本地关系数据直接使用 `lsqlite3`；
+- Reader 使用 `baga.reader`；
+- 真正并发离线编辑场景优先采用 Automerge core，而不是自研 CRDT；
+- 不需要额外通用中间层。
+
 允许 LifeBook 在早期存在少量内部实验接口，但这些接口：
 
 - MUST 明确标记为 internal / experimental；
 - MUST 不被第三方依赖；
-- 成熟后要么进入正式 Baga Ink API，要么删除。
-
-LifeBook 本身不依赖额外通用中间层；它直接基于 Baga Ink Platform 已有的 Platform Core、API 与可复用组件实现。
+- 成熟后要么进入正式 Baga Ink API / Standard Library，要么删除。
 
 ---
 
 # 22. 最终目标
 
-Baga Ink App Standard 的目标不是限制创造力，而是把跨设备最痛苦、最容易重复造轮子的部分收敛到平台，并让平台内部最大化复用成熟实现。
+Baga Ink App Standard 的目标不是限制创造力，而是把跨设备最痛苦、最容易重复造轮子的部分收敛到平台，并让成熟通用软件能力直接复用成熟生态。
 
 开发者应该把时间花在：
 
@@ -650,6 +744,7 @@ iReader private SDK
 Android vendor differences
 不同设备的安装脚本
 文件拼接式“数据库”
+Baga 自研数据库抽象
 每种书籍格式的定位算法
 自研通用 CRDT
 ```
