@@ -1,6 +1,6 @@
 # Contributing to Baga Ink
 
-Thanks for contributing to Baga Ink. The project is designed for long-term collaboration across device vendors, operating systems, languages, and human/AI contributors.
+Thanks for contributing to Baga Ink. The project is designed for long-term collaboration across device vendors, operating systems, countries, human languages, and human/AI contributors.
 
 **简体中文:** [`CONTRIBUTING.zh-CN.md`](CONTRIBUTING.zh-CN.md)
 
@@ -8,35 +8,31 @@ Thanks for contributing to Baga Ink. The project is designed for long-term colla
 
 Read:
 
-1. [`AGENTS.md`](AGENTS.md)
-2. [`docs/README.md`](docs/README.md)
-3. the relevant Standards / Design / Reference App documents for your work
+1. [`README.md`](README.md)
+2. [`AGENTS.md`](AGENTS.md) if you are an AI/automation contributor
+3. [`docs/en/00_baga-ink-documentation-index.md`](docs/en/00_baga-ink-documentation-index.md)
+4. the governing Standard / Design / Reference App / Plan for your work
 
-During the documentation migration, use [`docs/localization/catalog.json`](docs/localization/catalog.json) to resolve the current location of a public document.
+Use [`docs/localization/catalog.json`](docs/localization/catalog.json) to map stable public Document IDs to maintained locale paths.
 
-## Branch and PR workflow
+## Branch / PR workflow
 
-`main` is protected. Work should follow:
+`main` is protected:
 
 ```text
 main
-  ↓
-short-lived feature/task branch
-  ↓
-implementation + tests + documentation
-  ↓
-Pull Request
-  ↓
-required CI checks
-  ↓
-merge to main
+→ short-lived feature/task branch
+→ implementation + tests + docs
+→ Pull Request
+→ required CI checks
+→ merge main
 ```
 
 Do not use permanent feature branches as project memory.
 
-## Documentation languages
+## Public documentation languages
 
-Public long-lived prose is localized under:
+Public long-lived prose exists only under:
 
 ```text
 docs/en/
@@ -45,65 +41,31 @@ docs/zh-CN/
 
 Public categories are Standards, Design, Reference Apps, Governance, and Status.
 
-English filenames use:
+English filenames:
 
 ```text
 NN_lowercase-kebab-case-name.md
 ```
 
-Simplified Chinese filenames use:
+Simplified Chinese filenames:
 
 ```text
 NN_中文名称.md
 ```
 
-Do not add new public docs to the legacy mixed-language directories.
+Do not create legacy mixed-language public directories or ad-hoc locale layouts.
 
-Engineering plans under `docs/plans/` are working material and are not required to duplicate every Task or AI execution prompt across languages.
+Engineering plans under `docs/plans/` are working material and are not required to duplicate every Task / AI Execution Prompt across locales.
 
-## Translations
-
-The repository homepage is English by default. Every actively maintained README translation is registered in:
-
-```text
-docs/localization/readme-languages.json
-```
-
-Current convention:
-
-```text
-README.md           English / default
-README.zh-CN.md     Simplified Chinese
-README.ja.md        future Japanese example
-README.de.md        future German example
-README.fr.md        future French example
-```
-
-When adding a maintained README language:
-
-1. add the locale to `docs/localization/readme-languages.json`;
-2. create the corresponding `README.<locale>.md`;
-3. update the managed language-switch block in every current README;
-4. if the language also gains full public technical documentation, update the localization governance/catalog rather than inventing a new directory convention;
-5. run `python3 tools/check_readme_languages.py` and `python3 tools/check_docs_i18n.py`.
-
-A translation is another edition of the same project documentation, **not another Baga protocol or architecture**. Preserve canonical API names, identifiers, package names, error codes, schema keys, and terminology defined by `docs/localization/terminology.json`.
-
-## Code and machine interfaces
+## Code / machine-interface language
 
 Use English for source identifiers, comments/docstrings, public API names, schema keys/IDs, machine error codes, CLI commands/flags, test names, dependency manifests, and commit subjects.
 
 Do not translate stable technical identifiers into incompatible names.
 
-## Licensing contributions
-
-Baga-authored material is accepted under the repository's Apache-2.0 terms unless a narrower directory/file policy explicitly applies. By intentionally submitting a contribution for inclusion in the project, you agree that it may be distributed under the applicable repository license terms.
-
-Do not copy third-party code into Baga without preserving its upstream license/provenance. GPL/AGPL or otherwise restrictively licensed dependencies require an explicit integration and distribution review. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-
 ## Required checks
 
-Before submitting documentation/plan changes, run as applicable:
+As applicable:
 
 ```bash
 python3 tools/check_docs_i18n.py
@@ -111,24 +73,61 @@ python3 tools/check_readme_languages.py
 python3 tools/check_platform_port_plans.py
 ```
 
-For new public localized documents, prefer:
+Create new public localized docs with:
 
 ```bash
 python3 tools/new_localized_doc.py ...
 ```
 
-For Platform Port Task / execution prompt scaffolding, prefer:
+Create Platform Port Task / Execution Prompt structures with:
 
 ```bash
 python3 tools/new_platform_port_task.py ...
 ```
 
-Do not weaken a validator merely to make an invalid structure pass.
+Do not weaken validators merely to make invalid structure pass.
 
 ## Architecture changes
 
-If implementation evidence requires changing an approved Standard, Design, or Architecture Freeze, update the governing document first (or in the same reviewed change) rather than silently changing the architecture in code.
+If implementation evidence requires changing an approved Standard, Design, or Architecture Freeze, update the governing decision first or in the same reviewed PR. Do not silently change architecture only in code or an execution prompt.
+
+## License / provenance
+
+Baga-authored material defaults to Apache License 2.0 unless a file/directory says otherwise.
+
+Third-party dependencies retain their upstream licenses. Contributions that add or change a dependency must record enough provenance to understand:
+
+```text
+project / source
+version or commit
+license
+where it is used
+whether code is bundled / modified / linked / invoked externally
+required notices or source obligations
+```
+
+See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+## Translations
+
+The root README language switch is governed by:
+
+```text
+docs/localization/readme-languages.json
+```
+
+To add a new maintained locale:
+
+1. propose the locale through documentation governance;
+2. identify maintenance/review ownership;
+3. add the locale tree and terminology guidance as needed;
+4. register the README translation if provided;
+5. update all managed language-switch blocks;
+6. extend localization CI/registry rules;
+7. do not create an ad-hoc language directory.
+
+A translation is an edition of the same logical document, not permission to create a different protocol or architecture.
 
 ## Completion
 
-A feature is not complete only because it compiles. Run the relevant tests, record device/conformance evidence where required, and update the current Project Status when a meaningful milestone changes.
+A feature is not complete only because it compiles. Run relevant tests, record real-device/conformance evidence where required, and update Project Status when a meaningful milestone changes.
