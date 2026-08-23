@@ -16,12 +16,69 @@ If a non-`main` branch exists and its content is already merged, treat it as dis
 
 Before making architecture or implementation decisions, read:
 
-1. `docs/00_项目文档入口_Baga-Ink-Documentation-Index.md`
-2. `docs/status/00_当前项目状态_Baga-Ink-Project-Status.md`
-3. `docs/standards/00_规范总览_Baga-Ink-Standards-Index.md`
-4. `docs/governance/00_开发治理_Baga-Ink-Development-Governance.md`
+1. `docs/README.md`
+2. `docs/en/00_baga-ink-documentation-index.md` or `docs/zh-CN/00_项目文档入口.md`
+3. `docs/localization/catalog.json`
+4. the current Status / Standards / Governance documents relevant to the task
+5. the specific Design / Reference App / Plan relevant to the task
 
-Then read the specific standard/design/plan/reference document relevant to the task.
+During the documentation internationalization migration, some public documents still live in the cataloged legacy paths under `docs/standards/`, `docs/design/`, `docs/reference-apps/`, `docs/governance/`, and `docs/status/`. Use `docs/localization/catalog.json` to resolve the current path. Do not invent a new path and do not treat translation-pending material as a completed English Standard.
+
+### Public documentation internationalization hard gate
+
+Before creating, renaming, moving, translating, or editing public long-lived documentation, MUST read:
+
+```text
+docs/en/governance/01_documentation-internationalization-policy.md
+```
+
+or its Simplified Chinese counterpart:
+
+```text
+docs/zh-CN/governance/01_文档国际化与本地化规范.md
+```
+
+Public localized categories are:
+
+```text
+standards/
+design/
+reference-apps/
+governance/
+status/
+```
+
+The final public structure is:
+
+```text
+docs/en/<category>/
+docs/zh-CN/<category>/
+```
+
+Hard rules:
+
+- Do not create new public documents in the legacy mixed-language directories `docs/standards/`, `docs/design/`, `docs/reference-apps/`, `docs/governance/`, or `docs/status/`. They are migration-only.
+- Do not invent `english/`, `chinese/`, `cn/`, `zh/`, per-Standard language subfolders, or other locale layouts.
+- English public files MUST use `NN_lowercase-kebab-case-name.md`.
+- Simplified Chinese public files MUST use `NN_中文名称.md`; stable technical identities such as `Baga Ink`, `IKP`, `API`, `SDK`, `Kindle`, `KOReader`, `FBInk`, `SQLite`, and `Automerge` may remain in English.
+- English and Chinese counterparts are editions of one document identity, not separate protocols.
+- Once a catalog entry is `current`, a semantic change SHOULD update both maintained locales in the same PR. If synchronization cannot be completed, the catalog must explicitly mark the counterpart pending/stale; do not silently drift.
+- Machine-readable specs, schemas, vectors, code, tests, API identifiers, error codes, CLI flags, source identifiers, code comments/docstrings, and commit subjects remain English/language-neutral and are not duplicated by locale.
+- `docs/plans/` is an engineering work area and is not required to duplicate every Task Design / AI Execution Prompt across languages. Stable external-facing decisions must be promoted back into localized public docs.
+
+When repository command execution is available, new public localized documents MUST be scaffolded with:
+
+```text
+python3 tools/new_localized_doc.py <category> <NN> <中文名称> <english-kebab-name> <document-id>
+```
+
+Before claiming documentation structure work complete, MUST run:
+
+```text
+python3 tools/check_docs_i18n.py
+```
+
+Do not weaken the guard, add ad-hoc exceptions, or edit the localization catalog merely to make an invalid layout pass.
 
 ### Device Adapter / OEM port hard gate
 
@@ -35,11 +92,13 @@ Before any work involving:
 - Adapter IDL / Codegen / SDK / Mock Adapter;
 - Adapter Contract Tests or BICTS adapter integration;
 
-MUST read and follow:
+MUST read and follow the current catalog-resolved editions of:
 
-1. `docs/standards/07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`
-2. the relevant family standard such as `docs/standards/11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md` or `12_Android墨水屏适配规范_Baga-Ink-Android-E-Paper-Adapter.md`
-3. `docs/design/02_设备适配器可执行契约与SDK设计_Baga-Ink-Device-Adapter-Executable-Contract-and-SDK-Design.md` when implementing machine IDL/SDK/codegen/mock infrastructure.
+1. Standard 07 — Baga Ink Device Adapter Contract
+2. the relevant family standard such as Standard 11 Kindle Adapter or Standard 12 Android E-Paper Adapter
+3. Design 02 — Device Adapter Executable Contract and SDK Design when implementing machine IDL/SDK/codegen/mock infrastructure
+
+During migration these currently resolve to the legacy Chinese files listed in `docs/localization/catalog.json`; after migration use the localized `docs/en/` or `docs/zh-CN/` editions.
 
 The Device Adapter Contract defines **what a device port must provide**, not that Baga must reimplement existing OS/vendor/homebrew/open-source capabilities. Prefer mature existing implementations and keep device-family Adapters thin.
 
@@ -56,11 +115,9 @@ Before any work involving:
 - Kindle native build target / ABI decisions;
 - LifeBook (`lifebook.ikp`) execution, install, update, launch or Kindle-specific integration;
 
-MUST also read and follow:
+MUST also read the current catalog-resolved edition of Reference App 03 — Kindle Implementation Architecture Freeze.
 
-`docs/reference-apps/03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md`
-
-This Kindle Architecture Freeze is subordinate to `docs/standards/`, but authoritative over older Kindle reference/design notes and implementation prototypes.
+This Kindle Architecture Freeze is subordinate to Standards, but authoritative over older Kindle reference/design notes and implementation prototypes.
 
 Do not silently change a frozen Kindle decision in code. If evidence requires a change, update the architecture decision/freeze first, then code and tests.
 
@@ -145,13 +202,13 @@ They must not be used to preserve:
 - hidden implementation requirements;
 - AI handoff context.
 
-Those belong in numbered documents under `docs/` and in code/tests on `main`.
+Those belong in governed documentation and in code/tests on `main`.
 
 ## 4. Project Terminology
 
 Baga Ink intentionally uses a lightweight platform architecture.
 
-Do not introduce a separate heavyweight execution-layer product concept. Use the established terminology from the standards, including:
+Do not introduce a separate heavyweight execution-layer product concept. Use the established terminology from the Standards, including:
 
 - Baga Ink Platform
 - Baga Ink Platform Core
@@ -175,10 +232,8 @@ For device ports, Adapter documentation or compilation alone is not enough: rele
 
 For any change under `docs/plans/platform-ports/`, `python3 tools/check_platform_port_plans.py` and the Platform Port Plan Guard CI are mandatory completion gates.
 
+For public documentation/internationalization changes, `python3 tools/check_docs_i18n.py` is also a mandatory completion gate.
+
 ## 6. Updating Project State
 
-When a meaningful milestone is completed, update:
-
-`docs/status/00_当前项目状态_Baga-Ink-Project-Status.md`
-
-so the next human or AI can understand the repository without reconstructing history from branches or conversations.
+When a meaningful milestone is completed, update the current catalog-resolved Project Status document so the next human or AI can understand the repository without reconstructing history from branches or conversations.
