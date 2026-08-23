@@ -1,50 +1,29 @@
 # Baga Ink 文档国际化迁移计划 / Documentation Internationalization Migration Plan
 
 > **文档级别：Implementation Plan / 文档基础设施迁移计划**  
-> **状态：Plan Baseline v0.4**  
+> **状态：Plan Baseline v0.5**  
 > **日期：2026-08-23**  
 > **上位治理：`docs/en/governance/01_documentation-internationalization-policy.md` / `docs/zh-CN/governance/01_文档国际化与本地化规范.md`**
 
 ## 0. Goal
 
-把早期以中文为主、文件名中英混合的公共文档体系迁移为：
+把早期中文为主、文件名中英混合的 Public Docs 迁移成稳定的：
 
 ```text
 docs/en/
 docs/zh-CN/
 ```
 
-同时保证：
-
-- Standards / Design / Reference Apps / Governance / Status 形成稳定国际化入口；
-- 中英文属于同一 Document Identity，不形成两套协议；
-- `docs/plans/` 不复制几千份 Task / AI Execution Prompt；
-- Machine Spec、Reference Implementation、Tests、API / Schema / Code 保持英文或语言无关；
-- 迁移不改变已批准的协议和架构语义；
-- 完成迁移后删除 Legacy Public Trees，并让 CI 禁止它们重新出现。
+并保证两种语言对应同一 Document Identity；Machine Spec / Code / Tests 不按语言分叉；海量工程 Task / Execution Prompt 不强制全文翻译。
 
 ---
 
-## 1. Final target structure
+## 1. Final structure
 
 ```text
 docs/
-├── README.md
-├── README.zh-CN.md
-├── en/
-│   ├── 00_baga-ink-documentation-index.md
-│   ├── standards/
-│   ├── design/
-│   ├── reference-apps/
-│   ├── governance/
-│   └── status/
-├── zh-CN/
-│   ├── 00_项目文档入口.md
-│   ├── standards/
-│   ├── design/
-│   ├── reference-apps/
-│   ├── governance/
-│   └── status/
+├── en/{standards,design,reference-apps,governance,status}/
+├── zh-CN/{standards,design,reference-apps,governance,status}/
 ├── plans/
 └── localization/
     ├── catalog.json
@@ -53,7 +32,7 @@ docs/
     └── readme-languages.json
 ```
 
-最终删除：
+最终删除旧：
 
 ```text
 docs/standards/
@@ -66,129 +45,109 @@ docs/00_项目文档入口_Baga-Ink-Documentation-Index.md
 
 ---
 
-## 2. Naming rules
+## 2. Naming
 
-English public docs:
+English:
 
 ```text
 NN_lowercase-kebab-case-name.md
 ```
 
-Simplified Chinese public docs:
+Simplified Chinese:
 
 ```text
 NN_中文名称.md
 ```
 
-同一 Category 的 Counterpart MUST 使用同一个稳定 `NN` / Document ID。
+Counterparts MUST use the same stable number / Document ID.
 
-`docs/plans/platform-ports/` 保持独立的四位 Task / Prompt 编号规则。
+`docs/plans/platform-ports/` keeps the separate four-digit bilingual task/prompt rule.
 
 ---
 
-## 3. Completed foundation — M0
+## 3. Completed milestones
 
-已完成：
+### M0 — Foundation — COMPLETE
 
 ```text
-README.md / README.zh-CN.md
-CONTRIBUTING.md / CONTRIBUTING.zh-CN.md
-LICENSE / NOTICE / THIRD_PARTY_NOTICES.md
-
-docs/en/ + docs/zh-CN/
-docs/localization/catalog.json
-docs/localization/terminology.json
-docs/localization/legacy-lock.json
-docs/localization/readme-languages.json
-
-tools/check_docs_i18n.py
-tools/check_readme_languages.py
-tools/new_localized_doc.py
-
-AGENTS hard gate
+README / CONTRIBUTING locale model
+Apache-2.0 / NOTICE / third-party boundary
+docs/en + docs/zh-CN
+catalog / terminology / legacy lock / README locale registry
+scaffolders + validators
+AGENTS hard gates
 Repository Documentation Guard
-GitHub main Ruleset / Required Check
+GitHub main Ruleset / required check
 ```
 
-Apache-2.0 是 Baga 自研内容默认许可证；第三方依赖保持各自上游许可证。
+### M1-A — Governance + Status + Index — COMPLETE
 
----
-
-## 4. M1 — Public working editions
-
-每个迁移批次必须：
-
-1. 保留已批准语义；
-2. 中文版不强行翻译 Canonical Technical Identity；
-3. 英文版必须完整可独立阅读，不允许空 Stub；
-4. 保留 `MUST` / `SHOULD` / `MAY`、API Identifier、Field Name、Error Code、Version、Package Name；
-5. 更新 Catalog / Documentation Index / Status；
-6. 通过 Documentation Guard 与现有 Conformance CI；
-7. 在旧引用仍存在时，Legacy File 只能保持 hash-locked 兼容入口，不得继续原位演进。
-
-### M1-A — Governance + Status + Documentation Index — COMPLETE
-
-```text
-docs/en/governance/00_baga-ink-development-governance.md
-docs/zh-CN/governance/00_开发治理.md
-
-docs/en/status/00_baga-ink-project-status.md
-docs/zh-CN/status/00_当前项目状态.md
-
-docs/en/00_baga-ink-documentation-index.md
-docs/zh-CN/00_项目文档入口.md
-```
+Maintained bilingual pairs exist for Development Governance, Documentation i18n Policy, Project Status, and Documentation Index.
 
 ### M1-B1 — Standards 00–06 — COMPLETE
 
 ```text
-00 Standards Index
-01 Platform Strategy / Architecture
-02 App Standard
-03 API Specification
-04 Capability Registry
-05 Permission Model
-06 IKP Package Specification
+Standards Index
+Platform Strategy / Architecture
+App Standard
+API Specification
+Capability Registry
+Permission Model
+IKP Package Specification
 ```
 
 ### M1-B2 — Standards 07–13 — COMPLETE
 
 ```text
-07 Device Adapter Contract
-08 Compatibility Standard
-09 UI Specification
-10 BICTS
-11 Kindle Device Adapter
-12 Android E-Paper Adapter
-13 Standard Libraries / Adopted Components
+Device Adapter Contract
+Compatibility Standard
+UI Specification
+BICTS
+Kindle Device Adapter
+Android E-Paper Adapter
+Standard Libraries / Adopted Components
 ```
 
-这意味着国际开发者现在已经可以完整阅读 Baga 的 App / API / IKP / Device Porting / Compatibility / Kindle / Android 核心标准。
-
-Catalog 中 Standards `00–13` 均为 `current`。
-
-### M1-C — Standards 20–28 — NEXT
+### M1-C — Standards 20–28 — COMPLETE
 
 ```text
-20 Market / Distribution Architecture
-21 Publisher Identity / App Ownership
-22 IKP Signing / Key Lifecycle
-23 Repository Metadata / Index Protocol
-24 Publishing / Review / Version Policy
-25 Update / Rollback / Revocation
-26 Distribution Client / Offline Transfer
-27 Transparency / Security Audit
-28 Catalog / App Discovery
+Market and Distribution Architecture
+Publisher Identity and App Ownership
+IKP Signing and Key Lifecycle
+Repository Metadata and Index Protocol
+App Publishing, Review and Version Policy
+Update, Rollback and Revocation Protocol
+Distribution Client and Offline Transfer Protocol
+Transparency and Security Audit Standard
+Catalog and App Discovery Specification
 ```
 
-### M1-D — Design — PENDING
+All Standards 00–13 and 20–28 now have full maintained English and Simplified Chinese editions and Catalog status `current`.
+
+---
+
+## 4. Next — M1-D Design
+
+Migrate and fully localize:
 
 ```text
 01 Executable Specification Design
 02 Device Adapter Executable Contract / SDK Design
 ```
 
-### M1-E — Reference Apps — PENDING
+Targets:
+
+```text
+docs/en/design/01_baga-ink-executable-specification-design.md
+docs/zh-CN/design/01_规范可执行化设计.md
+
+docs/en/design/02_baga-ink-device-adapter-executable-contract-and-sdk-design.md
+docs/zh-CN/design/02_设备适配器可执行契约与SDK设计.md
+```
+
+---
+
+## 5. Then — M1-E Reference Apps
 
 ```text
 01 LifeBook Reference App
@@ -197,11 +156,27 @@ Catalog 中 Standards `00–13` 均为 `current`。
 99 Superseded compatibility document
 ```
 
+The Kindle Architecture Freeze is especially important because international Kindle contributors must be able to read the same frozen implementation decisions as Chinese maintainers.
+
 ---
 
-## 5. Pair synchronization
+## 6. M4 — Remove Legacy Migration Zone
 
-一旦 Catalog Entry 为 `current`：
+After all maintained public pairs exist and important references are migrated:
+
+1. update AGENTS / Status / Index / Plans to localized paths;
+2. set every Catalog `legacy_path` to `null`;
+3. delete old mixed-language public files/directories;
+4. remove/retire `legacy-lock.json`;
+5. change `tools/check_docs_i18n.py` from legacy-lock mode to **forbid legacy public directories entirely**;
+6. run Repository Documentation Guard + all existing Conformance CI;
+7. merge only if green.
+
+---
+
+## 7. Pair synchronization rule
+
+For a Catalog Entry marked `current`:
 
 ```text
 zh-CN semantic change
@@ -209,104 +184,40 @@ zh-CN semantic change
 English semantic change
 ```
 
-SHOULD 在同一个 PR 中同步。
-
-后续 Guard 要逐步增加：
-
-```text
-pair identity check
-same category/number check
-translation state check
-stale counterpart detection
-broken-link detection
-public terminology lint where practical
-```
+SHOULD occur in the same reviewed PR. A language edition cannot silently fork Architecture, Requirement, API Contract, Permission, Compatibility, Signing, or Security semantics.
 
 ---
 
-## 6. M4 — Remove Legacy Migration Zone
+## 8. Kindle engineering-plan exception
 
-只有当所有公共文档都已有正式 Localized Pair、重要引用都迁移、Catalog 状态明确、CI 通过，才删除 Legacy Trees。
+`docs/plans/platform-ports/kindle/` remains operational engineering material and does not receive full locale mirroring.
 
-最终删除：
-
-```text
-docs/standards/
-docs/design/
-docs/reference-apps/
-docs/governance/
-docs/status/
-docs/00_项目文档入口_Baga-Ink-Documentation-Index.md
-```
-
-之后 `tools/check_docs_i18n.py` MUST 从“锁定 Legacy”切换为：
-
-> **Legacy public directories MUST NOT exist.**
-
----
-
-## 7. Kindle engineering-plan exception
-
-`docs/plans/platform-ports/kindle/` 不做全文多语言镜像。
-
-继续采用：
+It keeps:
 
 ```text
 NNNN_中文名_English-Name.md
 ```
 
-正文允许中文优先，因为这里会出现数百 Task / 数千 Execution Prompt。
-
-但：
-
-```text
-外部实现者需要依赖的稳定结论
-      ↓
-MUST 回写 Public Localized Docs
-```
-
----
-
-## 8. Root multi-language entry model
-
-当前：
-
-```text
-README.md              English default
-README.zh-CN.md        Simplified Chinese
-CONTRIBUTING.md        English default
-CONTRIBUTING.zh-CN.md  Simplified Chinese
-AGENTS.md              English AI/Automation entry
-```
-
-语言注册：
-
-```text
-docs/localization/readme-languages.json
-```
-
-未来可以按治理流程增加 `README.ja.md`、`README.de.md`、`README.fr.md` 等；禁止自行发明另一套语言目录结构。
+Stable facts required by external implementers MUST be promoted into localized Public Docs.
 
 ---
 
 ## 9. Completion Gate
 
-Public Documentation 国际化最终完成条件：
-
 ```text
 [x] locale tree stable
 [x] filename rules enforced
-[x] README locale registry + CI
+[x] README language registry + CI
+[x] Governance / Status localized
 [x] Standards 00–13 localized
-[ ] Standards 20–28 localized
+[x] Standards 20–28 localized
 [ ] Design localized
 [ ] Reference Apps localized
-[ ] all current pairs synchronized/reviewed
 [ ] important old-path references migrated
-[ ] legacy public directories removed
-[ ] CI forbids legacy public directories
+[ ] Legacy Public Trees removed
+[ ] CI forbids Legacy Public Trees
 ```
 
-最终目标：
+Final goal:
 
-> **中国维护者和国际开发者可以从自己的语言入口理解、实现并审查同一套 Baga Ink Platform，而协议、代码、测试和架构不会因语言不同而分叉。**
+> **A Chinese maintainer and an international developer can understand, implement, review, and extend the same Baga Ink Platform from their own language entry point without creating protocol or architecture forks.**
