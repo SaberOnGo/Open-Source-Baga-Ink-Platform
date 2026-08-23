@@ -1,7 +1,7 @@
 # Baga Ink 项目文档入口 / Baga Ink Documentation Index
 
 > **文档级别：项目总入口 / Project Documentation Entry Point**  
-> **状态：Living Index v0.1**  
+> **状态：Living Index v0.2**  
 > **日期：2026-08-23**
 
 ---
@@ -57,15 +57,6 @@ docs/governance/00_开发治理_Baga-Ink-Development-Governance.md
 00_当前项目状态_Baga-Ink-Project-Status.md
 ```
 
-该文件回答：
-
-- 当前已经完成什么；
-- 哪些东西只是 Draft；
-- 当前正在做什么；
-- 下一阶段是什么；
-- 哪些测试已经有证据；
-- 哪些关键工作尚未开始。
-
 ---
 
 ## `docs/standards/`
@@ -82,6 +73,18 @@ docs/governance/00_开发治理_Baga-Ink-Development-Governance.md
 
 > **Baga Ink 应该是什么、App/设备/分发系统必须遵守什么。**
 
+当前设备接入最重要的正式入口：
+
+```text
+07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md
+→ Baga Device Adapter Contract
+→ OEM / 第三方设备移植者必须实现什么
+
+11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md
+→ Kindle 如何实现 07
+→ 原则是最大化复用 KOReader / FBInk / Kindle OS/Homebrew 已有成熟能力
+```
+
 标准不是项目进度日志。
 
 ---
@@ -93,6 +96,16 @@ docs/governance/00_开发治理_Baga-Ink-Development-Governance.md
 Design 回答：
 
 > **某个子系统准备怎样实现，以及为什么这样设计。**
+
+当前重要 Design：
+
+```text
+01_规范可执行化_Baga-Ink-Executable-Specification-Design.md
+→ 21–28 分发安全规范如何机器化
+
+02_设备适配器可执行契约与SDK设计_Baga-Ink-Device-Adapter-Executable-Contract-and-SDK-Design.md
+→ Adapter IDL / Codegen / SDK / Mock Adapter / Contract Tests 的实施设计
+```
 
 Design 不取代上位 Standard。
 
@@ -120,13 +133,19 @@ Plan 可以完成后保留作为实施历史，但当前进度必须回写 `docs
 01_LifeBook参考实现_LifeBook-Reference-App.md
 → LifeBook Universal App 高层参考实现
 
+02_LifeBook-Kindle产品行为与外设扩展设计_LifeBook-Kindle-Product-Behavior-and-Accessory-Extension-Design.md
+→ Kindle 低刷新、网络、Audio/Bluetooth、Accessory 等产品行为
+
 03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md
-→ Kindle 代码开工、依赖选型、bootstrap/install、Platform/IKP 与 KOReader/KPM/MRPI 等具体实现的冻结基线
+→ Kindle Client/bootstrap/KPM/MRPI/Platform/IKP/Home Entry 等整体实现冻结
+
+99_旧版LifeBook架构与Kindle兼容实现_LifeBook-Architecture-and-Kindle-Compatibility-Superseded.md
+→ 历史兼容入口，不是当前实现依据
 ```
 
 LifeBook 是 App，不是 Baga Ink Platform。
 
-Kindle 具体实现必须先服从 `docs/standards/`，再服从上述 `03` Kindle Architecture Freeze；不得从历史聊天或已经 superseded 的 Reference 文档恢复旧架构。
+Device Adapter Contract 的权威来源始终是 `docs/standards/07`；Kindle Device Adapter 的权威实现规范是 `docs/standards/11`。`reference-apps/03` 不覆盖这两个标准。
 
 ---
 
@@ -150,6 +169,13 @@ spec/
 
 保存机器可读规范，包括 JSON Schema、测试向量和非法样本。
 
+下一阶段计划增加：
+
+```text
+spec/adapter/
+→ Device Adapter machine-readable Contract / frozen snapshots
+```
+
 ```text
 reference/
 ```
@@ -172,11 +198,56 @@ tests/
 
 ---
 
-# 4. Git 信息的职责
+# 4. 当前设备移植阅读路径
+
+## 新设备 / OEM Adapter
+
+```text
+docs/standards/01
+  ↓
+03 API
+  ↓
+04 Capability
+  ↓
+07 Device Adapter Contract
+  ↓
+10 BICTS
+  ↓
+对应设备家族 11/12/...
+  ↓
+docs/design/02 Adapter executable contract / SDK
+```
+
+## Kindle Platform / Adapter
+
+```text
+07 Device Adapter Contract
+  ↓
+11 Kindle Device Adapter
+  ↓
+reference-apps/03 Kindle Implementation Freeze
+  ↓
+design/02 Adapter SDK Design
+  ↓
+10 Adapter Contract Tests + BICTS
+```
+
+必须保持：
+
+```text
+Device Adapter
+≠ jailbreak/install route
+≠ KPM/MRPI
+≠ Reader/UI framework
+```
+
+---
+
+# 5. Git 信息的职责
 
 Git Commit / Tag / Release 用来保存历史与发布点。
 
-Feature Branch 只用于短期施工隔离，例如：
+Feature Branch 只用于短期施工隔离：
 
 ```text
 创建临时 Branch
@@ -192,7 +263,7 @@ Feature Branch 只用于短期施工隔离，例如：
 
 ---
 
-# 5. AI Handoff 原则
+# 6. AI Handoff 原则
 
 任何 AI 完成重要阶段后，必须确保以下信息已经存在 `main`：
 
@@ -209,7 +280,7 @@ Feature Branch 只用于短期施工隔离，例如：
 
 ---
 
-# 6. 当前最重要入口
+# 7. 当前最重要入口
 
 ```text
 Project status
@@ -217,6 +288,15 @@ Project status
 
 Platform standards
 → docs/standards/00_规范总览_Baga-Ink-Standards-Index.md
+
+Device Adapter Contract
+→ docs/standards/07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md
+
+Kindle Device Adapter
+→ docs/standards/11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md
+
+Device Adapter executable contract / SDK design
+→ docs/design/02_设备适配器可执行契约与SDK设计_Baga-Ink-Device-Adapter-Executable-Contract-and-SDK-Design.md
 
 Development governance
 → docs/governance/00_开发治理_Baga-Ink-Development-Governance.md
