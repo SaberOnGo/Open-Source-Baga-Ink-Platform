@@ -1,103 +1,73 @@
 # Baga Ink 兼容性标准 / Baga Ink Compatibility Standard
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.2**  
-> **日期：2026-08-22**  
+> **状态：Draft v0.3**  
+> **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
-> **配套规范：`04_能力注册表_Baga-Ink-Capability-Registry.md`、`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`、`10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md`**
+> **配套规范：`04_能力注册表_Baga-Ink-Capability-Registry.md`、`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`、`10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
 
 ---
 
 ## 0. 目的
 
-本文档定义：
+本文档定义什么样的设备 / OS / Platform / Adapter 组合可以称为 **Baga Ink Compatible**。
 
-> **什么样的设备、系统组合和 Device Adapter，才可以称为 Baga Ink Compatible。**
+兼容性不能只靠“LifeBook 能启动”，必须同时验证：
 
-Baga Ink 的统一性不能靠“看起来能运行”判断，也不能靠设备品牌白名单判断。
-
-兼容性的基础是：
-
-1. Platform Core 能否稳定工作；
-2. Device Adapter 是否正确实现平台要求；
-3. Capability 声明是否真实；
-4. 标准 IKP 是否能按照相同语义运行；
-5. 是否通过 Baga Ink Compatibility Test Suite；
-6. 是否满足数据安全、更新恢复和墨水屏行为要求。
+1. Platform Core；
+2. Device Adapter；
+3. Capability 真实性；
+4. Baga Lua Profile；
+5. 正式 Standard Libraries；
+6. IKP 行为；
+7. BICTS；
+8. 数据安全与更新恢复。
 
 核心原则：
 
-> **不要求所有设备拥有相同硬件，但要求相同 API 在已声明能力范围内具有相同语义。**
+> **硬件可以不同，内部库可以不同，但同一 Baga API / Lua Profile / Standard Library 契约必须成立。**
 
 ---
 
 # 1. 适用对象
 
-本规范适用于：
+适用于 Kindle、Android E-Paper、第三方 Device Adapter、Baga Ink Client / Market 兼容展示，以及未来电子纸平台。
 
-- Kindle 设备上的 Baga Ink Platform；
-- Android E-Paper 设备上的 Baga Ink Platform；
-- 第三方厂商实现的 Baga Ink Device Adapter；
-- Baga Ink Client 的设备识别与兼容状态展示；
-- Baga Ink Market 的设备兼容标签；
-- 后续新增的其他电子纸设备平台。
-
-本规范不要求所有设备拥有触摸、手写、蓝牙、音频、彩色或快速刷新。
-
-这些差异必须通过 Capability Model 表达。
+不要求所有设备具备 Touch / Pen / Color / Audio / Bluetooth；这些通过 Capability 表达。
 
 ---
 
-# 2. 兼容性等级
+# 2. 兼容等级
 
 ## 2.1 Baga Ink Compatible
 
 要求：
 
-- 满足全部 Mandatory Requirements；
-- Device Adapter 通过对应版本 BICTS；
-- 至少通过官方 Universal Reference Apps；
-- 不存在已知用户数据破坏性安装流程；
-- Capability 声明经过验证；
-- Platform 更新和失败恢复满足最低要求。
+- Base Mandatory Requirements 全部满足；
+- Baga Lua Profile 通过对应 BICTS；
+- Stable Standard Libraries 通过对应 BICTS；
+- Adapter / Capability 通过验证；
+- Universal Reference Apps 可运行；
+- 安装/更新无已知高风险数据破坏；
+- Recovery 满足最低要求。
 
-## 2.2 Baga Ink Compatible + Profile
+## 2.2 Compatible + Profile
 
-可附加：
-
-```text
-Touch
-Pen
-Fast Refresh
-Color
-Audio
-Bluetooth
-```
-
-Profile 只表示额外能力，不形成平台分叉。
+可附加 Touch、Pen、Fast Refresh、Color、Audio、Bluetooth 等 Profile；Profile 不形成平台分叉。
 
 ## 2.3 Experimental
 
-可运行 Platform，但尚未达到正式认证要求。
-
-Baga Ink Client MUST 清楚显示实验性支持，不能伪装成正式兼容。
+Platform 可运行但尚未达到正式认证要求。
 
 ## 2.4 Unsupported
 
-存在以下任一情况时应标记 Unsupported：
-
-- Platform 无法可靠安装或启动；
-- 存在高风险数据破坏；
-- 核心 Display / Input / Storage 无法满足基本语义；
-- 必须恢复出厂才能正常工作；
-- 设备或固件已知会导致不可恢复故障；
-- 无法实现最低 API 基线。
+包括无法可靠安装/启动、核心 Display/Input/Storage 无法满足、存在高风险数据破坏、必须恢复出厂、最低 Platform/Lua Profile 基线无法实现等情况。
 
 ---
 
 # 3. Base Compatibility Profile
 
-所有 Compatible 设备必须满足：
+设备必须满足：
 
 ```text
 display.basic
@@ -107,38 +77,43 @@ power.sleep_wake
 platform.lifecycle
 ```
 
-正式语义以 `04_能力注册表_Baga-Ink-Capability-Registry.md` 为准。
+并同时提供当前 Baga Lua Profile 的 Mandatory Standard Libraries。
 
-Base Profile 不要求触摸、音频、Pen、彩色或蓝牙。
+当前 Reference Baseline 包括：
+
+```text
+require("lsqlite3")
++
+符合 13 / BICTS 的 SQLite Profile
+```
+
+SQLite/lsqlite3 不是 Device Capability；它们属于 Lua Profile Standard Library。
+
+Automerge 不属于 Base Mandatory Standard Library：它是 Adopted Foundation，只在实际采用相关功能时测试。
 
 ---
 
 # 4. Platform 可安装与可启动
 
-设备 MUST：
+设备 MUST 可安装 Platform、有用户可理解启动入口、重启后保持状态、能加载标准 IKP，并在 App crash 后恢复可用。
 
-- 能安装 Baga Ink Platform；
-- 从用户可理解入口启动；
-- 重启后保持正确安装状态；
-- 正确加载受支持 IKP；
-- App 崩溃后恢复到可用状态。
-
-安装方式可以因 Kindle / Android 不同，但 App 层语义不能不同。
+安装路径可以不同，App contract 不能不同。
 
 ---
 
 # 5. 用户数据安全
 
-安装、升级、修复流程 MUST：
+安装 / 更新 / 修复 MUST：
 
 - 不删除用户书籍；
 - 不删除用户笔记；
-- 不默认删除用户个人文档；
-- 不要求恢复出厂；
-- 不把清空设备作为正常故障修复方案；
-- 失败时尽量保留原有可工作状态。
+- 不默认删除用户文档；
+- 不恢复出厂；
+- 失败保留上一可工作状态；
+- Platform/App 更新不无故删除 App-private SQLite databases；
+- SQLite migration / rollback 失败不得留下半迁移数据。
 
-任何已知数据破坏风险都会阻止正式 Compatible 标签。
+任何已知 Critical data-loss 阻止 Compatible。
 
 ---
 
@@ -146,70 +121,99 @@ Base Profile 不要求触摸、音频、Pen、彩色或蓝牙。
 
 同一个 Universal IKP：
 
-- MUST 不因设备品牌改变包内容；
-- MUST 不要求 Kindle / Android 各自打不同 IKP；
-- MUST 不要求 App 内含设备私有执行桥；
-- SHOULD 在 Capability 条件相同的设备上呈现相同业务语义。
+- 不因品牌改变包内容；
+- Kindle / Android 不打不同业务包；
+- 不携带设备私有执行桥；
+- 在 Capability 相同时保持相同业务语义；
+- 可以依赖 Platform 正式提供的 Baga Lua Profile Standard Libraries，不需要把它们打进 IKP。
 
 ---
 
-# 7. API 基线
+# 7. API / Lua Profile / Standard Library 基线
 
-设备 MUST 实现对应 Platform 版本声明的 Mandatory API Surface。
+设备 MUST 实现 Platform 版本声明的 Mandatory API Surface 与 Baga Lua Profile。
 
-若某能力无法提供：
+必须区分：
 
-- Adapter MUST 不伪造支持；
-- `baga.device.has()` MUST 返回真实结果；
-- API SHOULD 返回 `not_supported`；
-- Market / Client SHOULD 基于 Capability 阻止不兼容 App 安装。
+```text
+设备/OS能力
+→ baga.* / Capability
+
+成熟通用库
+→ Baga Lua Profile Standard Library
+```
+
+当前 SQLite 基线：
+
+```text
+lsqlite3 API-compatible module
+Platform-managed SQLite runtime
+Pinned version / compile options
+Sandbox-safe file access
+```
+
+设备不得要求 App 回退到已撤销的 `baga.data`。
 
 ---
 
 # 8. Capability Truthfulness
 
-Capability 声明必须真实、稳定、可测试。
+Capability 声明必须真实、稳定、可测。
 
-禁止：
-
-- 因为同系列理论上有某硬件就声明支持；
-- 因厂商宣传页写了某功能就直接声明；
-- 某固件不可用时仍保持 true；
-- 用 true 表示“可能支持”。
-
-如果能力依赖固件版本，Adapter MUST 按实际系统状态报告。
+禁止同系列推断、宣传页代替实测、固件不可用仍 true，以及把 SQLite/Automerge/KOReader 名称注册成 Capability。
 
 ---
 
-# 9. Display Compatibility
+# 9. Storage / SQLite Sandbox Compatibility
 
-Adapter MUST 提供：
-
-- 屏幕尺寸；
-- 可用显示区域；
-- 方向信息；
-- 基本刷新；
-- 支持时的局部刷新；
-- 支持时的快速刷新；
-- Display Mode 到设备实现的映射。
-
-App 使用的语义模式：
+Platform MUST 提供 App sandbox：
 
 ```text
-AUTO
-TEXT
-QUALITY
-FAST
-ANIMATION
+appdata/
+cache/
+documents/
+downloads/
 ```
 
-这些是显示意图，不是硬件 waveform ID。
+对于正式 SQLite Standard Library：
+
+### Android / 强 OS sandbox
+
+可主要依靠 OS app sandbox + Baga private path mapping。
+
+### Kindle / 弱 OS sandbox
+
+必须通过 sandbox-aware SQLite VFS 或等价 I/O confinement 证明 SQLite 无法逃逸当前 App 授权根。
+
+至少覆盖：
+
+```text
+main DB
+ATTACH DB
+journal
+WAL
+SHM
+temporary DB
+URI vfs override
+symlink / canonical path escape
+loadable extension
+```
+
+仅 `resolve_path()` 返回合法路径不等于 SQLite Sandbox 兼容。
 
 ---
 
-# 10. Input Compatibility
+# 10. Display Compatibility
 
-核心语义动作：
+Adapter MUST 提供屏幕尺寸、方向、基本刷新与已声明增强能力。
+
+App 只表达 `AUTO / TEXT / QUALITY / FAST / ANIMATION`，不暴露 waveform ID。
+
+---
+
+# 11. Input Compatibility
+
+核心动作：
 
 ```text
 confirm
@@ -219,243 +223,155 @@ page_next
 page_previous
 ```
 
-设备 MAY 额外提供 touch / pen / keyboard / physical_button。
-
-App 不得依赖 Android keycode 或 Kindle 私有键值。
+设备 MAY 提供 touch / pen / keyboard / physical buttons；App 不依赖平台私有 keycode。
 
 ---
 
-# 11. Storage Compatibility
+# 12. Lifecycle / Power
 
-设备 MUST 支持 Baga Ink App 沙箱。
+必须映射 `start / resume / pause / sleep / wake / stop`。
 
-至少提供：
+已提交 SQLite transaction 必须在正常持久化边界后经 sleep/restart 保持可靠。
+
+Power 请求可以因平台策略被拒绝。
+
+---
+
+# 13. Network Compatibility
+
+网络不是 Base 硬件要求。
+
+声明网络能力时 MUST 正确 online/offline、使用 Baga Network API、处理 sleep/wake/reconnect，并映射 DNS/TLS/timeout。
+
+Automerge sync protocol（若某功能采用）不是网络 Capability 本身。
+
+---
+
+# 14. Reader Compatibility
+
+声明 `reader.open` / `reader.anchor` 时必须通过对应 BICTS。
+
+Reader：
+
+- 不以 EPUB 为固定格式；
+- 可以内部复用 KOReader / MuPDF / CREngine；
+- Anchor 可使用不同格式的成熟原生 locator；
+- App 不解析 Reader private object。
+
+---
+
+# 15. Automerge Compatibility
+
+Automerge core 是 Adopted Local-first Foundation，但不是 Base Compatible 强制组件。
+
+只有实际采用 Automerge 的 Platform/App 功能才运行对应 BICTS：
 
 ```text
-appdata/
-cache/
-documents/
-downloads/
+document / merge
+binary persistence
+history
+sync protocol（若采用）
 ```
 
-Platform / Adapter MUST：
-
-- 防止路径逃逸；
-- 隔离不同 App 私有数据；
-- Platform 更新时保留 App 数据；
-- 正确处理磁盘不足；
-- 返回统一错误码。
+可以整用，也可以拆模块使用；不强制 automerge-repo。
 
 ---
 
-# 12. Lifecycle Compatibility
+# 16. Optional Capability Profiles
 
-设备 MUST 映射：
+典型：Touch→`input.touch`、Pen→`input.pen`、FastRefresh→`display.fast_refresh`、Color→`display.color`、Audio→`audio.output`、Bluetooth→`bluetooth.available`。
 
-```text
-start
-resume
-pause
-sleep
-wake
-stop
-```
-
-Universal App 不得因为 Android Activity 或 Kindle 私有进程模型不同而需要两套业务逻辑。
+声明即必须测试。
 
 ---
 
-# 13. Power Compatibility
+# 17. Performance / Resource Constraints
 
-设备 MUST 至少提供：
+Compatible 不要求相同 CPU/RAM/Storage，但必须稳定运行标准 Reference Apps 与 Mandatory SQLite Profile。
 
-- sleep / wake 状态桥接；
-- 电量读取（可用时）；
-- 充电状态（可用时）；
-- keep-awake 请求的支持/不支持结果。
-
-Platform MAY 根据系统策略、电量与用户设置拒绝请求。
+Automerge 等非 Base 组件如果在低端设备资源过重，可以不启用对应增强功能，不能因此破坏 Base compatibility。
 
 ---
 
-# 14. Network Compatibility
+# 18. Upgrade / Recovery
 
-网络不是 Base Profile 必需硬件。
+正式兼容设备必须支持 staged update / verify / activation / rollback。
 
-设备如果声明网络 Capability，则 MUST：
-
-- 正确报告 online / offline；
-- 通过 Baga Ink Network API 发起受支持请求；
-- 正确处理断网与 sleep/wake；
-- 不要求 App 直接调用 Android 或 Kindle 网络接口。
+App package 与 App-private data/SQLite DB 分离。
 
 ---
 
-# 15. Optional Capability Profiles
+# 19. Security Baseline
 
-Profile 基于 Capability Registry 自动形成。
-
-典型：
-
-```text
-Touch       → input.touch
-Pen         → input.pen
-FastRefresh → display.fast_refresh
-Color       → display.color
-Audio       → audio.output
-Bluetooth   → bluetooth.available
-```
-
-声明某 Profile 必须通过对应 BICTS suite。
-
----
-
-# 16. Performance 与资源约束
-
-Compatible 不要求所有设备拥有相同 CPU、RAM、存储和刷新速度。
-
-但设备必须达到“可稳定运行标准 Reference Apps”的最低可用性。
-
-具体性能阈值 SHOULD 在 Test Profile 中按设备类别定义，而不是按品牌硬编码。
-
----
-
-# 17. Upgrade 与 Recovery
-
-正式兼容设备必须支持安全更新原则：
-
-```text
-Current working version
-        │
-        ▼
-Stage update
-        │
-      Verify
-        │
-   ┌────┴────┐
-Success    Failure
-   │           │
-Switch       Keep old
-```
-
-Platform / Client SHOULD 保留上一已知可用版本，并在升级后重新验证 Capability。
-
----
-
-# 18. Security Baseline
-
-Compatible 设备必须满足：
+Compatible 设备必须：
 
 - IKP 执行前验证；
-- 路径安全检查；
-- App 沙箱隔离；
-- 权限声明检查；
-- 不默认允许 arbitrary shell；
-- 不默认允许 App 直接访问 Vendor API；
-- 正确处理恶意或损坏 IKP；
-- App 崩溃不破坏 Platform 主体。
+- App sandbox；
+- Permission 检查；
+- 禁止 arbitrary shell；
+- 禁止 Vendor API 直接穿透；
+- 禁止 SQLite path/VFS/extension escape；
+- 正确处理恶意/损坏 IKP；
+- App crash 不破坏 Platform。
 
 ---
 
-# 19. BICTS
+# 20. BICTS
 
-正式认证必须基于：
+正式认证必须基于对应版本 BICTS。
 
-> **Baga Ink Compatibility Test Suite (BICTS)**
-
-完整定义见 `10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md`。
-
-测试结果必须可机器读取、可回归、可绑定设备/固件/Adapter/Platform 版本。
-
----
-
-# 20. Reference Apps
-
-Baga Ink SHOULD 维护：
+测试报告绑定：
 
 ```text
-HelloInk
-ListNavigation
-ReaderMini
-StorageProbe
-PermissionProbe
-DisplayProbe
-LifecycleProbe
-LifeBook Reference App
+Device / Firmware
+Platform
+Adapter
+Lua Profile
+SQLite / lsqlite3 baseline
+Compatibility Standard
+BICTS
 ```
-
-单纯逐 API 测试不足以证明真实兼容。
-
-LifeBook 是重要真实场景，但认证规则不能只围绕 LifeBook 私有需求设计。
 
 ---
 
-# 21. Firmware / OS Version 维度
+# 21. Reference Apps
+
+Baga SHOULD 维护小型 Probe 与 LifeBook Reference。
+
+LifeBook 不是唯一认证依据。
+
+Reference Smoke Test 应包含 offline start、SQLite read/write/transaction、Reader（若声明）、sleep/wake、update/recovery。
+
+---
+
+# 22. Firmware / OS 维度
 
 Compatibility 是：
 
-> **Device Model + OS/Firmware Range + Platform Version + Adapter Version**
-
-的组合，而不是只按设备型号判断。
-
-同一型号不同固件可以分别是 Compatible / Experimental / Unsupported。
-
----
-
-# 22. Baga Ink Client 兼容展示
-
-Client SHOULD 对普通用户展示：
-
 ```text
-✓ Baga Ink Compatible
-△ Experimental
-✕ Unsupported
+Device Model
++ OS/Firmware Range
++ Platform Version
++ Adapter Version
++ Lua Profile Version
++ BICTS Version
 ```
 
-并展示附加 Profile。
-
-不应向普通用户暴露复杂 Adapter 内部实现。
+同一型号不同固件可以分别 Compatible / Experimental / Unsupported。
 
 ---
 
-# 23. Market 兼容判断
+# 23. Client / Market 展示
 
-Market 安装判断应基于：
+Client 对普通用户展示 Compatible / Experimental / Unsupported。
 
-```text
-App Manifest
-+ Device Capability Set
-+ Baga Ink API Version
-+ Compatibility Status
-```
-
-而不是型号白名单作为正常机制。
-
-型号黑名单 MAY 仅作为严重缺陷的临时安全措施。
+Market 安装判断基于 Manifest + Capability + API/Profile compatibility + Compatibility Status，而不是普通型号白名单。
 
 ---
 
-# 24. 厂商认证流程
+# 24. Certification Artifact
 
-```text
-1. 实现 Baga Ink Device Adapter
-2. 提交 Device Descriptor
-3. 运行 BICTS
-4. 修复失败项
-5. 运行 Reference Apps
-6. 生成 Compatibility Report
-7. 审核 Capability 声明
-8. 获得 Baga Ink Compatible 标识
-9. 固件更新后执行回归测试
-```
-
-长期目标是从 Baga Ink 主动适配厂商，转为厂商主动适配 Baga Ink Standard。
-
----
-
-# 25. Certification Artifact
-
-每次正式认证 SHOULD 生成机器可读报告，例如：
+报告 SHOULD 包括：
 
 ```json
 {
@@ -464,56 +380,20 @@ App Manifest
   "firmware_range": ">=x <y",
   "baga_platform": "0.x",
   "adapter_version": "0.x",
-  "compatibility_standard": "0.2",
+  "lua_profile": "0.x",
+  "sqlite_version": "...",
+  "lsqlite3_version": "...",
+  "compatibility_standard": "0.3",
+  "bicts": "0.4",
   "status": "compatible",
-  "profiles": ["touch", "fast_refresh"],
-  "test_suite": "0.1",
-  "tested_at": "2026-08-22"
+  "profiles": []
 }
 ```
 
 ---
 
-# 26. 标准版本化
+# 25. 核心原则
 
-设备认证必须明确基于哪个版本：
+> **Baga Ink Compatible 意味着开发者可以相信稳定的 `baga.*`、Baga Lua Profile 与正式 Standard Libraries，而不用重新学习该设备的私有实现。**
 
-```text
-Baga Ink Compatibility Standard
-Baga Ink API
-Baga Ink Device Adapter Specification
-BICTS
-```
-
-新标准版本不得无理由让已工作的旧设备全部失效。
-
-平台 SHOULD 尽量保持存量设备价值。
-
----
-
-# 27. 顶层原则总结
-
-```text
-不同硬件
-不同 OS
-不同 Vendor SDK
-不同输入与显示能力
-        │
-        ▼
-Baga Ink Device Adapter
-        │
-        ▼
-统一 Capability 语义
-统一 Baga Ink API
-统一 IKP 行为
-        │
-        ▼
-BICTS
-        │
-        ▼
-Baga Ink Compatible
-```
-
-最终，一个设备被称为 **Baga Ink Compatible**，意味着：
-
-> **第三方开发者可以相信 Baga Ink 标准，而不用重新学习这台设备。**
+内部使用 KOReader、SQLite、Automerge、FBInk、Vendor SDK 都不改变这个定义。
