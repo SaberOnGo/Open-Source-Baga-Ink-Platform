@@ -1,7 +1,7 @@
 # Baga Ink 兼容性标准 / Baga Ink Compatibility Standard
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.3**  
+> **状态：Draft v0.4**  
 > **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`04_能力注册表_Baga-Ink-Capability-Registry.md`、`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`、`10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
@@ -26,6 +26,8 @@
 核心原则：
 
 > **硬件可以不同，内部库可以不同，但同一 Baga API / Lua Profile / Standard Library 契约必须成立。**
+
+正式正文只描述当前有效兼容契约。
 
 ---
 
@@ -151,8 +153,6 @@ Platform-managed SQLite runtime
 Pinned version / compile options
 Sandbox-safe file access
 ```
-
-设备不得要求 App 回退到已撤销的 `baga.data`。
 
 ---
 
@@ -383,8 +383,8 @@ Market 安装判断基于 Manifest + Capability + API/Profile compatibility + Co
   "lua_profile": "0.x",
   "sqlite_version": "...",
   "lsqlite3_version": "...",
-  "compatibility_standard": "0.3",
-  "bicts": "0.4",
+  "compatibility_standard": "0.4",
+  "bicts": "0.x",
   "status": "compatible",
   "profiles": []
 }
