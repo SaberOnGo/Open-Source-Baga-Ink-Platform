@@ -1,7 +1,7 @@
 # Baga Ink 应用标准 / Baga Ink App Standard
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.5**  
+> **状态：Draft v0.6**  
 > **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`、`06_IKP应用包规范_IKP-Package-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
@@ -17,6 +17,8 @@
 本规范约束应用开发者；设备厂商与适配层的要求由 Baga Ink Compatibility Standard / Device Adapter Specification 另行定义。
 
 本文中的 MUST / SHOULD / MAY 含义继承顶层战略文档。
+
+正式正文只描述当前有效设计；历史方案由 Git 保存。
 
 ---
 
@@ -181,9 +183,9 @@ FTS
 JSON
 ```
 
-Baga 不再定义 `baga.data`，也不在 SQLite 上重新发明 KV / collection 数据库 API。
+Baga 不在 SQLite 上重新发明 KV / collection 数据库 API。
 
-Automerge core 已被 Baga 正式采纳为 Local-first / CRDT 优先基础；可整体采用，也可拆用 document/merge、binary persistence、sync protocol、C FFI、patch/cursor 等模块。但 developer-facing Lua binding 当前仍为 provisional，因此不得为了表面统一生造 `baga.automerge` 或 `baga.crdt`。
+Automerge core 已被 Baga 正式采纳为 Local-first / CRDT 优先基础；可整体采用，也可拆用 document/merge、binary persistence、sync protocol、C FFI、patch/cursor 等模块。developer-facing Lua binding 当前仍为 provisional；在成熟接口确定前，Platform / App 通过受控集成使用 Automerge。
 
 详细规则见 `13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`。
 
@@ -744,7 +746,7 @@ iReader private SDK
 Android vendor differences
 不同设备的安装脚本
 文件拼接式“数据库”
-Baga 自研数据库抽象
+自研数据库抽象
 每种书籍格式的定位算法
 自研通用 CRDT
 ```
