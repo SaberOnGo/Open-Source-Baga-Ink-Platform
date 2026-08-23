@@ -1,7 +1,7 @@
 # LifeBook IKP 架构与 Kindle 兼容实现 / LifeBook IKP Architecture and Kindle Compatibility
 
 > **文档级别：Reference App 技术实现补充 / Reference App Technical Implementation Companion**  
-> **状态：Baseline v0.2**  
+> **状态：Baseline v0.3**  
 > **日期：2026-08-23**  
 > **适用对象：LifeBook (`lifebook.ikp`) on Baga Ink Platform**  
 > **上位文档：`docs/standards/` 全部正式规范**  
@@ -1050,3 +1050,66 @@ BICTS regression across representative Kindle families
 - W3C Web Annotation（仅设计参考）: https://www.w3.org/TR/annotation-model/
 
 外部项目的支持范围、许可证与 API 会变化；实际发布版本必须锁定 tag/commit，并由 Baga Ink Platform dependency manifest 记录。
+
+---
+
+# 31. Kindle Reference Implementation Mapping / Kindle 参考实现映射
+
+本节把前文已经分散说明的 Kindle 复用关系收敛成一张明确的实现映射图，供 LifeBook、Baga Ink Platform 实现者和后续 AI 直接使用。
+
+> **本图不是 LifeBook/Baga Ink 的新架构层，而是 `baga.*` 在 Kindle 上的参考实现映射。**  
+> **KOReader、Automerge、SQLite 是 Baga Ink API 在 Kindle 上的具体实现所复用的开源组件。**
+
+```text
+Baga Ink on Kindle
+│
+├─ baga.reader
+│   └─ 主要复用 KOReader
+│       ├─ CREngine
+│       ├─ MuPDF
+│       ├─ ReaderUI
+│       ├─ annotation / bookmark / highlight
+│       └─ position / search / selection / anchor
+│
+├─ baga.ui
+│   └─ 可复用 KOReader Lua UI / widget / UIManager
+│
+├─ baga.display
+│   └─ KOReader Kindle device/display knowledge + FBInk
+│
+├─ baga.input
+│   └─ KOReader Kindle input / key / touch handling
+│
+├─ baga.data
+│   └─ SQLite 或同等级成熟事务存储
+│
+├─ baga.sync
+│   ├─ Baga 标准语义：联网 / Wi-Fi / sleep-wake / trigger / retry policy
+│   └─ 真正需要并发离线合并的业务场景：可复用 Automerge
+│
+├─ baga.network
+│   └─ 复用成熟 HTTP / TLS / KOReader 已验证网络能力与 Kindle 网络桥接
+│
+└─ baga.power
+    └─ Kindle 系统能力 / KOReader 已有 lifecycle / power 相关实现
+```
+
+对 LifeBook 的含义：
+
+- LifeBook 只调用 `baga.*`；
+- LifeBook 不 `require()` KOReader 私有模块，不执行 SQL，不直接调用 Automerge runtime；
+- Kindle 平台实现者应先检查 KOReader/SQLite/Automerge/FBInk/Homebrew 生态是否已经有可靠实现，再决定是否编写新代码；
+- 某个内部库被替换时，只要 `baga.*` 语义保持一致，`lifebook.ikp` 不应修改；
+- 某个旧 Kindle 无法承载某内部实现时，应优先替换实现或降级对应能力，而不是为该型号维护另一份 LifeBook。
+
+这张映射图必须和顶层架构分开理解：
+
+```text
+架构：
+LifeBook IKP → Baga Ink API → Platform Core → Kindle Adapter → Kindle OS
+
+实现映射：
+某个 baga.* 在 Kindle 内部优先复用哪个成熟轮子
+```
+
+两者不能混为一谈。
