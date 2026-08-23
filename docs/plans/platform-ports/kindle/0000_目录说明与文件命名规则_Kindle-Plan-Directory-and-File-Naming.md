@@ -1,7 +1,7 @@
 # Kindle 实现计划目录说明与文件命名规则 / Kindle Plan Directory and File Naming
 
 > **文档级别：Implementation Plan Directory Rule / 任务目录规则**  
-> **状态：Mandatory Naming Rule v0.2**  
+> **状态：Mandatory Naming Rule v0.3**  
 > **日期：2026-08-23**  
 > **适用范围：`docs/plans/platform-ports/kindle/` 及其全部子目录**  
 > **上位规则：`../0000_平台移植计划目录与文件命名规则_Baga-Ink-Platform-Port-Plan-Naming.md`**
@@ -15,7 +15,7 @@ Kindle Port 后续会产生大量功能实现、测试、调试、验证、真�
 ```text
 docs/plans/platform-ports/kindle/
 ├── 0000_目录说明与文件命名规则_Kindle-Plan-Directory-and-File-Naming.md
-├── 00_Kindle实现任务总计划_Baga-Ink-Kindle-Implementation-Master-Plan.md
+├── 0010_Kindle实现任务总计划_Baga-Ink-Kindle-Implementation-Master-Plan.md
 │
 ├── task/
 │   └── ...
@@ -73,7 +73,7 @@ README.md
 
 即：数字、中文名、英文名三部分都必须存在。
 
-新的大规模目录默认使用四位零填充：
+新的大规模目录 MUST 使用四位零填充：
 
 ```text
 0000_
@@ -109,7 +109,7 @@ Task 可以以任何真正工程目标为单位，包括：
 建立恢复/回滚流程
 ```
 
-Task 目录 SHOULD 使用：
+Task 目录 MUST 使用：
 
 ```text
 <四位Task编号>_<中文任务名>_<English-Task-Name>/
@@ -404,3 +404,62 @@ docs/status/00_当前项目状态_Baga-Ink-Project-Status.md
 ```
 
 这个结构允许 Kindle 实现长期积累数百个 Task、数千份 execution prompt，而不会失去“为什么做、基于哪一版设计、执行到了哪一步”的追踪关系。
+
+---
+
+# 11. 自动校验与 AI 禁止绕过
+
+Kindle 目录同样由以下脚本自动校验：
+
+```text
+tools/check_platform_port_plans.py
+```
+
+任何 AI / 开发者修改本目录后，在宣称完成前 MUST 执行：
+
+```bash
+python3 tools/check_platform_port_plans.py
+```
+
+GitHub CI Gate：
+
+```text
+.github/workflows/platform-port-plan-guard.yml
+```
+
+会拒绝包括但不限于：
+
+```text
+乱建 K0_* / K1_* 物理任务目录
+另建 prompt/、ai_prompt/、handoff/、scratch/、temp/、notes/ 等平行执行目录
+Task 目录没有四位编号
+文件只有中文或只有英文
+README.md
+v1 / v2 / v10
+execution-prompts 没有对应 task
+execution version 没有对应 Task Design version
+Task 没有版本索引
+Task Version 没有任务设计总纲
+Execution Version 没有执行索引
+```
+
+AI MUST NOT 为了让自己的错误结构通过而：
+
+```text
+删除或跳过脚本
+修改 CI 让它不运行
+增加忽略规则
+把非法目录加入 allowlist
+把 MUST 改成 SHOULD
+```
+
+如果未来确实需要改变目录模型，必须先修改：
+
+```text
+上位 platform-ports 命名规则
+本 Kindle 规则
+AGENTS.md
+validator / CI
+```
+
+经明确设计后，才允许创建新的目录类型。
