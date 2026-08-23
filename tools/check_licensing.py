@@ -80,12 +80,12 @@ def main() -> None:
         if "LifeBook" not in text or ("Proprietary" not in text and "proprietary" not in text):
             fail(f"{name} must preserve the proprietary LifeBook boundary")
 
-    # Commercial licensing should be documented, but not promoted in the README hero.
+    # README presentation policy: detailed commercial terms are not part of the hero.
     first_50_en = "\n".join(readme.splitlines()[:50])
     first_50_zh = "\n".join(readme_zh.splitlines()[:50])
     for name, text in [("README.md", first_50_en), ("README.zh-CN.md", first_50_zh)]:
         if "COMMERCIAL_LICENSE" in text or "Commercial License" in text or "商业授权" in text:
-            fail(f"{name} promotes commercial licensing too prominently in the first 50 lines")
+            fail(f"{name} places detailed commercial licensing in the first 50 lines")
 
     en_policy = read("docs/en/governance/02_baga-ink-licensing-policy.md")
     zh_policy = read("docs/zh-CN/governance/02_Baga-Ink授权策略.md")
@@ -98,7 +98,7 @@ def main() -> None:
     for required in ["OEM Enablement Program", "零费用", "Baga Ink Client", "Proprietary"]:
         if required not in zh_policy:
             fail(f"zh-CN licensing policy missing OEM/control-plane boundary: {required}")
-    for required in ["OEM Enablement Program", "$0", "official Baga Ink Client"]:
+    for required in ["OEM Enablement Program", "no-fee", "official Baga Ink Client"]:
         if required not in commercial:
             fail(f"COMMERCIAL_LICENSE.md missing OEM Enablement term: {required}")
     for required in ["OEM Enablement Program", "零费用", "Baga Ink Client"]:
@@ -140,9 +140,7 @@ def main() -> None:
                 "publish only with an explicit architecture/licensing decision"
             )
 
-    # Confidential business/monetization strategy belongs only in a local ignored
-    # directory or a separate private repository. The public checkout must never
-    # contain a tracked private/ tree.
+    # Confidential strategy is stored outside the tracked public repository.
     gitignore = read(".gitignore")
     if "/private/" not in gitignore:
         fail(".gitignore must ignore the root /private/ directory for confidential local strategy docs")
