@@ -6,9 +6,8 @@ is to prevent a recurring class of documentation errors: text copied from a
 private owner/assistant discussion into material that is publicly committed.
 
 All tracked Markdown is in scope, including docs/plans, Task Designs and AI
-Execution Prompts. Fenced code blocks, inline code spans, and explicitly curly-
-quoted examples are ignored so Governance documents may show literal examples
-of prohibited wording without disabling checks for ordinary prose.
+Execution Prompts. Markdown fenced code blocks, inline code spans, and clearly
+curly-quoted prohibited-writing examples are excluded from prose scanning.
 """
 
 from __future__ import annotations
@@ -73,13 +72,13 @@ ENGLISH_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
     )
 )
 
-INLINE_CODE_RE = re.compile(r"`[^`]*`")
 CURLY_QUOTED_EXAMPLE_RE = re.compile(r"“[^”]*”|‘[^’]*’")
-FENCE_RE = re.compile(r"^\s*(```|~~~)")
+OPEN_FENCE_RE = re.compile(r"^ {0,3}(?P<fence>`{3,}|~{3,})")
+CLOSE_FENCE_RE = re.compile(r"^ {0,3}(?P<fence>`{3,}|~{3,})[ \t]*$")
 
 
 def tracked_markdown() -> list[Path]:
-    # NUL-delimited output avoids Git's C-style quoting of non-ASCII paths.
+    """Return tracked Markdown paths without Git C-style path quoting."""
     proc = subprocess.run(
         ["git", "-c", "core.quotepath=false", "ls-files", "-z", "--", "*.md"],
         cwd=ROOT,
@@ -90,29 +89,91 @@ def tracked_markdown() -> list[Path]:
     for raw in proc.stdout.split(b"\0"):
         if not raw:
             continue
-        rel = raw.decode("utf-8", errors="strict")
-        paths.append(ROOT / rel)
+        paths.append(ROOT / raw.decode("utf-8", errors="strict"))
     return paths
 
 
+def strip_inline_code_spans(line: str) -> str:
+    """Remove valid backtick code spans while preserving ordinary text.
+
+    Markdown code spans are delimited by backtick runs of exactly the same
+    length. A shorter run inside a longer-delimited span therefore does not
+    close it. Unclosed delimiters remain ordinary text and are scanned.
+    """
+    chars = list(line)
+    length = len(line)
+    i = 0
+
+    while i < length:
+        if line[i] != "`":
+            i += 1
+            continue
+
+        opener_start = i
+        while i < length and line[i] == "`":
+            i += 1
+        opener_len = i - opener_start
+
+        search = i
+        closing_start: int | None = None
+        closing_end: int | None = None
+        while search < length:
+            next_tick = line.find("`", search)
+            if next_tick < 0:
+                break
+            run_end = next_tick
+            while run_end < length and line[run_end] == "`":
+                run_end += 1
+            run_len = run_end - next_tick
+            if run_len == opener_len:
+                closing_start = next_tick
+                closing_end = run_end
+                break
+            search = run_end
+
+        if closing_start is None or closing_end is None:
+            # CommonMark treats an unmatched opener as literal text.
+            continue
+
+        for pos in range(opener_start, closing_end):
+            chars[pos] = " "
+        i = closing_end
+
+    return "".join(chars)
+
+
 def visible_lines(path: Path):
+    """Yield prose lines while excluding Markdown fenced/code-span content."""
     in_fence = False
-    fence_token: str | None = None
-    text = path.read_text(encoding="utf-8")
-    for lineno, raw in enumerate(text.splitlines(), 1):
-        match = FENCE_RE.match(raw)
-        if match:
-            token = match.group(1)
-            if not in_fence:
-                in_fence = True
-                fence_token = token
-            elif fence_token and token.startswith(fence_token[0]):
-                in_fence = False
-                fence_token = None
-            continue
+    fence_char: str | None = None
+    fence_len = 0
+
+    for lineno, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if in_fence:
+            close = CLOSE_FENCE_RE.match(raw)
+            if close:
+                run = close.group("fence")
+                if run[0] == fence_char and len(run) >= fence_len:
+                    in_fence = False
+                    fence_char = None
+                    fence_len = 0
             continue
-        line = INLINE_CODE_RE.sub("", raw)
+
+        opening = OPEN_FENCE_RE.match(raw)
+        if opening:
+            run = opening.group("fence")
+            # A backtick opening fence cannot contain another backtick later in
+            # its info string under CommonMark. Treat malformed lines as prose.
+            suffix = raw[opening.end():]
+            if run[0] == "`" and "`" in suffix:
+                pass
+            else:
+                in_fence = True
+                fence_char = run[0]
+                fence_len = len(run)
+                continue
+
+        line = strip_inline_code_spans(raw)
         line = CURLY_QUOTED_EXAMPLE_RE.sub("", line)
         yield lineno, line
 
@@ -122,8 +183,6 @@ def main() -> int:
 
     for path in tracked_markdown():
         rel = path.relative_to(ROOT).as_posix()
-        # A tracked private/ file is always a repository error; this complements
-        # the licensing guard and catches Markdown even if force-added.
         if rel == "private" or rel.startswith("private/"):
             errors.append(f"{rel}: tracked private material is forbidden in the public repository")
             continue
