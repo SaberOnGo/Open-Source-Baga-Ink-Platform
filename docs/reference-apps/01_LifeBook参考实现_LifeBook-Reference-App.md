@@ -1,7 +1,7 @@
 # LifeBook 墨水屏参考应用实现规范 / LifeBook Ink Reference App Implementation Specification
 
 > **文档级别：参考应用实现规范 / Reference App Implementation Specification**  
-> **状态：Baseline v0.4**  
+> **状态：Baseline v0.5**  
 > **日期：2026-08-23**  
 > **适用对象：LifeBook on Baga Ink Platform**  
 > **本文件不是 Baga Ink Standard，不得覆盖或修改上位标准。**
@@ -15,6 +15,8 @@
 核心目标：
 
 > **用真实 LifeBook 证明：同一份 IKP 可以跨 Kindle 与 Android E-Paper，同时充分复用 KOReader、SQLite、Automerge 等成熟轮子，而不增加多余架构层。**
+
+正式正文只描述当前有效设计。
 
 ---
 
@@ -56,15 +58,7 @@ LifeBook 是：
 
 > **Baga Ink Platform 上的旗舰 Universal App / Reference App。**
 
-LifeBook 不是：
-
-- Baga Ink Platform；
-- Runtime；
-- Device Adapter；
-- KOReader 外壳；
-- EPUB-only Reader；
-- 一套私有 Kindle API；
-- 自研数据库 / 自研通用 CRDT 平台。
+LifeBook 业务保持在 IKP 内；Platform、Device Adapter、Reader backend、数据库引擎和通用 CRDT 基础不由 LifeBook 重新实现。
 
 ---
 
@@ -111,29 +105,27 @@ LifeBook
 
 ---
 
-# 5. LifeBook 使用哪些平台能力
+# 5. LifeBook 使用的平台能力与成熟库
 
 ```text
-UI                    → baga.ui / input / display
-Reader                → baga.reader
-User Library          → baga.library
-Files / downloads     → baga.storage
-Network               → baga.network
-Sync scheduling       → baga.sync
-Power / lifecycle     → baga.power / baga.app
-Permissions           → baga.permissions
-Logging               → baga.log
-Relational local DB   → require("lsqlite3")
-Concurrent local-first→ Automerge core（适用对象）
+UI                     → baga.ui / input / display
+Reader                 → baga.reader
+User Library           → baga.library
+Files / downloads      → baga.storage
+Network                → baga.network
+Sync scheduling        → baga.sync
+Power / lifecycle      → baga.power / baga.app
+Permissions            → baga.permissions
+Logging                → baga.log
+Relational local DB    → require("lsqlite3")
+Concurrent local-first → Automerge core（适用对象）
 ```
 
-特别注意：
-
-> **不存在 `baga.data`。SQLite 本身就是 LifeBook 的成熟关系数据库基础。**
+SQLite 本身是 LifeBook 的关系数据库基础。
 
 ---
 
-# 6. SQLite：LifeBook 直接使用成熟数据库
+# 6. SQLite
 
 LifeBook 使用 Baga Lua Profile 标准库：
 
@@ -143,7 +135,7 @@ local path = baga.storage.resolve_path("appdata/lifebook.sqlite3")
 local db = sqlite3.open(path)
 ```
 
-LifeBook 自己拥有自己的：
+LifeBook 自己维护：
 
 ```text
 schema
@@ -154,11 +146,7 @@ FTS
 business constraints
 ```
 
-Baga Platform 不替 LifeBook 重新发明 repository / KV / collection database API。
-
 ## 6.1 适合 SQLite 的 LifeBook 数据
-
-例如：
 
 ```text
 library metadata
@@ -175,21 +163,13 @@ Automerge document/change metadata or BLOB
 
 ## 6.2 大文件
 
-书籍、图片、大型附件仍通过：
-
-```text
-baga.storage
-```
-
-SQLite 保存 metadata / index / relationship，不应无条件把所有大文件塞进数据库。
+书籍、图片、大型附件仍通过 `baga.storage` 管理；SQLite 保存 metadata / index / relationship。
 
 ---
 
-# 7. Automerge：优先成熟 Local-first Foundation
+# 7. Automerge
 
-LifeBook 不自己发明通用 CRDT。
-
-对真正存在**多个设备同时离线编辑**的对象，优先采用 Automerge core。
+对真正存在多个设备同时离线编辑的对象，优先采用 Automerge core。
 
 候选：
 
@@ -220,23 +200,16 @@ LifeBook / Platform 可以：
 
 ```text
 完整使用 Automerge core
-或
 只使用 document / merge / history
-或
 只使用 binary persistence
-或
 只使用 sync protocol
-或
 通过 automerge-c / Rust bridge
-或
 只使用 patches / cursors
 ```
 
 不要求使用完整 `automerge-repo`。
 
-## 7.2 SQLite + Automerge 组合
-
-一种自然实现：
+## 7.2 SQLite + Automerge
 
 ```text
 SQLite
@@ -248,13 +221,11 @@ Automerge
 └─ 真正并发 Local-first object
 ```
 
-SQLite 与 Automerge 不是竞争关系。
+SQLite 与 Automerge 互补。
 
 ---
 
 # 8. Sync 边界
-
-必须分开：
 
 ```text
 SQLite
@@ -276,23 +247,17 @@ LifeBook Domain
 
 # 9. Reader
 
-LifeBook 书籍 / 文档阅读只使用：
-
-```text
-baga.reader
-```
+LifeBook 书籍 / 文档阅读使用 `baga.reader`。
 
 Kindle 第一实现优先复用 KOReader；Android 可以使用自己的成熟实现。
 
 LifeBook 不依赖 KOReader private Lua object / sidecar schema。
 
-Reader 不是 EPUB-centric。
+Reader 不以 EPUB 为中心。
 
 ---
 
 # 10. Reader Anchor / Public Notes
-
-LifeBook 的 Public Notes：
 
 ```text
 book/document content → baga.reader
@@ -301,16 +266,9 @@ public note body       → LifeBook Domain / Server
 
 二者通过 Baga Reader Anchor 关联。
 
-LifeBook：
+LifeBook 保存、同步 Anchor，并把 Anchor 交回 Reader；不解析 XPointer / PDF boxes / EPUB CFI / Readium Locator。
 
-- 保存 Anchor；
-- 同步 Anchor；
-- 把 Anchor 交回 Reader；
-- 不解析 XPointer / PDF boxes / EPUB CFI / Readium Locator。
-
-Kindle 优先复用 KOReader rolling/paging 已有定位。
-
-Readium/W3C 仅作参考。
+Kindle 优先复用 KOReader rolling/paging 已有定位。Readium/W3C 仅作参考。
 
 ---
 
@@ -340,21 +298,11 @@ baga.ui
 
 它们不需要转换成 EPUB，也不经过 ReaderUI。
 
-LifeBook UI 原则：
-
-- 高对比；
-- page-first；
-- Touch + Focus；
-- 物理翻页键语义动作；
-- 少动画；
-- 少全刷；
-- Color/Pen/Fast Refresh 渐进增强。
+UI 原则：高对比、page-first、Touch + Focus、物理翻页键语义动作、少动画、少全刷、Color/Pen/Fast Refresh 渐进增强。
 
 ---
 
 # 13. Kindle 内部成熟组件复用
-
-Kindle Reference Implementation 可以：
 
 ```text
 baga.reader
@@ -367,7 +315,7 @@ Baga Lua Profile lsqlite3
 → Platform-managed libsqlite3
 
 KOReader internals
-→ 原样继续 lua-ljsqlite3
+→ lua-ljsqlite3
 → 与 lsqlite3 共享 libsqlite3
 
 Automerge core
@@ -382,8 +330,6 @@ KPM / Hotfix / MRPI / KUAL
 ---
 
 # 14. Android 内部成熟组件复用
-
-Android Reference Platform：
 
 ```text
 lsqlite3
@@ -522,20 +468,19 @@ LifeBook Reference baseline SHOULD 满足：
 2. 核心业务不判断 Vendor；
 3. 设备能力只使用 `baga.*`；
 4. 结构化关系数据使用正式 `lsqlite3` / SQLite；
-5. 不存在 `baga.data` 私有依赖；
-6. SQLite schema/migration 在 update/restart 下可靠；
-7. Reader 不绑定 EPUB；
-8. Reader Anchor 不依赖 KOReader private schema；
-9. 真正 CRDT 场景优先 Automerge，不自研通用 CRDT；
-10. Automerge 可以整用/拆用，不强制 automerge-repo；
-11. offline start 可用；
-12. sync 失败不破坏本地已提交数据；
-13. sleep/wake 可恢复；
-14. 更新失败不删除书籍、笔记或 SQLite DB；
-15. 通过对应 BICTS。
+5. SQLite schema/migration 在 update/restart 下可靠；
+6. Reader 不绑定 EPUB；
+7. Reader Anchor 不依赖 KOReader private schema；
+8. 真正 CRDT 场景优先 Automerge，不自研通用 CRDT；
+9. Automerge 可以整用/拆用，不强制 automerge-repo；
+10. offline start 可用；
+11. sync 失败不破坏本地已提交数据；
+12. sleep/wake 可恢复；
+13. 更新失败不删除书籍、笔记或 SQLite DB；
+14. 通过对应 BICTS。
 
 ---
 
 # 20. 最终原则
 
-> **LifeBook 只实现 LifeBook 产品；设备差异交给 Baga Ink；成熟通用软件能力直接站在成熟生态肩膀上。SQLite 就用 SQLite，Automerge 就优先用 Automerge，KOReader 就充分复用 KOReader，不为“统一外观”重复发明更弱的一层。**
+> **LifeBook 只实现 LifeBook 产品；设备差异交给 Baga Ink；成熟通用软件能力直接站在成熟生态肩膀上。SQLite 直接使用 SQLite，Automerge 优先复用 Automerge，KOReader 充分复用 KOReader。**
