@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "default_locale": "en",
+  "languages": [
+    {
+      "locale": "en",
+      "label": "English",
+      "readme": "README.md",
+      "status": "current"
+    },
+    {
+      "locale": "zh-CN",
+      "label": "简体中文",
+      "readme": "README.zh-CN.md",
+      "status": "current"
+    }
+  ],
+  "rules": {
+    "default_readme": "README.md",
+    "localized_readme_pattern": "README.<locale>.md",
+    "switch_start_marker": "<!-- BAGA-LANG-SWITCH:START -->",
+    "switch_end_marker": "<!-- BAGA-LANG-SWITCH:END -->"
+  }
+}
