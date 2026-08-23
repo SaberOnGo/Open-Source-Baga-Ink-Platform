@@ -3,7 +3,7 @@
 > **Task ID：`TASK-0010`**  
 > **任务：适配器契约可执行化 / Executable Adapter Contract**  
 > **关联 Milestone：K0**  
-> **当前选定版本：`v001`**  
+> **当前选定版本：`v002`**  
 > **状态：Selected Planning Baseline**  
 > **日期：2026-08-23**
 
@@ -21,7 +21,8 @@
 
 | Version | Status | Summary | Reason |
 |---|---|---|---|
-| `v001` | Selected | Base Contract IDL、codegen、Mock、Contract Tests、frozen snapshot | 首个可执行化实现版本 |
+| `v001` | Superseded | Base Contract IDL、codegen、Mock、Contract Tests、frozen snapshot | 首个可执行化实现版本 |
+| `v002` | **Selected** | 在 v001 基础上明确 Contract 语言无关；generated bindings 不是实现语言白名单；Kindle Bring-up 不被通用 Lua codegen 阻塞 | 防止后续实现把 Rust/C/Kotlin codegen 列表误解为 Adapter 语言限制 |
 
 ---
 
@@ -36,6 +37,7 @@ docs/zh-CN/standards/08_兼容性标准.md
 docs/zh-CN/standards/10_兼容性测试套件.md
 docs/zh-CN/design/02_设备适配器可执行契约与SDK设计.md
 docs/plans/platform-ports/kindle/0010_Kindle实现任务总计划_Baga-Ink-Kindle-Implementation-Master-Plan.md
+docs/plans/platform-ports/kindle/0020_Kindle实现语言与绑定裁决_Kindle-Implementation-Language-and-Binding-Decision.md
 ```
 
 发生冲突时按上位文档优先级处理，不在本 Task 中形成平行 Contract。
@@ -47,10 +49,12 @@ docs/plans/platform-ports/kindle/0010_Kindle实现任务总计划_Baga-Ink-Kindl
 当前执行设计来源：
 
 ```text
-v001/0000_任务设计总纲_Task-Design-Overview.md
+v002/0000_任务设计总纲_Task-Design-Overview.md
 ```
 
-若机器 schema 范围、正式 codegen target、兼容性策略或 Base Gate 发生结构性变化，应创建新版本，不覆盖 `v001`。
+`v001` 保留为历史基线，不再作为新 execution prompt 的来源。
+
+若机器 schema 范围、正式 codegen target、兼容性策略、语言无关边界或 Base Gate 发生结构性变化，应创建新版本，不覆盖历史版本。
 
 ---
 

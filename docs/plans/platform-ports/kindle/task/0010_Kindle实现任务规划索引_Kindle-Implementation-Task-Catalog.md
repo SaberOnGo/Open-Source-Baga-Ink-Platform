@@ -2,7 +2,7 @@
 
 > **目录：`docs/plans/platform-ports/kindle/task/`**  
 > **文档级别：Task Design Catalog / 任务设计索引**  
-> **状态：Planning Baseline v0.1**  
+> **状态：Planning Baseline v0.2**  
 > **日期：2026-08-23**  
 > **上位计划：`../0010_Kindle实现任务总计划_Baga-Ink-Kindle-Implementation-Master-Plan.md`**
 
@@ -21,6 +21,8 @@ Standards / Approved Design / Architecture Freeze
         ↓
 Kindle Implementation Master Plan
         ↓
+Kindle implementation decisions
+        ↓
 Task Design vNNN
         ↓
 Execution Prompts
@@ -36,9 +38,9 @@ Task Design 不改变公共 Standard、IKP Contract、Device Adapter Contract �
 
 | Task ID | Milestone | Task | Current Design | Dependency Gate |
 |---|---|---|---|---|
-| `TASK-0010` | K0 | Adapter Contract 可执行化 | `v001` | Standards 07 + Approved Design 02 |
-| `TASK-0020` | K1 | KOReader `kindlehf` Bring-up | `v001` | Homebrew-ready real `kindlehf`; 可与 K0 的非冲突工作有限并行 |
-| `TASK-0030` | K2 | Kindle Base Device Adapter | `v001` | K0 Contract baseline + K1 substrate evidence |
+| `TASK-0010` | K0 | Adapter Contract 可执行化 | **`v002`** | Standards 07 + Approved Design 02 |
+| `TASK-0020` | K1 | KOReader `kindlehf` Bring-up | **`v002`** | Homebrew-ready real `kindlehf`; 可与 K0 的非冲突工作有限并行 |
+| `TASK-0030` | K2 | Kindle Base Device Adapter | **`v002`** | K0 Contract baseline + K1 substrate evidence |
 | `TASK-0040` | K3 | Minimal Platform Core + Probe IKP | `v001` | K0–K2 gates |
 | `TASK-0050` | K4 | IKP staging / activation / device verifier | `v001` | K3 developer-mode IKP chain + signing/update executable baseline |
 | `TASK-0060` | K5 | Kindle Reader Provider | `v001` | K3/K4 Platform/App lifecycle stable |
@@ -47,17 +49,58 @@ Task Design 不改变公共 Standard、IKP Contract、Device Adapter Contract �
 
 ---
 
-# 2. 首个工程焦点
+# 2. Kindle 语言与绑定实施裁决
+
+K0–K3 execution work MUST 同时读取：
+
+```text
+../0020_Kindle实现语言与绑定裁决_Kindle-Implementation-Language-and-Binding-Decision.md
+```
+
+该文档固定以下解释：
+
+```text
+Device Adapter Contract
+→ language-independent
+
+Rust/C/Kotlin generated interfaces
+→ current first-party codegen targets
+→ NOT an allowed-language whitelist
+
+Kindle implementation
+→ use the shortest mature path
+→ Lua/LuaJIT first for KOReader-facing glue
+→ keep mature native libraries native
+→ mixed-language implementation is allowed
+```
+
+后续 AI 不得把“选择 Lua / Rust / C”重新作为普通 Execution Prompt 的开放架构问题。
+
+对 K1：
+
+```text
+direct Baga private entry
+→ default
+
+Platform-private .koplugin
+→ evidence-triggered fallback only
+```
+
+对 K2：各 subsystem 的默认语言/backend 已由 `TASK-0030/v002` 固定。偏离必须有 build/ABI/crash/profiling/security 等真实证据，并通过新的 Task Design Version 处理。
+
+---
+
+# 3. 首个工程焦点
 
 首轮工程重点为：
 
 ```text
-TASK-0010 / v001   Adapter Contract 可执行化
+TASK-0010 / v002   Adapter Contract 可执行化
         +
-TASK-0020 / v001   KOReader kindlehf Bring-up
+TASK-0020 / v002   KOReader kindlehf Bring-up
 ```
 
-两者允许有限并行：K0 建立机器 Contract、codegen、Mock 与 Contract Tests；K1 锁定并验证 Kindle substrate、native target 与 Baga-controlled private entry。
+两者允许有限并行：K0 建立机器 Contract、codegen、Mock 与 Contract Tests；K1 锁定并验证 Kindle substrate、native target、direct Baga private entry 与 Lua/LuaJIT bootstrap。
 
 首轮不把以下工作设为前置条件：
 
@@ -71,13 +114,16 @@ Reader
 AI / Sync / Market
 Audio / Bluetooth / Pen
 历史 Kindle 全覆盖
+通用 generated Lua SDK
 ```
+
+缺少通用 Lua codegen 不阻塞 Kindle Adapter 使用 Lua；K0 `v002` 已明确 generated bindings 与实现语言是两个不同问题。
 
 第一条设备侧产品链仍以 `baga-probe.ikp` 为首个真实 App 验收目标；该链在 `TASK-0040` 完成。
 
 ---
 
-# 3. 依赖与推进顺序
+# 4. 依赖与推进顺序
 
 主依赖链：
 
@@ -103,7 +149,7 @@ TASK-0080 (K7)
 
 ---
 
-# 4. 首台真实设备基线
+# 5. 首台真实设备基线
 
 首台 Bring-up 设备使用以下基线：
 
@@ -128,7 +174,7 @@ kindlepw2
 
 ---
 
-# 5. Task Version 规则
+# 6. Task Version 规则
 
 每个 Task 根目录包含：
 
@@ -136,15 +182,17 @@ kindlepw2
 0000_任务版本索引_Task-Version-Index.md
 v001/
 └── 0000_任务设计总纲_Task-Design-Overview.md
+v002/
+└── 0000_任务设计总纲_Task-Design-Overview.md
 ```
 
-当范围、核心实现方案、依赖、真机验证策略、验收 Gate 或恢复策略发生结构性变化时，新建 `v002`、`v003` 等版本；旧版本保留。
+当范围、核心实现方案、依赖、语言/backend 基线、真机验证策略、验收 Gate 或恢复策略发生结构性变化时，新建 `v003`、`v004` 等版本；旧版本保留。
 
 Execution Prompt 只能从精确选定的 Task Version 派生，并使用同名 Task 目录与同一 `vNNN` 镜像。
 
 ---
 
-# 6. 第一条重大验收链
+# 7. 第一条重大验收链
 
 Kindle Port 的第一条重大设备验收链属于 K3 / `TASK-0040`：
 

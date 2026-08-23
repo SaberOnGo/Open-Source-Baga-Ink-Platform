@@ -3,7 +3,7 @@
 > **Task ID：`TASK-0020`**  
 > **任务：KOReader KindleHF 启动验证 / KOReader KindleHF Bring-up**  
 > **关联 Milestone：K1**  
-> **当前选定版本：`v001`**  
+> **当前选定版本：`v002`**  
 > **状态：Selected Planning Baseline**  
 > **日期：2026-08-23**
 
@@ -21,7 +21,8 @@
 
 | Version | Status | Summary | Reason |
 |---|---|---|---|
-| `v001` | Selected | upstream pin、native bring-up、Baga private entry PoC、诊断与真机证据 | 首个 Kindle 真机 bring-up 版本 |
+| `v001` | Superseded | upstream pin、native bring-up、direct entry / private plugin 双候选 PoC、诊断与真机证据 | 首个 Kindle 真机 bring-up 版本 |
+| `v002` | **Selected** | Lua/LuaJIT bootstrap baseline；direct Baga private entry 固定为默认；`.koplugin` 仅作有证据的 fallback | 避免每次执行重新选择语言和启动技术 |
 
 ---
 
@@ -32,6 +33,7 @@ docs/zh-CN/standards/11_Kindle适配规范.md
 docs/zh-CN/reference-apps/03_Kindle具体实现架构冻结.md
 docs/zh-CN/standards/13_标准库与成熟组件采用规范.md
 docs/plans/platform-ports/kindle/0010_Kindle实现任务总计划_Baga-Ink-Kindle-Implementation-Master-Plan.md
+docs/plans/platform-ports/kindle/0020_Kindle实现语言与绑定裁决_Kindle-Implementation-Language-and-Binding-Decision.md
 ```
 
 ---
@@ -56,10 +58,12 @@ native target: kindlehf
 当前设计来源：
 
 ```text
-v001/0000_任务设计总纲_Task-Design-Overview.md
+v002/0000_任务设计总纲_Task-Design-Overview.md
 ```
 
-如真机证据推翻 private entry 方案、upstream pin 策略、日志/恢复方案或验收 Gate，应建立 `v002`。
+`v001` 保留为历史方案，不再作为新的 execution prompt 来源。
+
+若真机证据证明 direct entry 默认方案不可行，或要求改变 upstream pin、语言/绑定、日志/恢复方案或验收 Gate，应创建 `v003`，不得在 execution prompt 中临时换方案。
 
 ---
 
