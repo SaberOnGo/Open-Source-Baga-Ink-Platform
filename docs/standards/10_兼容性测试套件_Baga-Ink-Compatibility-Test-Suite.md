@@ -2,7 +2,7 @@
 
 > **文档级别：一级平台规范**  
 > **简称：BICTS**  
-> **状态：Draft v0.4**  
+> **状态：Draft v0.5**  
 > **日期：2026-08-23**  
 > **上位文档：`08_兼容性标准_Baga-Ink-Compatibility-Standard.md`**  
 > **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`、`09_UI规范_Baga-Ink-UI-Specification.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
@@ -29,6 +29,8 @@ IKP install/update/recovery
 ```
 
 内部可以用 KOReader、FBInk、SQLite、Automerge 或其他成熟组件；测试的是公开语义与安全边界。
+
+正式测试文档只覆盖当前有效设计。
 
 ---
 
@@ -88,9 +90,9 @@ Optional Capability 存在时运行对应 suite，例如：
 input.touch             → TOUCH
 input.pen               → PEN
 display.partial_refresh → PARTIAL_REFRESH
-network.https            → HTTPS
-storage.user_library     → LIBRARY_BRIDGE
-reader.anchor            → READER_ANCHOR
+network.https           → HTTPS
+storage.user_library    → LIBRARY_BRIDGE
+reader.anchor           → READER_ANCHOR
 ```
 
 ---
@@ -120,7 +122,7 @@ SQLite / `lsqlite3` 是正式 Standard Library，公开名称不属于 implement
 
 # 4. SQLite / `lsqlite3` Profile
 
-`baga.data` 已撤销。数据库测试直接针对 SQLite / `lsqlite3`。
+数据库测试直接针对 SQLite / `lsqlite3`。
 
 最低：
 
@@ -304,7 +306,7 @@ LIBRARY-006 unsupported format fails cleanly
 LIBRARY-007 rescan does not corrupt state
 ```
 
-不得要求 EPUB-only / Kindle `/documents` / Android vendor DB schema。
+测试格式从当前 Reader implementation 声明支持的格式集合中选择，不固定 EPUB，也不依赖 Kindle `/documents` 或 Android vendor DB schema。
 
 ---
 
@@ -334,7 +336,7 @@ close/reopen
 restore
 ```
 
-不得把 EPUB 固定成测试格式。
+测试使用当前 Reader implementation 实际支持的格式，不把 EPUB 固定成标准格式。
 
 `reader.anchor`：
 
@@ -440,7 +442,7 @@ Reader/Library/Network 受影响时加跑对应 suite。
   "lsqlite3_version": "...",
   "reader_backend": "...",
   "automerge_version": null,
-  "bicts_version": "0.4",
+  "bicts_version": "0.5",
   "tests": {}
 }
 ```
@@ -461,4 +463,4 @@ Reader/Library/Network 受影响时加跑对应 suite。
 
 # 18. 核心原则
 
-> **BICTS 证明的是 Baga Ink API、Lua Profile、Standard Libraries 和安全边界真正成立。SQLite 直接按 SQLite 测；Automerge 按实际采用模块测；不再测试已经撤销的 `baga.data`。**
+> **BICTS 证明的是 Baga Ink API、Lua Profile、Standard Libraries 和安全边界真正成立。SQLite 直接按 SQLite Profile 测；Automerge 按实际采用模块测。**
