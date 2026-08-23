@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Validate docs/plans/platform-ports structure and naming.
 
-This guard exists to prevent humans or AI agents from creating ad-hoc task
-folders, ambiguous version folders, or execution prompts that cannot be traced
-back to an approved Task Design version.
+This guard prevents humans or AI agents from creating ad-hoc task folders,
+ambiguous version folders, invalid bilingual file names, or execution prompts
+that cannot be traced to an approved Task Design version.
 
 Run from anywhere inside the repository:
 
-    python tools/check_platform_port_plans.py
+    python3 tools/check_platform_port_plans.py
 
 The script uses only the Python standard library and exits non-zero on any
 violation so it can be used locally and in GitHub Actions.
@@ -22,16 +22,15 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BASE = REPO_ROOT / "docs" / "plans" / "platform-ports"
 
-# Markdown file names MUST be:
-#   <digits>_<Chinese name>_<English-Name>.md
+# All Markdown under platform-ports MUST be:
+#   NNNN_<Chinese name>_<English-Name>.md
 # The Chinese segment may contain ASCII product names, but must contain at least
 # one CJK ideograph. The English segment is ASCII and hyphen-separated.
 MARKDOWN_RE = re.compile(
-    r"^(?P<number>\d{2,4})_(?P<zh>[^_]+)_(?P<en>[A-Za-z0-9][A-Za-z0-9.-]*(?:-[A-Za-z0-9][A-Za-z0-9.-]*)*)\.md$"
+    r"^(?P<number>\d{4})_(?P<zh>[^_]+)_(?P<en>[A-Za-z0-9][A-Za-z0-9.-]*(?:-[A-Za-z0-9][A-Za-z0-9.-]*)*)\.md$"
 )
 
-# Task directories MUST use four digits because these directories are expected
-# to scale to hundreds/thousands of tasks.
+# Task directories use the same bilingual convention and a four-digit stable ID.
 TASK_DIR_RE = re.compile(
     r"^(?P<number>\d{4})_(?P<zh>[^_]+)_(?P<en>[A-Za-z0-9][A-Za-z0-9.-]*(?:-[A-Za-z0-9][A-Za-z0-9.-]*)*)$"
 )
@@ -60,7 +59,7 @@ def has_whitespace(name: str) -> bool:
     return any(ch.isspace() for ch in name)
 
 
-def validate_bilingual_markdown(path: Path, *, require_four_digits: bool = False) -> None:
+def validate_bilingual_markdown(path: Path) -> None:
     name = path.name
     if has_whitespace(name):
         fail(path, "file name must not contain whitespace")
@@ -70,12 +69,9 @@ def validate_bilingual_markdown(path: Path, *, require_four_digits: bool = False
     if not match:
         fail(
             path,
-            "Markdown file name must match '<digits>_<中文名>_<English-Name>.md'",
+            "Markdown file name must match 'NNNN_<中文名>_<English-Name>.md'",
         )
         return
-
-    if require_four_digits and len(match.group("number")) != 4:
-        fail(path, "task/execution Markdown files must use a four-digit numeric prefix")
 
     if not CJK_RE.search(match.group("zh")):
         fail(path, "the Chinese-name segment must contain at least one Chinese character")
@@ -103,18 +99,6 @@ def validate_task_dir_name(path: Path) -> bool:
     return True
 
 
-def validate_no_unexpected_files(directory: Path, *, allow_dirs: set[str] | None = None) -> None:
-    allow_dirs = allow_dirs or set()
-    for entry in directory.iterdir():
-        if entry.is_file():
-            if entry.suffix != ".md":
-                fail(entry, "only Markdown files are allowed in plan directories")
-            else:
-                validate_bilingual_markdown(entry)
-        elif entry.is_dir() and entry.name not in allow_dirs:
-            fail(entry, f"unexpected directory; allowed directories here: {sorted(allow_dirs)}")
-
-
 def validate_task_tree(platform_dir: Path) -> dict[str, set[str]]:
     task_root = platform_dir / "task"
     task_versions: dict[str, set[str]] = {}
@@ -127,7 +111,7 @@ def validate_task_tree(platform_dir: Path) -> dict[str, set[str]]:
             if entry.suffix != ".md":
                 fail(entry, "only Markdown files are allowed directly under task/")
             else:
-                validate_bilingual_markdown(entry, require_four_digits=True)
+                validate_bilingual_markdown(entry)
             continue
 
         if not entry.is_dir():
@@ -147,7 +131,7 @@ def validate_task_tree(platform_dir: Path) -> dict[str, set[str]]:
                 if child.suffix != ".md":
                     fail(child, "only Markdown files are allowed in a task root")
                 else:
-                    validate_bilingual_markdown(child, require_four_digits=True)
+                    validate_bilingual_markdown(child)
                 continue
 
             if not child.is_dir():
@@ -170,7 +154,7 @@ def validate_task_tree(platform_dir: Path) -> dict[str, set[str]]:
                     if item.suffix != ".md":
                         fail(item, "only Markdown files are allowed in a Task Design version")
                     else:
-                        validate_bilingual_markdown(item, require_four_digits=True)
+                        validate_bilingual_markdown(item)
 
         if not versions:
             fail(entry, "task directory must contain at least one vNNN Task Design version")
@@ -190,7 +174,7 @@ def validate_execution_tree(platform_dir: Path, task_versions: dict[str, set[str
             if entry.suffix != ".md":
                 fail(entry, "only Markdown files are allowed directly under execution-prompts/")
             else:
-                validate_bilingual_markdown(entry, require_four_digits=True)
+                validate_bilingual_markdown(entry)
             continue
 
         if not entry.is_dir():
@@ -229,16 +213,16 @@ def validate_execution_tree(platform_dir: Path, task_versions: dict[str, set[str
                     if item.suffix != ".md":
                         fail(item, "only Markdown files are allowed in execution prompt versions")
                     else:
-                        validate_bilingual_markdown(item, require_four_digits=True)
+                        validate_bilingual_markdown(item)
 
 
 def validate_platform(platform_dir: Path) -> None:
     if not PLATFORM_DIR_RE.fullmatch(platform_dir.name):
         fail(platform_dir, "platform directory must be lowercase kebab-case, e.g. kindle or android-e-paper")
 
-    # A platform root may contain bilingual numbered Markdown documents plus
-    # exactly task/ and execution-prompts/. New top-level subdirectories require
-    # an intentional update to this validator and the governing docs.
+    # A platform root may contain numbered bilingual Markdown documents plus
+    # exactly task/ and execution-prompts/. Any new top-level directory type
+    # requires an intentional governance + validator change first.
     for entry in platform_dir.iterdir():
         if entry.is_file():
             if entry.suffix != ".md":
@@ -260,13 +244,12 @@ def main() -> int:
         print(f"ERROR: missing {BASE.relative_to(REPO_ROOT)}", file=sys.stderr)
         return 2
 
-    # Validate top-level policy documents.
     for entry in BASE.iterdir():
         if entry.is_file():
             if entry.suffix != ".md":
                 fail(entry, "only Markdown files are allowed directly under platform-ports/")
             else:
-                validate_bilingual_markdown(entry, require_four_digits=True)
+                validate_bilingual_markdown(entry)
         elif entry.is_dir():
             validate_platform(entry)
 
