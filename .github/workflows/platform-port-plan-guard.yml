@@ -2,21 +2,12 @@ name: Platform Port Plan Guard
 
 on:
   pull_request:
-    paths:
-      - 'docs/plans/platform-ports/**'
-      - 'tools/check_platform_port_plans.py'
-      - 'tools/new_platform_port_task.py'
-      - '.github/workflows/platform-port-plan-guard.yml'
-      - 'AGENTS.md'
+    branches:
+      - main
   push:
     branches:
       - main
-    paths:
-      - 'docs/plans/platform-ports/**'
-      - 'tools/check_platform_port_plans.py'
-      - 'tools/new_platform_port_task.py'
-      - '.github/workflows/platform-port-plan-guard.yml'
-      - 'AGENTS.md'
+  workflow_dispatch:
 
 permissions:
   contents: read
