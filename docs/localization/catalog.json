@@ -293,7 +293,7 @@
       "legacy_path": "docs/governance/00_开发治理_Baga-Ink-Development-Governance.md",
       "zh_cn_path": "docs/zh-CN/governance/00_开发治理.md",
       "en_path": "docs/en/governance/00_baga-ink-development-governance.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "status.00",
@@ -302,7 +302,7 @@
       "legacy_path": "docs/status/00_当前项目状态_Baga-Ink-Project-Status.md",
       "zh_cn_path": "docs/zh-CN/status/00_当前项目状态.md",
       "en_path": "docs/en/status/00_baga-ink-project-status.md",
-      "status": "migration-pending"
+      "status": "current"
     }
   ]
 }
