@@ -30,6 +30,7 @@ jobs:
           tools/new_localized_doc.py
           tools/check_readme_languages.py
           tools/check_licensing.py
+          tools/check_public_writing.py
 
       - name: Validate public documentation internationalization
         run: python3 tools/check_docs_i18n.py
@@ -39,6 +40,9 @@ jobs:
 
       - name: Validate licensing architecture
         run: python3 tools/check_licensing.py
+
+      - name: Validate repository-wide public writing
+        run: python3 tools/check_public_writing.py
 
       - name: Validate platform-port plan structure
         run: python3 tools/check_platform_port_plans.py
