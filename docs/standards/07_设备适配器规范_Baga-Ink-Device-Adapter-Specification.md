@@ -1,7 +1,7 @@
-# Baga Ink 设备适配器规范 / Baga Ink Device Adapter Specification
+# Baga Ink 设备适配器契约 / Baga Ink Device Adapter Contract
 
-> **文档级别：一级平台规范**  
-> **状态：Draft v0.5**  
+> **文档级别：一级平台规范 / Platform Standard**  
+> **状态：Draft v0.6**  
 > **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`04_能力注册表_Baga-Ink-Capability-Registry.md`、`08_兼容性标准_Baga-Ink-Compatibility-Standard.md`、`10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
@@ -10,15 +10,27 @@
 
 ## 0. 目的
 
-Device Adapter 是 Baga Ink Platform 与具体设备 / OS / Vendor SDK 之间的标准适配边界。
+本文档定义 **Baga Ink Device Adapter Contract**：一个设备、OS、固件或厂商平台要接入 Baga Ink Platform 时，设备移植者必须实现的标准设备契约。
 
-它解决：
+核心定义：
 
-> **设备实现可以不同，但上层 `baga.*` 的设备/平台语义保持统一。**
+> **Baga Device Adapter Contract 定义“设备接入 Baga Ink 必须提供什么”，不规定“这些能力必须怎样重新实现”。**
+>
+> **Adapter 实现 SHOULD 优先复用设备 OS、Vendor SDK、驱动、Homebrew 与成熟开源项目已有能力，只补 Baga 所需的映射、归一化、Capability 探测、Quirk 修正和测试。**
 
-SQLite、Automerge 等成熟通用软件能力由 Standard Libraries / Adopted Components 规范管理，不属于 Device Adapter 的数据库或 CRDT 抽象。
+因此，Device Adapter 的标准可以完整而严格，而某一个具体设备的 Adapter 实现可以非常薄。
 
-正式正文只描述当前有效设计。
+本文档面向：
+
+```text
+Baga Ink Platform implementer
+OEM / device vendor
+第三方设备移植者
+Device Adapter maintainer
+BICTS / compatibility maintainer
+```
+
+IKP App 开发者 **不直接调用 Device Adapter**。App 只面对 `baga.*`、Baga Lua Profile 与正式 Standard Libraries。
 
 ---
 
@@ -34,160 +46,449 @@ Baga Ink API / Baga Lua Profile
    Baga Ink Platform Core
             │
             ▼
-   Baga Ink Device Adapter
+  Baga Device Adapter Contract
             │
-      ┌─────┴───────────┐
-      ▼                 ▼
- Kindle OS /        Android /
- Homebrew           Vendor SDK
+      ┌─────┴──────────────┐
+      ▼                    ▼
+ Kindle OS /           Android / Vendor SDK /
+ Homebrew              Other E-Paper OS
 ```
 
-内部复用 KOReader、FBInk、SQLite、Automerge、Vendor SDK 时，上图不增加新层。
+公开设备能力链保持：
 
-Standard Libraries 由 `13` 规范负责，不是 DeviceAdapter module。
+```text
+App
+ ↓
+baga.*
+ ↓
+Platform Core
+ ↓
+Device Adapter Contract
+ ↓
+设备 / OS / 固件 / Vendor 能力
+```
+
+成熟通用库不因为被采用而进入 Device Adapter：
+
+```text
+SQLite / lsqlite3
+Automerge
+通用 JSON / crypto / compression
+```
+
+Reader/UI 等 Platform shared implementation 也不等于 Device Adapter；它们在需要设备能力时通过 Adapter 获取 Display/Input/Storage/Lifecycle 等机制。
 
 ---
 
-# 2. Adapter 职责
+# 2. 最重要的设计原则
+
+## 2.1 Contract 重，具体 Adapter 轻
+
+正确方向：
 
 ```text
-Device identification
-Capability detection
-Display / refresh
-Input
-Storage sandbox / path mapping
-Lifecycle
-Power
-Network device bridge
-Frontlight
-Pen
-Audio
-Bluetooth
-System events
-Diagnostics
-Device quirks
+完整、稳定、可测试的 Device Adapter Contract
+                    ↓
+            很薄的设备实现
+                    ↓
+        复用现成 OS / SDK / 开源能力
 ```
 
-Adapter 最重要的责任是准确表达真实设备能力。
+错误方向：
+
+```text
+为了“实现 Adapter”
+→ 重写 framebuffer
+→ 重写 input stack
+→ 重写 reader
+→ 重写 network stack
+→ 重写 power manager
+```
+
+如果设备已有成熟实现，Adapter SHOULD 包装/调用它，而不是复制其内部能力。
+
+## 2.2 Interfaces, not device conditionals
+
+型号、固件、Vendor 差异 MUST 尽量集中在 Adapter / Device Profile / Quirk Set 内。
+
+禁止让以下判断散落到 Universal App 或 Platform shared code：
+
+```text
+if Kindle PW5 ...
+if BOOX ...
+if iReader ...
+if firmware >= ...
+```
+
+Platform-neutral 上层代码依赖稳定接口；设备差异由下层实现吸收。
+
+## 2.3 Mechanism, not product policy
+
+Adapter 提供设备机制：
+
+```text
+屏幕怎样刷新
+输入事件怎样取得
+设备怎样休眠/唤醒
+存储根在哪里
+当前网络是否可用
+前光是否可控
+```
+
+Adapter 不决定：
+
+```text
+LifeBook 产品逻辑
+同步业务策略
+Market 业务
+UI 页面结构
+Reader 产品策略
+```
+
+## 2.4 不要求独立进程或 IPC
+
+v0.6 Contract 是**语义与实现接口**，不是 IPC 协议。
+
+Reference Platform SHOULD 优先使用：
+
+```text
+Platform Core
+   ↓ direct typed call
+Device Adapter
+```
+
+不得为了模仿其他平台架构而强制加入 Binder、JSON bridge、RPC daemon 或独立 Adapter process。
+
+未来如某 OS 需要进程隔离，可在保持 Contract 语义的前提下由该平台内部实现。
 
 ---
 
-# 3. 成熟实现优先，但先判断是否属于 Adapter
+# 3. Base Contract 与 Optional Subsystems
 
-实现一个需求前必须先判断：
+Baga Device Adapter 使用：
 
-```text
-设备 / OS / Vendor 差异？
-→ Device Adapter / baga.*
+> **Root Adapter + Typed Subsystem Interfaces**
 
-成熟通用软件能力？
-→ Standard Library / Adopted Component
-```
+而不是一个不断膨胀的万能 `DeviceAdapter` 类。
 
-当前典型映射：
+逻辑结构：
 
 ```text
-Kindle framebuffer / touch / power
-→ Adapter，可复用 KOReader / FBInk
-
-BOOX Pen / refresh
-→ Adapter，可复用 Vendor SDK
-
-SQLite relational DB
-→ Standard Library
-
-Automerge CRDT
-→ Adopted Foundation
+BagaDeviceAdapter
+│
+├── Identity / Descriptor                MUST
+├── Capability Snapshot                  MUST
+├── DisplayAdapter                       MUST
+├── InputAdapter                         MUST
+├── StorageAdapter                       MUST
+├── LifecycleAdapter                     MUST
+├── PowerAdapter                         MUST
+│
+├── NetworkAdapter                       OPTIONAL
+├── LightAdapter                         OPTIONAL
+├── AudioAdapter                         OPTIONAL
+├── BluetoothAdapter                     OPTIONAL
+└── UserLibraryBridge                    OPTIONAL
 ```
 
-MUST NOT 因采用一个 library 而机械增加通用 Provider、Engine、Runtime 或 Library Adapter 层。
+Pen / Touch / Keyboard 属于 `InputAdapter` 的可选能力，不必形成单独顶层 Adapter。
+
+Reader 不属于 Device Adapter 顶层 subsystem。
+
+Baga Base Compatibility 对应当前 Capability Registry：
+
+```text
+display.basic
+input.navigation
+storage.app_sandbox
+power.sleep_wake
+platform.lifecycle
+```
+
+Optional subsystem 不存在时必须明确返回 `not_supported` / absent，不得伪造。
 
 ---
 
-# 4. Adapter 不负责什么
+# 4. Adapter Factory 与加载模型
 
-Device Adapter 不负责：
+## 4.1 v0.6 默认：随 Platform 构建/打包
 
-- App 业务逻辑；
-- Market 业务；
-- LifeBook 私有功能；
-- SQLite database semantics；
-- CRDT algorithm；
-- 将第三方库私有对象变成 Baga API；
-- 把 Vendor / OS 私有对象直接暴露给 IKP。
-
-设备能力的正式调用链保持：
+第一阶段 Adapter SHOULD：
 
 ```text
-App → baga.* → Platform Core → Device Adapter → Device / OS
+Adapter source
+   ↓
+Baga Adapter SDK / generated interfaces
+   ↓
+compile/link/package with Platform
 ```
 
-成熟 Standard Library 则由 Baga Lua Profile 直接提供给应用。
+例如：
+
+```text
+Kindle Adapter
+→ baga-platform.kpkg / native Platform envelope
+
+Android Adapter
+→ Baga Ink Platform APK
+```
+
+v0.6 **不定义第三方下载后 `dlopen()` 的动态 Native Adapter Plugin ABI**。
+
+未来若要允许独立签名 Native Adapter Module，必须单独定义：ABI、签名、依赖、崩溃隔离和供应链策略。
+
+## 4.2 Root Factory
+
+Platform 可以包含一个或多个 Adapter Factory。逻辑接口：
+
+```text
+AdapterFactory
+├── probe(BootstrapDeviceInfo) -> ProbeResult
+└── create(AdapterCreateContext, ProbeResult) -> BagaDeviceAdapter
+```
+
+`probe()` MUST：
+
+- 只使用 Platform bootstrap 阶段安全可得的信息；
+- 不修改用户数据；
+- 不假设同系列其他型号等价；
+- 对未知设备/固件明确返回 unknown / unsupported；
+- 提供选择 Device Profile / Quirk 的必要证据。
+
+如果一个 Platform build 只服务单一设备家族，也可以只有一个 Factory。
 
 ---
 
-# 5. Adapter Identity / Device Descriptor
+# 5. Root Adapter 生命周期
 
-Adapter SHOULD 提供：
+语言无关逻辑接口：
 
 ```text
+BagaDeviceAdapter
+├── contract_version() -> AdapterContractVersion
+├── adapter_version() -> Version
+├── descriptor() -> DeviceDescriptor
+├── capabilities() -> CapabilitySnapshot
+├── init(AdapterHost) -> Result
+├── self_test(SelfTestMode) -> SelfTestReport
+├── subsystem(name) -> typed subsystem / absent
+└── shutdown() -> Result
+```
+
+初始化顺序：
+
+```text
+Platform bootstrap
+      ↓
+AdapterFactory.probe
+      ↓
+AdapterFactory.create
+      ↓
+Adapter.init
+      ↓
+Adapter.descriptor + capability snapshot
+      ↓
+Adapter self-test
+      ↓
+Platform Core ready
+      ↓
+IKP Apps may start
+```
+
+在 Base Mandatory subsystem 尚未就绪时，Platform MUST NOT 把设备标记为 `Baga Ink Compatible`。
+
+---
+
+# 6. DeviceDescriptor
+
+Adapter MUST 返回稳定、结构化的设备描述。
+
+最小逻辑字段：
+
+```text
+adapter_contract_version
 adapter_id
 adapter_version
+
 device_family
-platform_family
-supported_firmware_range
-compatibility_standard_version
-```
-
-Device Descriptor 最低包括：
-
-```text
 manufacturer
 model
 model_id
-platform_family
-os_or_firmware_version
-screen_width
-screen_height
+firmware_or_os_version
+
+cpu_arch
+native_target / abi_profile     when applicable
+
+screen
+input_summary
+
+profile_id                      if profile model is used
+quirk_set_id                    if quirk set is active
+compatibility_record_id         when available
+```
+
+`screen` 至少包括：
+
+```text
+pixel_width
+pixel_height
 orientation
-capabilities
 ```
 
-这些用于诊断；Universal App 核心业务不按 model/vendor 分支。
+Adapter Descriptor 用于 Platform、Client、诊断和 Compatibility，不是 Universal App 的型号分支入口。
+
+默认 MUST NOT 包含：
+
+```text
+设备序列号
+Amazon / Google / OEM 用户账号
+用户书籍正文
+用户笔记正文
+用户凭据
+```
+
+如诊断确需设备唯一标识，必须另走隐私受控机制。
 
 ---
 
-# 6. Capability Detection
+# 7. Capability Snapshot 与 Runtime State 分离
+
+必须区分：
 
 ```text
-has(capability) -> boolean
-list_capabilities() -> set
+Capability Snapshot
+→ 这个设备/Platform 组合“能不能做”
+
+Runtime State
+→ 当前“是什么状态”
 ```
 
-Capability 必须：
+例如：
 
-- 基于当前设备 / 固件真实状态；
-- 不因同系列其他设备有就误报；
-- 未验证能力不标 stable；
-- 不因内部 library 存在就自动声明其所有能力。
+```text
+Capability: network.wifi = supported
+Runtime State: offline
+```
 
-SQLite / lsqlite3 / Automerge 不属于 Device Capability。
+```text
+Capability: power.battery_level = supported
+Runtime State: battery = 72%
+```
+
+Capability 名称必须来自 `04 Capability Registry`。
+
+Adapter MUST 不因为内部存在某个库就自动声明能力。
+
+Capability Snapshot SHOULD 在一次 Platform Session 中保持稳定；如果固件/外设热插拔导致能力真正变化，Platform 必须通过明确 capability-change 事件重新生成快照，而不是静默改变行为。
 
 ---
 
-# 7. Display Adapter
+# 8. AdapterHost 与事件模型
 
-最低职责：
+Platform Core 在 `init()` 时提供受控 `AdapterHost`。
+
+逻辑职责：
 
 ```text
-get_size()
-get_orientation()
-refresh(region, mode)
-full_refresh()
-supports_display_mode(mode)
+AdapterHost
+├── emit(AdapterEvent)
+├── monotonic_time()
+├── platform_log(...)
+└── controlled scheduling / wake hook as implemented
 ```
 
-Baga Display Intent：
+核心规则：
+
+> **Adapter / Vendor callback MUST NOT 直接调用 IKP App。所有设备事件先进入 Platform Core。**
+
+Adapter 可以从设备/OS 任意线程收到 callback，但：
+
+- 必须把事件转换为 typed `AdapterEvent`；
+- 必须提交给 Platform Core；
+- Platform Core 负责应用侧的排序、去重和生命周期派发；
+- v0.6 不要求 Adapter 自己实现第二套 App event loop。
+
+典型事件：
+
+```text
+LifecycleEvent
+NavigationEvent
+PointerEvent
+KeyboardEvent
+PenEvent
+PowerStateEvent
+NetworkStateEvent
+DisplayStateEvent
+LightStateEvent
+BluetoothStateEvent
+CapabilityChangedEvent     rare / explicit
+```
+
+---
+
+# 9. 通用错误模型
+
+Adapter 的内部错误必须被归一化为稳定机器语义，再由 Platform Core 映射为 `baga.*` 错误。
+
+v0.6 推荐基础错误码：
+
+```text
+not_supported
+not_ready
+invalid_argument
+invalid_state
+out_of_bounds
+busy
+timeout
+io_error
+storage_full
+offline
+device_error
+permission_unavailable
+```
+
+规则：
+
+- 不把 Vendor 原始整数错误码作为 Universal App contract；
+- Adapter MAY 在 diagnostics 中保留 raw backend code；
+- raw code 不能成为 App 业务分支依据；
+- 错误必须明确可恢复性。
+
+---
+
+# 10. DisplayAdapter Contract
+
+DisplayAdapter 负责**设备显示与刷新机制**，不等于完整 UI framework，也不强制拥有一套独立 rendering engine。
+
+逻辑接口：
+
+```text
+DisplayAdapter
+├── info() -> DisplayInfo
+├── supports(intent) -> boolean
+└── refresh(RefreshRequest) -> Result
+```
+
+`DisplayInfo` 至少：
+
+```text
+pixel_width
+pixel_height
+logical_width
+logical_height
+orientation
+grayscale_levels       if known
+color                   boolean / profile
+```
+
+`RefreshRequest`：
+
+```text
+regions[]
+intent
+```
+
+标准 intent：
 
 ```text
 AUTO
@@ -197,66 +498,72 @@ FAST
 ANIMATION
 ```
 
-Adapter 可复用 KOReader / FBInk / Vendor E-Paper SDK，但不暴露 waveform ID。
+`regions` 使用当前 Baga display logical coordinate space；越界必须拒绝或安全裁剪，不能写出 framebuffer 边界。
+
+设备内部可以使用：
+
+```text
+Kindle waveform
+FBInk
+KOReader display backend
+BOOX refresh mode
+Vendor SDK
+Linux framebuffer/DRM
+```
+
+这些不得泄漏为标准接口。
+
+如果某设备只能全刷，Adapter 可以把 region refresh 安全降级为 full refresh，但 Capability 必须如实声明。
 
 ---
 
-# 8. Input Adapter
+# 11. InputAdapter Contract
 
-统一语义：
+InputAdapter 负责把设备原始输入归一化为 Baga 输入语义。
+
+Base Mandatory 至少能产生：
 
 ```text
 confirm
 back
-menu
+menu               if device/platform provides semantic equivalent
 page_next
 page_previous
 focus_next
 focus_previous
 ```
 
-来源可以是：
+没有独立 `menu` 键的设备可以通过 Platform/UI 提供等价交互，不要求伪造物理键。
+
+标准事件族：
 
 ```text
-touch
-pen
-physical_button
-keyboard
-volume key
+NavigationAction
+PointerEvent
+KeyboardEvent
+PenEvent
 ```
 
-App 不依赖 Linux/Android/Kindle private keycode。
-
----
-
-# 9. Touch / Pen
-
-`input.touch` 至少提供：
+Pointer：
 
 ```text
-pointer_down
-pointer_move
-pointer_up
+down
+move
+up
 cancel
 ```
 
-Pen 可选能力：
+Pen 的 pressure / eraser / hover / low-latency 只在真实支持并声明对应 Capability 时提供。
 
-```text
-input.pen
-input.pen.pressure
-input.pen.eraser
-input.pen.hover
-input.pen.low_latency
-```
-
-Vendor Pen API 留在 Adapter 内部。
+Adapter MUST 不把 Kindle keycode、Android KeyEvent、Vendor MotionEvent object 等直接暴露给 IKP。
 
 ---
 
-# 10. Storage Adapter
+# 12. StorageAdapter Contract
 
-逻辑根：
+StorageAdapter 提供 Platform 在该设备上建立安全逻辑存储的设备机制。
+
+Platform 对 App 暴露的逻辑路径仍是：
 
 ```text
 appdata/
@@ -265,45 +572,46 @@ documents/
 downloads/
 ```
 
-Platform / Adapter 共同保证：
-
-- App sandbox；
-- path normalization；
-- `..` / unauthorized absolute path rejection；
-- disk-full error；
-- Platform update 不默认删除 App data。
-
-## 10.1 Standard Library path bridge
-
-`baga.storage.resolve_path()` MAY 为 `lsqlite3` 等正式 Standard Library 提供当前 App 被授权的运行时路径。
-
-但 `resolve_path()` 不是弱 OS sandbox 平台的完整安全边界。
-
-在 Kindle 等系统上，SQLite 还必须通过 sandbox-aware VFS / 等价 I/O confinement 约束 `ATTACH`、journal、WAL、temp DB 等所有文件访问。
-
-详细规则见 `13`。
-
----
-
-# 11. User Library Bridge
-
-用户书库通过：
+Adapter MUST 至少提供：
 
 ```text
-baga.library
-+ storage.user_library
-+ library.read / library.write
+storage_info()
+platform_private_root()
+app_private_root(app_id)
+canonicalize / containment mechanism
+free_space()                 if reliably available
+atomic-replace capability metadata
+fsync/durability profile     if applicable
 ```
 
-暴露。
+这里的 `root` 是 Platform 内部 NativePathHandle / equivalent，不是给 IKP 直接读取的稳定真实路径。
 
-IKP 不扫描 Kindle `/documents` 或 Android Vendor private path/database。
+Platform / Adapter 共同保证：
+
+- path normalization；
+- `..` escape 拒绝；
+- unauthorized absolute path 拒绝；
+- symlink/canonical escape 防护；
+- disk-full error；
+- Platform update 不默认删除 App data；
+- staged package 与 App data 分离。
+
+对于 Kindle 等弱 OS sandbox 平台，SQLite 仍必须满足 `13` 与 BICTS 定义的 VFS / 等价 I/O confinement；仅返回一个合法目录不足以构成完整 sandbox。
 
 ---
 
-# 12. Lifecycle / Power
+# 13. LifecycleAdapter Contract
 
-Adapter 将底层事件转换为：
+LifecycleAdapter 把 OS/设备事件映射为 Platform 可依赖的生命周期事实。
+
+必须支持：
+
+```text
+sleep
+wake
+```
+
+并为 Platform 构造：
 
 ```text
 start
@@ -314,211 +622,498 @@ wake
 stop
 ```
 
-Power MAY 提供：
+提供底层信号。
+
+规则：
+
+- SHOULD 使用事件/回调，不应高频轮询；
+- wake 后设备状态可能变化，Platform 可重新检查 network/power；
+- Adapter 不直接调用 App lifecycle handler；
+- Platform Core 负责 App lifecycle 顺序。
+
+---
+
+# 14. PowerAdapter Contract
+
+Base Mandatory：
 
 ```text
-battery_level
-charging_state
-keep_awake
+power.sleep_wake
 ```
 
-不支持返回 `not_supported/unknown`，不得伪造。
-
----
-
-# 13. Network Adapter
-
-声明网络能力后，Adapter 必须处理：
+可选接口：
 
 ```text
-connectivity state
-network change
-sleep/wake disruption
-DNS / TLS / timeout error mapping
+battery_level()
+charging_state()
+request_keep_awake(reason)
+release_keep_awake(token)
 ```
 
-HTTP/TLS stack 可以复用成熟实现；App 只看 `baga.network`。
-
-Automerge sync protocol（若使用）是 Local-first protocol，不属于 Network Adapter API。
-
----
-
-# 14. Frontlight / Audio / Bluetooth
-
-只有真实可控时才声明：
+只有真实可实现时才声明：
 
 ```text
-light.frontlight*
-audio.output
-bluetooth.*
+power.battery_level
+power.charging_state
+power.keep_awake
 ```
 
-具体 Vendor API 不穿透。
+Platform 可以拒绝 keep-awake；App 不能假设请求一定成功。
 
 ---
 
-# 15. Error / Event / Main Loop
+# 15. NetworkAdapter Contract（Optional）
 
-Adapter 将底层错误映射成稳定 Baga error semantics。
+NetworkAdapter 负责**设备/OS 网络状态与必要平台桥接**，不要求每个 Adapter 自己重写完整 HTTP/TLS stack。
 
-Event SHOULD：
-
-- 有序；
-- 可去重；
-- 先进入 Platform Core；
-- 不让 Vendor/library callback 直接进入 App。
-
-Adapter MAY 复用 Android main thread、KOReader event loop 等成熟机制，不需要重新实现事件引擎。
-
----
-
-# 16. Logging / Self-check
-
-Diagnostics SHOULD 记录：
+最小逻辑接口：
 
 ```text
-model / firmware
-adapter version
-capability detection
-screen/input/network backend
-display/input failures
-power/network events
-unexpected vendor errors
+connectivity_state()
+network_info()
 ```
 
-普通日志不得写用户正文/笔记/凭据。
-
-Self-check 至少验证：
+并通过 AdapterEvent 上报：
 
 ```text
-Device identity
-Display
-Input
-Storage sandbox
-Lifecycle
-Capability consistency
+online
+offline
+network_changed
 ```
 
-SQLite Profile 由 BICTS / Standard Library test 验证，而不是 Adapter Self-check 重新定义。
-
----
-
-# 17. Kindle / Android 设备规范
-
-Kindle：见 `11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md`。
-
-Android E-Paper：见 `12_Android墨水屏适配规范_Baga-Ink-Android-E-Paper-Adapter.md`。
-
----
-
-# 18. Android Vendor Specialization
-
-Android 内部 MAY：
+具体 Platform 可以：
 
 ```text
-Generic Android Adapter
-├─ BOOX specialization
-├─ iReader specialization
-├─ Bigme specialization
-└─ Other vendor specialization
+共享成熟 HTTP/TLS library
+或
+调用 OS network stack
 ```
 
-这些只处理真实 Vendor SDK / hardware differences。
+只要最终 `baga.network` 语义与 BICTS 成立即可。
+
+不得因为 NetworkAdapter 存在就把 Automerge sync protocol、HTTP client policy 或 LifeBook 同步策略塞入 Adapter。
 
 ---
 
-# 19. Capability Provider 的严格边界
+# 16. Light / Audio / Bluetooth Optional Contracts
 
-Capability Provider 只用于**确实需要受控扩展的设备/厂商高级能力**，例如某些 Vendor Pen / E-Paper 特性。
+## LightAdapter
 
-它：
-
-- MUST 通过标准 Capability/API 暴露；
-- MUST 不成为任意 Library 的包装惯例；
-- MUST 不用于 SQLite、Automerge、KOReader 仅仅因为它们是库；
-- MUST 不泛化为所有 Baga API 的必经层。
-
-成熟库仅作为实现依赖时，不为其额外定义公共 Provider 概念。
-
----
-
-# 20. Adapter Versioning / Compatibility
-
-Compatibility Record SHOULD 记录：
+可选：
 
 ```text
-Device Model
-Firmware Range
-Platform Version
+get_level()
+set_level(level)
+get_temperature()
+set_temperature(value)
+```
+
+仅在真实可控时声明 `light.frontlight*`。
+
+## AudioAdapter
+
+只提供 Platform 需要的设备音频输出/输入机制；TTS engine 本身可以属于 Platform shared implementation。
+
+## BluetoothAdapter
+
+只提供设备 Bluetooth 可用性与标准化事件/能力，不把 Vendor private object 暴露给 App。
+
+---
+
+# 17. UserLibraryBridge（Optional）
+
+User Library 是强设备相关能力，因此允许 Device Adapter 提供桥接，但 `baga.library` 的产品/语义 API 属于 Platform。
+
+逻辑 Bridge 能力：
+
+```text
+enumerate library items
+open opaque source handle
+import/remove when supported and permitted
+rescan/refresh
+```
+
+规则：
+
+- Item ID / source handle 对 App opaque；
+- 不把 Kindle `/documents` 或 Android Vendor DB path 作为 Universal contract；
+- 权限由 Platform Permission Model 控制；
+- Reader 可以接收 opaque source handle；
+- Library Bridge 不等于 Reader engine。
+
+---
+
+# 18. Reader 与 UI 不属于 Device Adapter
+
+必须保持以下边界：
+
+```text
+baga.ui
+  ↓
+Platform UI implementation/backend
+  ↓
+Device Adapter: Display + Input
+```
+
+```text
+baga.reader
+  ↓
+Platform Reader implementation
+  ↓
+Device Adapter: Display + Input + Storage + Lifecycle
+```
+
+因此：
+
+- KOReader ReaderUI / CREngine / MuPDF 可以是 Kindle Platform Reader implementation；
+- KOReader UIManager/widgets 可以是 Kindle Platform UI implementation；
+- 它们可以大量复用 Adapter 下层的 Kindle device knowledge；
+- 但 `ReaderAdapter` / `UIAdapter` 不应因为实现方便而被机械塞进 Device Adapter 根契约。
+
+Reader Capability 继续由 `04` 与 `03` 定义。
+
+---
+
+# 19. Native Build Target、Device Profile、Quirk Set 必须分开
+
+这是设备适配的三个不同维度。
+
+## 19.1 Native Build Target / ABI Profile
+
+回答：
+
+> **Native binary 怎么编译/链接？**
+
+例如 Kindle：
+
+```text
+kindle-legacy
+kindle
+kindlepw2
+kindlehf
+```
+
+它不是设备型号本身。
+
+## 19.2 Device Profile
+
+回答：
+
+> **某 model + firmware 组合的已知设备事实、backend 选择与能力预期是什么？**
+
+Profile SHOULD 是数据驱动记录，例如：
+
+```text
+profile_id
+match: model / firmware range
+native_target
+screen expectations
+input expectations
+baseline capability expectations
+preferred backend choices
+known validation status
+```
+
+Profile 不是 Compatibility 认证结果；最终仍以实测 Capability + BICTS 为准。
+
+## 19.3 Quirk Set
+
+回答：
+
+> **这个精确组合有哪些偏离标准行为、需要在 Adapter 内修正的问题？**
+
+Quirk 记录 SHOULD 包含：
+
+```text
+quirk_id
+match condition
+reason
+workaround
+scope
+introduced/verified firmware range
+test reference
+```
+
+Quirk 可以处理：
+
+```text
+touch correction
+refresh workaround
+frontlight behavior
+sleep event issue
+network issue
+library bridge difference
+```
+
+Quirk MUST 不成为公开 Capability，也不得泄漏到 IKP 业务代码。
+
+---
+
+# 20. Installation Route 与 Adapter 分离
+
+设备“怎样获得 Baga Platform”不等于“Platform 运行后怎样访问设备”。
+
+因此：
+
+```text
+Jailbreak / bootstrap / KPM / MRPI / APK install
+→ Installation / Platform bootstrap
+
+Device Adapter
+→ Platform 已运行后，怎样统一设备/OS/固件差异
+```
+
+Kindle 的 WinterBreak / SpringBreak / Sanctuary / Véra、KPM、MRPI、KUAL、PEKI、KindleTool 等不得因为与设备相关就自动进入 Device Adapter Contract。
+
+具体边界由 `11 Kindle Adapter` 与 Kindle implementation freeze 定义。
+
+---
+
+# 21. Self-test
+
+Adapter MUST 提供非破坏性 self-test。
+
+推荐模式：
+
+```text
+QUICK
+INTERACTIVE
+```
+
+`QUICK` 至少检查：
+
+```text
+Descriptor consistency
+Base subsystem presence
+Capability/subsystem consistency
+Display info valid
+Storage root accessible and contained
+Lifecycle hook registered
+Power sleep/wake integration initialized
+Backend versions readable where applicable
+```
+
+`INTERACTIVE` MAY 检查：
+
+```text
+visible refresh
+navigation keys
+touch
+pen
+frontlight
+```
+
+Self-test 不替代 BICTS；它用于安装后诊断与快速判断 Adapter 是否明显损坏。
+
+---
+
+# 22. Adapter Contract Versioning
+
+必须区分：
+
+```text
+Adapter Contract Version
+→ 本标准接口版本
+
 Adapter Version
-Lua Profile Version
-Compatibility Standard Version
-BICTS Version
+→ 某具体 Adapter 实现版本
+
+Device/Firmware Version
+→ 设备本身版本
 ```
 
-Adapter 更新后运行受影响的 BICTS。
-
----
-
-# 21. 安全原则
-
-Adapter 位于高权限边界：
-
-- 不暴露 arbitrary shell；
-- 不暴露 Android Context；
-- 不暴露 Vendor SDK object；
-- 不暴露内部高权限 library escape；
-- 校验 path/region/arguments；
-- 遵守 Platform Policy。
-
----
-
-# 22. OEM 实现流程
+Reference 版本模型：
 
 ```text
-Vendor hardware/firmware
-  ↓
-Implement Adapter
-  ↓
-Reuse mature components
-  ↓
-Self-check
-  ↓
+adapter_contract = MAJOR.MINOR
+```
+
+规则：
+
+- MAJOR：允许破坏性 Contract 变化；
+- MINOR：只允许向后兼容的新增；
+- 已冻结 MINOR 中已有字段/方法语义不得静默改变；
+- 新 optional method/type field 必须有明确默认/absent 语义；
+- Platform MUST 拒绝不支持的 Contract MAJOR；
+- Platform SHOULD 能运行其声明支持范围内的较旧 MINOR Adapter。
+
+未来机器可读 IDL / Codegen MUST 保存 frozen contract snapshots，并自动执行兼容性检查。
+
+---
+
+# 23. Adapter Contract Tests 与 BICTS 分工
+
+必须区分两类测试。
+
+## 23.1 Adapter Contract Tests
+
+直接验证 Adapter 本身：
+
+```text
+Factory / probe
+Descriptor
+Capability consistency
+Display contract
+Input event normalization
+Storage containment
+Lifecycle event mapping
+Power contract
+Optional subsystem behavior
+Error normalization
+Profile / Quirk selection
+Self-test
+```
+
+它回答：
+
+> **这个 Adapter 是否正确实现了 Device Adapter Contract？**
+
+## 23.2 BICTS
+
+BICTS 验证：
+
+```text
+Device + Firmware/OS + Platform + Adapter + Lua Profile
+```
+
+整个组合的公开 Baga 行为是否真正成立。
+
+它回答：
+
+> **这台设备能否宣称 Baga Ink Compatible？**
+
+Adapter Contract Tests PASS 不等于 BICTS PASS；反之，正式认证也应有 Adapter Contract evidence。
+
+---
+
+# 24. Mock / Reference Adapter 要求
+
+Baga SHOULD 维护一个：
+
+> **Mock / Headless Device Adapter**
+
+用途：
+
+- Device Adapter Contract 的最小 Reference Implementation；
+- Platform Core host-side tests；
+- IKP 开发无需真实设备；
+- OEM Adapter 开发者可对照实现；
+- 自动化 Adapter Contract Tests。
+
+推荐能力：
+
+```text
+Display → memory bitmap / PNG snapshot
+Input → scripted events
+Storage → temp sandbox
+Lifecycle → simulated sleep/wake
+Power → simulated battery/charging
+Network → simulated online/offline
+Device Profile → configurable fixture
+```
+
+Mock Adapter 不用于宣称真实硬件 Compatible。
+
+---
+
+# 25. 语言与 SDK
+
+Device Adapter Contract 是语言无关的。
+
+Platform 内部 MAY 使用：
+
+```text
+Rust
+C / C++
+Kotlin / Java
+JNI
+Lua
+Shell integration where device-specific and controlled
+```
+
+长期 SHOULD 建立机器可读 Adapter Contract / IDL，并生成：
+
+```text
+Rust traits/types
+C headers/vtables
+Kotlin interfaces/data classes
+Mock stubs
+Contract test fixtures
+Documentation tables
+```
+
+机器 IDL 是减少 Kindle/Android/OEM 实现漂移的工具，不改变本文档的语义权威。
+
+具体设计见 `docs/design/02_设备适配器可执行契约与SDK设计_Baga-Ink-Device-Adapter-Executable-Contract-and-SDK-Design.md`。
+
+---
+
+# 26. 安全边界
+
+Device Adapter 位于高权限设备边界。
+
+MUST：
+
+- 不向 IKP 暴露 arbitrary shell；
+- 不暴露 Android Context / Kindle private framework object / Vendor SDK object；
+- 校验 refresh region / path / index / range；
+- 不允许 App 通过 Adapter 越过 Permission/Sandbox；
+- 不把 raw device callback 直接交给 App；
+- 不在普通日志中记录用户正文/笔记/凭据；
+- malformed input 不得导致越界硬件访问；
+- Adapter crash/failure 应由 Platform 转换成可诊断故障，而不是破坏 App data。
+
+---
+
+# 27. OEM / 第三方设备接入流程
+
+标准流程：
+
+```text
+阅读 01 / 03 / 04 / 07
+        ↓
+选择/实现 Adapter SDK backend
+        ↓
+实现 Base Mandatory subsystems
+        ↓
+复用 OS / Vendor SDK / mature libraries
+        ↓
+实现 Device Profile / Quirk（如需要）
+        ↓
+Adapter self-test
+        ↓
+Adapter Contract Tests
+        ↓
+实现并声明 Optional Capabilities
+        ↓
 BICTS
-  ↓
-Declare verified capabilities
-  ↓
-Baga Ink Compatible
+        ↓
+生成 Compatibility Record
+        ↓
+Baga Ink Compatible / Experimental / Unsupported
 ```
 
-OEM 不需要修改第三方 IKP。
+第三方 Adapter 不需要修改 Universal IKP。
 
 ---
 
-# 23. 顶层 Adapter 模型
+# 28. 设计参考（非规范依赖）
 
-```text
-DeviceAdapter
-├─ Identity
-├─ Capabilities
-├─ Display
-├─ Input
-├─ Storage/Sandbox
-├─ Lifecycle
-├─ Power
-├─ Network       optional
-├─ Touch/Pen     optional
-├─ Frontlight    optional
-├─ Audio         optional
-└─ Bluetooth     optional
-```
+本 Contract 的部分设计原则参考成熟平台抽象体系，但不复制其进程模型或具体 ABI：
 
-SQLite、Automerge 与 Reader 数据库不属于 Device Adapter 顶层模块。
+- Android HAL / Stable AIDL：标准厂商接口、接口冻结与版本兼容；
+- Zephyr Device Driver Model：generic subsystem API、device-specific implementation、config/data/api 分离思想；
+- Chromium Ozone：`interfaces, not ifdefs`、platform layer 提供 mechanism 而非上层 policy；
+- Qt QPA：platform backend / minimal platform implementation 的工程经验。
+
+这些项目不是 Baga Runtime dependency，也不要求 Baga 采用它们的 IPC、window system 或 driver ABI。
 
 ---
 
-# 24. 最终验收标准
+# 29. 最终原则
 
-> **正确的 Adapter 让 IKP 用统一 `baga.*` 获得设备能力，同时不妨碍 IKP 直接使用 Baga Lua Profile 已正式采用的成熟 Standard Libraries。**
+> **Baga Device Adapter 是设备接入 Baga Ink Platform 的稳定 Porting Contract。标准定义必须足够完整，让 OEM/第三方知道“要实现什么”；具体设备实现则应尽量薄，优先站在现有 OS、Vendor SDK、Homebrew 和成熟开源能力之上。**
 
-如果 App 必须知道这是 Kindle/BOOX/iReader 才能工作，Adapter 失败；如果一个成熟通用库被无意义塞进 Adapter/Provider 才能使用，标准分层也失败。
+进一步说：
+
+> **标准化设备语义，不重新实现设备；集中设备差异，不把型号/固件条件扩散到 Platform 与 IKP。**
