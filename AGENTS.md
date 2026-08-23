@@ -64,6 +64,63 @@ This Kindle Architecture Freeze is subordinate to `docs/standards/`, but authori
 
 Do not silently change a frozen Kindle decision in code. If evidence requires a change, update the architecture decision/freeze first, then code and tests.
 
+### Platform-port Task / AI execution-prompt hard gate
+
+Before creating, renaming, moving, or editing anything under:
+
+```text
+docs/plans/platform-ports/
+```
+
+MUST read and follow:
+
+```text
+docs/plans/platform-ports/0000_平台移植计划目录与文件命名规则_Baga-Ink-Platform-Port-Plan-Naming.md
+```
+
+For Kindle work, MUST also read:
+
+```text
+docs/plans/platform-ports/kindle/0000_目录说明与文件命名规则_Kindle-Plan-Directory-and-File-Naming.md
+docs/plans/platform-ports/kindle/task/0000_任务设计目录说明_Task-Design-Directory-Guide.md
+docs/plans/platform-ports/kindle/execution-prompts/0000_AI执行提示目录说明_AI-Execution-Prompt-Directory-Guide.md
+```
+
+The required physical workflow is:
+
+```text
+Platform Master Plan
+      ↓
+task/<NNNN_中文任务名_English-Task-Name>/vNNN/
+      ↓
+select exact Task Design version
+      ↓
+execution-prompts/<same Task directory>/<same vNNN>/
+```
+
+Hard rules:
+
+- Do not invent another task, prompt, handoff, scratch, plan, notes, temp, date-based, milestone, or AI-output directory under a platform-port root.
+- A platform-port root may contain plan Markdown files plus only `task/` and `execution-prompts/` unless the governing rule and validator are deliberately changed first.
+- Task directories MUST use `NNNN_中文任务名_English-Task-Name`.
+- Task Design versions MUST use zero-padded `vNNN` such as `v001`, `v002`, `v010`; `v1`, `v2`, `v10`, date folders, and ad-hoc version names are forbidden.
+- Markdown files MUST use `数字前缀_中文名_English-Name.md`; files inside task/execution trees MUST use four-digit numeric prefixes.
+- Every Task directory MUST have `0000_任务版本索引_Task-Version-Index.md` and at least one `vNNN` version.
+- Every Task Design version MUST have `0000_任务设计总纲_Task-Design-Overview.md`.
+- Every execution-prompt Task/version MUST exactly mirror an existing Task Design Task/version.
+- Every execution-prompt version MUST have `0000_执行索引_Execution-Index.md`.
+- An execution prompt may refine implementation steps, tests, debugging, validation, or real-device actions; it MUST NOT silently change the selected Task Design architecture/scope. If the design changes materially, create a new Task Design `vNNN` first.
+
+Before claiming any change under `docs/plans/platform-ports/` is complete, MUST run:
+
+```text
+python3 tools/check_platform_port_plans.py
+```
+
+and require a zero exit code. The same validator runs in `.github/workflows/platform-port-plan-guard.yml`.
+
+If an agent is operating through a tool that cannot execute repository commands, it MUST still conform to the same rules and MUST inspect the CI result before claiming the change is valid. Do not bypass, weaken, or add exceptions to the validator merely to make an invalid layout pass.
+
 ## 3. Branches Are Not Knowledge Storage
 
 Feature branches are temporary construction scaffolding only.
@@ -104,6 +161,8 @@ Check the current status document and run/inspect the relevant tests or CI evide
 Do not mark a Draft standard Stable merely because prose is complete. The executable-specification Stable Gate must be satisfied where applicable.
 
 For device ports, Adapter documentation or compilation alone is not enough: relevant Adapter Contract Tests and BICTS evidence are required before claiming compatibility.
+
+For any change under `docs/plans/platform-ports/`, `python3 tools/check_platform_port_plans.py` and the Platform Port Plan Guard CI are mandatory completion gates.
 
 ## 6. Updating Project State
 
