@@ -16,8 +16,8 @@ Examples:
       kindle 0010_适配器契约可执行化_Executable-Adapter-Contract v001 \
       0010 建立IDL模式与加载器 Create-IDL-Schema-and-Loader
 
-This script never overwrites an existing file or directory version. Run
-`python3 tools/check_platform_port_plans.py` after scaffolding and before commit.
+This script never overwrites an existing task/version/prompt. It invokes
+`tools/check_platform_port_plans.py` after each successful operation.
 """
 
 from __future__ import annotations
@@ -27,23 +27,26 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import NoReturn
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BASE = REPO_ROOT / "docs" / "plans" / "platform-ports"
 CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff]")
-EN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]*(?:-[A-Za-z0-9][A-Za-z0-9.-]*)*$")
+EN_PATTERN = r"[A-Za-z0-9]+(?:[-.][A-Za-z0-9]+)*"
+EN_RE = re.compile(rf"^{EN_PATTERN}$")
 TASK_DIR_RE = re.compile(
-    r"^(?P<number>\d{4})_(?P<zh>[^_]+)_(?P<en>[A-Za-z0-9][A-Za-z0-9.-]*(?:-[A-Za-z0-9][A-Za-z0-9.-]*)*)$"
+    rf"^(?P<number>\d{{4}})_(?P<zh>[^_]+)_(?P<en>{EN_PATTERN})$"
 )
 VERSION_RE = re.compile(r"^v\d{3}$")
 NUMBER_RE = re.compile(r"^\d{4}$")
+CURRENT_VERSION_RE = re.compile(r"(?m)^(> \*\*Current Selected Version:\*\* `)v\d{3}(`\s*)$")
 
 TASK_INDEX = "0000_任务版本索引_Task-Version-Index.md"
 TASK_OVERVIEW = "0000_任务设计总纲_Task-Design-Overview.md"
 EXEC_INDEX = "0000_执行索引_Execution-Index.md"
 
 
-def die(message: str) -> "NoReturn":
+def die(message: str) -> NoReturn:
     print(f"ERROR: {message}", file=sys.stderr)
     raise SystemExit(2)
 
@@ -59,6 +62,8 @@ def validate_number(value: str, *, allow_zero: bool = False) -> str:
 def validate_zh(value: str) -> str:
     if "_" in value or "/" in value or "\\" in value:
         die("Chinese name must not contain '_', '/' or '\\'")
+    if any(ch.isspace() for ch in value):
+        die("Chinese name must not contain whitespace")
     if not CJK_RE.search(value):
         die("Chinese name must contain at least one Chinese character")
     return value
@@ -66,7 +71,7 @@ def validate_zh(value: str) -> str:
 
 def validate_en(value: str) -> str:
     if not EN_RE.fullmatch(value):
-        die("English name must use ASCII letters/numbers/dots/hyphens and no spaces/underscores")
+        die("English name must use ASCII letters/numbers separated only by '-' or '.', with no spaces/underscores")
     return value
 
 
@@ -87,8 +92,13 @@ def platform_root(platform: str) -> Path:
 
 
 def task_root_from_name(platform: str, task_name: str) -> Path:
-    if not TASK_DIR_RE.fullmatch(task_name):
+    match = TASK_DIR_RE.fullmatch(task_name)
+    if not match:
         die("task directory must match NNNN_<中文任务名>_<English-Task-Name>")
+    if match.group("number") == "0000":
+        die("0000 is reserved and cannot be used as a Task ID")
+    if not CJK_RE.search(match.group("zh")):
+        die("task directory Chinese-name segment must contain Chinese characters")
     return platform_root(platform) / "task" / task_name
 
 
@@ -206,8 +216,8 @@ TBD
 """
 
 
-def execution_index_content(task_name: str, version: str) -> str:
-    source = f"docs/plans/platform-ports/{{platform}}/task/{task_name}/{version}/"
+def execution_index_content(platform: str, task_name: str, version: str) -> str:
+    source = f"docs/plans/platform-ports/{platform}/task/{task_name}/{version}/"
     return f"""# 执行索引 / Execution Index
 
 > **Task:** `{task_name}`  
@@ -244,7 +254,7 @@ TBD
 
 def prompt_content(task_name: str, version: str, number: str, zh: str, en: str, platform: str) -> str:
     source = f"docs/plans/platform-ports/{platform}/task/{task_name}/{version}/"
-    return f"""# {zh} / {en.replace('-', ' ')}
+    return f"""# {zh} / {en.replace('-', ' ').replace('.', ' ')}
 
 > **Task:** `{task_name}`  
 > **Source Task:** `{source}`  
@@ -304,22 +314,34 @@ def cmd_version(args: argparse.Namespace) -> None:
     task_root = task_root_from_name(args.platform, args.task_name)
     if not task_root.is_dir():
         die(f"task does not exist: {task_root.relative_to(REPO_ROOT)}")
-    version = validate_version(args.version)
-    write_new(task_root / version / TASK_OVERVIEW, task_overview_content(args.task_name, version))
 
     index = task_root / TASK_INDEX
     if not index.is_file():
         die(f"task index missing: {index.relative_to(REPO_ROOT)}")
+
+    version = validate_version(args.version)
+    version_dir = task_root / version
+    if version_dir.exists():
+        die(f"Task Design version already exists: {version_dir.relative_to(REPO_ROOT)}")
+
+    write_new(version_dir / TASK_OVERVIEW, task_overview_content(args.task_name, version))
+
     existing = index.read_text(encoding="utf-8")
-    if f"`{version}`" not in existing:
-        marker = "## Governing Sources"
-        addition = f"- `{version}` — New Task Design version.\n\n"
-        if marker in existing:
-            existing = existing.replace(marker, addition + marker, 1)
-        else:
-            existing += "\n" + addition
-        index.write_text(existing, encoding="utf-8")
-        print(f"updated {index.relative_to(REPO_ROOT)}")
+    if f"`{version}`" in existing:
+        die(f"version {version} is already recorded in the task index")
+
+    existing, replacements = CURRENT_VERSION_RE.subn(rf"\g<1>{version}\g<2>", existing, count=1)
+    if replacements != 1:
+        die("task index does not contain a valid Current Selected Version line")
+
+    marker = "## Governing Sources"
+    addition = f"- `{version}` — New Task Design version.\n\n"
+    if marker in existing:
+        existing = existing.replace(marker, addition + marker, 1)
+    else:
+        existing += "\n" + addition
+    index.write_text(existing, encoding="utf-8")
+    print(f"updated {index.relative_to(REPO_ROOT)}")
 
 
 def cmd_execution(args: argparse.Namespace) -> None:
@@ -331,8 +353,7 @@ def cmd_execution(args: argparse.Namespace) -> None:
         die(f"source Task Design version does not exist: {source.relative_to(REPO_ROOT)}")
 
     exec_dir = root / "execution-prompts" / args.task_name / version
-    content = execution_index_content(args.task_name, version).replace("{platform}", args.platform)
-    write_new(exec_dir / EXEC_INDEX, content)
+    write_new(exec_dir / EXEC_INDEX, execution_index_content(args.platform, args.task_name, version))
 
 
 def cmd_prompt(args: argparse.Namespace) -> None:
