@@ -3,7 +3,7 @@
 > **Document level:** Project governance  
 > **Document ID:** `governance.00`  
 > **Locale:** English (`en`)  
-> **Status:** Governance Baseline v0.3  
+> **Status:** Governance Baseline v0.4  
 > **Date:** 2026-08-23  
 > **Counterpart:** `docs/zh-CN/governance/00_开发治理.md`
 
@@ -11,21 +11,21 @@
 
 ## 0. Purpose
 
-This document defines how Baga Ink preserves long-term project facts, organizes Standards / Design / Plans / Status / Reference Apps, uses branches and pull requests, and enables humans and AI agents to continue the project without relying on historical chat context.
+This document defines how Baga Ink preserves long-lived project facts, organizes Standards / Design / Plans / Status / Reference Apps, manages branches and pull requests, and supports collaboration among independent contributors and AI agents.
 
-The most important rule is:
+Core principles:
 
-> **`main` is the long-term source of truth; short-lived branches are construction scaffolding, not project memory.**
+> **`main` is the long-term source of truth.**
 
-Baga Ink is also an international project:
+> **Every tracked document in this public repository is public-facing material.**
 
-> **Public long-lived documentation is localized by locale, while the protocol, APIs, schemas, code, and tests remain one shared implementation contract.**
+> **Public documentation is written for repository users, contributors, implementers, OEM engineers, reviewers, and other third parties—not as a transcript of private project discussions.**
 
 ---
 
 ## 1. Role of `main`
 
-`main` MUST contain all long-lived project material, including:
+`main` MUST contain the durable project state that is intended to be public, including as applicable:
 
 - approved Standards;
 - Approved Design;
@@ -33,37 +33,28 @@ Baga Ink is also an international project:
 - current Project Status;
 - Implementation Plans;
 - machine-readable specifications, schemas, and test vectors;
-- reference / independent implementations;
+- public/reference implementations;
 - tests and CI;
-- production/reference Platform, SDK, Client, and Market source code;
+- public Platform / SDK / tooling source intended for this repository;
 - governance and contributor rules;
 - licensing, third-party provenance, and release evidence.
 
-If an important conclusion exists only in:
+Proprietary first-party products and confidential commercial material are not required to be stored in this public repository.
 
-```text
-chat history
-feature branch
-draft PR description
-issue comment
-personal notes
-an AI's temporary context
-```
-
-then it has not yet become durable project knowledge.
+If a public technical conclusion exists only in a feature branch, draft PR discussion, issue comment, chat transcript, or private notes, it has not yet become durable public project knowledge.
 
 ---
 
 ## 2. Official public documentation layout
 
-Public, long-lived prose that external developers may rely on is organized by locale:
+Long-lived localized prose is organized under:
 
 ```text
 docs/en/
 docs/zh-CN/
 ```
 
-Public categories are:
+Localized public categories are:
 
 ```text
 standards/
@@ -73,7 +64,7 @@ governance/
 status/
 ```
 
-English and Chinese editions that share a Document Number / Document ID are editions of the same logical document. They MUST NOT evolve into different protocols or architectures.
+English and Chinese editions sharing a Document Number / Document ID represent the same logical document and MUST NOT evolve into different protocols or architectures.
 
 Localization rules are defined by:
 
@@ -83,11 +74,70 @@ docs/localization/catalog.json
 docs/localization/terminology.json
 ```
 
-Historical mixed-language directories are currently a migration zone only. New public documents must not be added there.
+The former mixed-language public directories are retired and MUST NOT be recreated.
 
 ---
 
-## 3. Different document classes answer different questions
+## 3. Public repository writing rule
+
+The public/private boundary is determined by repository visibility and Git tracking, not by document category.
+
+Therefore all tracked prose in this public repository—including:
+
+```text
+README files
+CONTRIBUTING files
+AGENTS.md
+COMMERCIAL_LICENSE files
+docs/en/
+docs/zh-CN/
+docs/plans/
+Platform Port Task Designs
+AI Execution Prompts
+other tracked Markdown documentation
+```
+
+MUST be suitable for external publication.
+
+Public repository prose MUST:
+
+- address its actual public audience or state project policy in an institutional voice;
+- distinguish normative requirements from informative rationale;
+- describe architecture, implementation plans, compatibility, licensing, and project status directly;
+- remain understandable without access to private conversations;
+- avoid references to private discussions, author-specific advice, or private commercial strategy.
+
+Public repository prose MUST NOT contain:
+
+- conversational responses addressed to the repository owner;
+- phrases whose meaning depends on a prior chat or private decision discussion;
+- private audience-management reasoning such as speculation about whether wording will annoy, scare, persuade, or discourage users or vendors;
+- confidential monetization strategy, negotiation tactics, internal pricing logic, or unpublished business priorities;
+- personal advisory language such as `I recommend`, `we think`, or equivalent private-discussion phrasing when a project requirement or rationale can be stated directly.
+
+Normative instructions addressed to the intended public role remain valid. For example:
+
+```text
+Contributors MUST run the validator.
+OEM ports SHOULD publish reproducible Compatibility Evidence.
+A Task Design MUST define acceptance criteria.
+```
+
+`docs/plans/` may use direct operational engineering language, but it remains public documentation and follows the same publication standard.
+
+Confidential material belongs outside the tracked public repository, for example in an ignored local `private/` directory or a separate private repository.
+
+Repository validation:
+
+```text
+python3 tools/check_public_writing.py
+```
+
+---
+
+## 4. Document classes
+
+Different document classes answer different questions:
 
 ```text
 What Baga Ink MUST be
@@ -99,42 +149,27 @@ How a subsystem is designed and why
 How a Reference App / Reference Platform validates the standards
 → docs/<locale>/reference-apps/
 
-Where the project actually stands now
+Where the project stands now
 → docs/<locale>/status/
 
 How contributors work and how the project is governed
 → docs/<locale>/governance/
 
-How an approved design is implemented next
+How an approved design is implemented and verified
 → docs/plans/
 ```
 
-`docs/plans/` is an engineering work area and is not required to translate thousands of Task Design / AI Execution Prompt documents across languages.
+`docs/plans/` is public operational engineering material. It is not required to duplicate every Task Design / AI Execution Prompt across human languages, but its technical conclusions are not a substitute for localized public Standards or Design when external implementers depend on those conclusions.
 
-However:
-
-> **Any stable fact that external implementers are expected to rely on must be promoted back into Public Localized Docs. It cannot remain authoritative only inside a Chinese task or prompt.**
+A stable external contract MUST be represented in the appropriate Standards / Design / Reference Apps / Governance / Status documents rather than remaining authoritative only in a platform-port task.
 
 ---
 
-## 4. Branch and PR lifecycle
+## 5. Branch and PR lifecycle
 
-Feature branches MAY be used for:
+Feature branches MAY be used for short-term development isolation, TDD intermediate states, PR review, CI validation, and temporary refactoring work.
 
-- short-term development isolation;
-- intentionally RED TDD states;
-- PR review;
-- CI validation;
-- temporary protection around risky refactors.
-
-Feature branches MUST NOT be used as long-term storage for:
-
-- architecture decisions;
-- current status;
-- roadmaps;
-- compatibility matrices;
-- hidden requirements;
-- context known only to one AI agent.
+Feature branches MUST NOT be used as long-term storage for architecture decisions, current status, roadmaps, compatibility matrices, hidden requirements, or context available only to one contributor or AI agent.
 
 Normal lifecycle:
 
@@ -154,23 +189,17 @@ merge main
 delete branch
 ```
 
-`main` is protected by a GitHub Ruleset. Administrator convenience is not a reason to bypass the normal PR/CI path.
+`main` is protected by a GitHub Ruleset. Repository changes follow the configured PR and CI requirements.
 
 ---
 
-## 5. Responsibility of a PR
+## 6. Responsibility of a PR
 
-A PR is for:
+A PR provides review, diff inspection, CI, discussion, and auditable construction history.
 
-- review;
-- diff inspection;
-- CI;
-- discussion;
-- auditable construction history.
+A PR is not the project current-state database.
 
-A PR is not the project's current-state database.
-
-After merge, current facts must already be represented by:
+After merge, current public facts MUST be represented by the appropriate combination of:
 
 ```text
 code
@@ -180,11 +209,11 @@ Standards / Design / Reference Apps
 Status / Plans
 ```
 
-Future maintainers should not need to read historical PR discussions to reconstruct the current architecture.
+Future maintainers should be able to reconstruct the current public architecture without reading historical PR conversations.
 
 ---
 
-## 6. Status must be maintained centrally
+## 7. Status management
 
 English status entry point:
 
@@ -200,7 +229,7 @@ docs/zh-CN/status/00_当前项目状态.md
 
 Meaningful milestone changes MUST update Status.
 
-Status should record at least:
+Status should record, as applicable:
 
 - Completed;
 - In Progress;
@@ -210,31 +239,29 @@ Status should record at least:
 - Verification Evidence;
 - current Compatibility Claim boundaries.
 
-The answer to "where are we now?" must not require inference from commits, branches, or chat history.
-
 ---
 
-## 7. AI / automation rules
+## 8. AI / automation rules
 
-A new AI agent MUST:
+An AI agent working in this repository MUST:
 
 1. use `main` as the baseline;
 2. read root `AGENTS.md` first;
-3. choose the English or Chinese Documentation Index;
-4. use `docs/localization/catalog.json` to resolve the current public-document path;
+3. select the English or Chinese Documentation Index;
+4. use `docs/localization/catalog.json` for public Document Identity and counterpart mapping;
 5. read the Standards / Design / Reference App / Plan relevant to the task;
-6. not scan historical branches to guess the active architecture;
-7. not assume a file or branch is authoritative merely because it appears newer;
-8. pass repository guards / CI for structural changes;
-9. update Status / Evidence after meaningful work.
+6. not infer current architecture from historical branches or private conversation context;
+7. pass applicable repository validators and CI;
+8. update Status / Evidence after meaningful work;
+9. apply the repository-wide public writing rule to every tracked documentation file it creates or modifies.
 
-AI agents MUST NOT weaken validators, widen allowlists, rename required checks, or bypass governance simply to make their own invalid layout pass.
+AI agents MUST NOT weaken validators, widen allowlists, rename required checks, or bypass governance to make invalid work pass.
 
 ---
 
-## 8. High-volume Platform Port engineering material
+## 9. High-volume Platform Port engineering material
 
-`docs/plans/platform-ports/` uses a separate high-scale task model because a single device platform may eventually have hundreds of tasks and thousands of AI execution prompts.
+`docs/plans/platform-ports/` uses a high-scale Task Design / Execution Prompt model because one device family may require many implementation and validation tasks.
 
 Core structure:
 
@@ -250,17 +277,17 @@ Rules are defined by:
 docs/plans/platform-ports/0000_平台移植计划目录与文件命名规则_Baga-Ink-Platform-Port-Plan-Naming.md
 ```
 
-The Kindle port also has its own Task / Execution Prompt guides.
+The Kindle port also has platform-specific Task / Execution Prompt guides.
 
-These engineering plans are operational context, not public protocol authority.
+These plans are public operational engineering context. They do not become private merely because they are implementation-oriented.
 
 ---
 
-## 9. Draft → Stable
+## 10. Draft → Stable
 
-A Standard MUST NOT become Stable merely because its Markdown looks complete.
+A Standard MUST NOT become Stable solely because its prose is complete.
 
-For executable protocols, a Stable Gate SHOULD/MUST (as defined by the governing Standard) include evidence such as:
+For executable protocols, a Stable Gate SHOULD/MUST, as defined by the governing Standard, include evidence such as:
 
 ```text
 Schema Validation
@@ -278,15 +305,13 @@ Device Compatibility additionally requires the relevant Adapter Contract Tests /
 
 ---
 
-## 10. Device Adapter / OEM port governance boundary
+## 11. Device Adapter / OEM port governance boundary
 
-The Device Adapter Contract defines:
+The Device Adapter Contract defines what a device port must provide in order to participate in Baga Ink.
 
-> **What a device must provide in order to join Baga Ink.**
+It does not require reimplementation of capabilities already provided by the OS, vendor SDK, homebrew ecosystem, or mature open-source components.
 
-It does not require Baga to reimplement capabilities already provided by the OS, vendor SDK, homebrew ecosystem, or mature open-source components.
-
-A concrete device port SHOULD remain as thin as practical and concentrate:
+A concrete device port SHOULD remain as thin as practical and concentrate device-family differences such as:
 
 ```text
 model / firmware differences
@@ -296,42 +321,42 @@ Quirk Set
 error / event normalization
 ```
 
-Reader/UI frameworks, installation routes, KPM/MRPI, and build tooling must not be pushed into the Device Adapter root contract merely because they are device-related.
+Reader/UI frameworks, installation routes, KPM/MRPI, and build tooling are not part of the Device Adapter root contract solely because they are device-related.
 
 ---
 
-## 11. License and third-party provenance
+## 12. License and third-party provenance
 
-Baga-authored material defaults to Apache License 2.0 unless a file/directory states otherwise.
-
-Third-party code and components retain their upstream licenses. The Baga repository license does not relicense projects such as KOReader, FBInk, or KPM.
-
-Distributable products must record the actual dependency version, provenance, digest, license, and local patch set.
-
-Repository entry points:
+Current licensing policy:
 
 ```text
 LICENSE
-NOTICE
+docs/en/governance/02_baga-ink-licensing-policy.md
+COMMERCIAL_LICENSE.md
+LICENSE_HISTORY.md
 THIRD_PARTY_NOTICES.md
 ```
 
-When GPL / AGPL or other additional redistribution obligations are involved, licensing compliance is a release gate — not documentation to add after shipping.
+Baga-authored Platform/OEM-side software follows the applicable current project license or an explicit file/directory override. Historical Apache-2.0 grants remain governed by `LICENSE_HISTORY.md`.
+
+Third-party code and components retain their upstream licenses. A Baga community or commercial license does not relicense KOReader, FBInk, KPM, or other upstream projects.
+
+Distributable products MUST record applicable dependency versions, provenance, licenses, and local modifications. GPL / AGPL and other redistribution obligations are release-gating requirements.
 
 ---
 
-## 12. Commits, tags, and releases
+## 13. Commits, tags, and releases
 
-Commits preserve traceable history. Commit subjects SHOULD be English and describe the actual change, for example:
+Commit subjects SHOULD be English and describe the actual change, for example:
 
 ```text
-docs: migrate device adapter standard
+docs: update device adapter standard
 spec: add publisher identity schemas
 feat: add IKP signature verifier
 test: add invalid IKP corpus
 ```
 
-Tags / releases mark formal baselines, for example:
+Tags / releases identify formal baselines, for example:
 
 ```text
 standards-v0.1
@@ -344,31 +369,24 @@ Historical states should be recoverable from commits, tags, and releases rather 
 
 ---
 
-## 13. Completion checklist for meaningful work
+## 14. Completion checklist
 
 Before considering a meaningful task complete, verify as applicable:
 
 ```text
-[ ] valid code is in the PR
+[ ] implementation is included in the reviewed change
 [ ] relevant tests / CI pass
 [ ] architecture changes are reflected in the governing Standard / Design
-[ ] external dependency facts are reflected in Public Docs
+[ ] external dependency facts are reflected in public documentation
 [ ] current state is reflected in Status
 [ ] required Compatibility / Device Evidence is recorded
-[ ] the branch contains no unique long-term knowledge not destined for main
-[ ] license / third-party provenance has not been broken
+[ ] the branch contains no unique long-term public knowledge absent from main
+[ ] license / third-party provenance remains valid
+[ ] tracked documentation satisfies the public writing rule
 ```
 
 ---
 
-## 14. Final principle
+## 15. Final principle
 
-Baga Ink is intended to be maintained over the long term by different countries, organizations, device vendors, and AI tools.
-
-The repository therefore optimizes for:
-
-> **Read the repository, not someone's memory.**
-
-More precisely:
-
-> **Read Code + Machine Specs + Tests + Approved Public Docs on `main`, not a forest of branches and historical chat logs.**
+> **Code + Machine Specs + Tests + approved public documentation on `main` define the public Baga Ink project state. Every tracked document is written for an external repository audience; confidential or private-strategy material remains outside the public repository.**

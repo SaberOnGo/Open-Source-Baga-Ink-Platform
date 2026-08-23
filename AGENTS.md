@@ -6,7 +6,7 @@ This file is the first entry point for AI agents and automated contributors.
 
 **`main` is the only long-term source of truth.** Feature branches, draft PRs, chat history, and old branch names are construction history, not authoritative project memory.
 
-Public long-lived documentation exists only in the governed locale trees:
+Long-lived localized documentation exists in:
 
 ```text
 docs/en/
@@ -28,18 +28,20 @@ README.md or README.zh-CN.md
 → relevant Design / Reference App / Plan
 ```
 
-Use `docs/localization/catalog.json` for stable Document Identity and locale counterpart mapping.
+Use `docs/localization/catalog.json` for stable localized Document Identity and locale counterpart mapping.
 
-## 3. Public documentation hard gate
+## 3. Documentation structure hard gate
 
 Governance:
 
 ```text
+docs/en/governance/00_baga-ink-development-governance.md
 docs/en/governance/01_documentation-internationalization-policy.md
-docs/zh-CN/governance/01_文档国际化与本地化规范.md
 ```
 
-Allowed localized public categories:
+or the corresponding Simplified Chinese editions.
+
+Localized public categories:
 
 ```text
 standards/
@@ -51,15 +53,15 @@ status/
 
 Hard rules:
 
-- Public docs MUST live under `docs/en/<category>/` or `docs/zh-CN/<category>/`.
+- Localized public docs MUST live under `docs/en/<category>/` or `docs/zh-CN/<category>/`.
 - `docs/standards/`, `docs/design/`, `docs/reference-apps/`, `docs/governance/`, `docs/status/`, and the old mixed-language root documentation index MUST NOT exist.
 - Do not invent `english/`, `chinese/`, `cn/`, `zh/`, or per-document language subtrees.
-- English public filenames: `NN_lowercase-kebab-case-name.md`.
-- Simplified Chinese public filenames: `NN_中文名称.md`.
+- English localized public filenames: `NN_lowercase-kebab-case-name.md`.
+- Simplified Chinese localized public filenames: `NN_中文名称.md`.
 - Counterparts share one stable Document ID / number and MUST NOT become different protocols or architectures.
-- A semantic change to a `current` document SHOULD update both maintained locales in the same reviewed PR.
+- A semantic change to a `current` localized document SHOULD update both maintained locales in the same reviewed PR.
 - Machine-readable specs, code, tests, API identifiers, schema keys, error codes, CLI flags, comments/docstrings, test names, dependency manifests, and commit subjects remain English/language-neutral.
-- `docs/plans/` is engineering material and is not required to duplicate every Task Design / Execution Prompt by locale. Stable facts required by external implementers MUST be promoted into localized public docs.
+- `docs/plans/` is operational engineering material and is not required to duplicate every Task Design / Execution Prompt by locale. Stable facts required by external implementers MUST be promoted into localized public docs.
 
 Create new localized public docs with the scaffolder when available:
 
@@ -67,7 +69,7 @@ Create new localized public docs with the scaffolder when available:
 python3 tools/new_localized_doc.py <category> <NN> <中文名称> <english-kebab-name> <document-id>
 ```
 
-Mandatory validation:
+Mandatory validation for localized public docs:
 
 ```text
 python3 tools/check_docs_i18n.py
@@ -75,7 +77,48 @@ python3 tools/check_docs_i18n.py
 
 Do not weaken validators or add exceptions merely to make invalid structure pass.
 
-## 4. Licensing / provenance hard gate
+## 4. Repository-wide public writing hard gate
+
+**Every documentation file tracked in this public repository is public-facing material.** This includes `docs/plans/`, Platform Port Task Designs, AI Execution Prompts, README files, contributor guides, licensing pages, and `AGENTS.md` itself.
+
+There is no tracked “private notes” area inside this public repository.
+
+All tracked documentation MUST:
+
+- be written for its actual external audience;
+- state project facts, requirements, decisions, plans, and rationale directly;
+- remain understandable without access to private conversations;
+- use institutional/project language rather than private advisory or chat-transcript language.
+
+Tracked documentation MUST NOT contain:
+
+- personal advice addressed to the repository owner;
+- references to private conversation context such as “as we discussed”, “just mentioned”, or equivalent wording;
+- private audience-management reasoning about whether wording will annoy, scare, persuade, or discourage users, developers, or OEMs;
+- confidential monetization strategy, negotiation tactics, unpublished pricing logic, or private business priorities;
+- private-consultation phrases such as `I recommend`, `we think`, or equivalent wording when the project requirement, policy, or rationale can be stated directly.
+
+Normative instructions addressed to a documented public role are valid, for example:
+
+```text
+Contributor MUST run the validator.
+OEM Port SHOULD publish reproducible Compatibility Evidence.
+Task Design MUST define Acceptance Criteria.
+```
+
+`docs/plans/` may use direct engineering instructions, but it remains public and follows the same writing rule.
+
+Confidential strategy MUST stay outside Git tracking, for example in the ignored local `private/` directory or a separate private repository.
+
+Mandatory validation for all tracked Markdown documentation:
+
+```text
+python3 tools/check_public_writing.py
+```
+
+Do not weaken this guard to preserve conversational or private-strategy prose in the public repository.
+
+## 5. Licensing / provenance hard gate
 
 Before changing code, SDK output, examples, dependencies, packaging, distributable artifacts, LifeBook boundaries, or license/notice files, MUST read:
 
@@ -85,7 +128,7 @@ or
 docs/zh-CN/governance/02_Baga-Ink授权策略.md
 ```
 
-Canonical legal/governance entry points:
+Canonical licensing/governance entry points:
 
 ```text
 LICENSE
@@ -105,7 +148,7 @@ Hard rules:
 - Third-party code always retains its upstream license. Never replace GPL/AGPL/other upstream notices with the Baga community or commercial license.
 - A Baga Commercial License cannot waive third-party copyleft/source obligations.
 - Historical Apache-2.0 rights already granted before the cutover remain historical rights; do not rewrite license history.
-- External contributions to dual-licensed Baga Platform/Adapter code may require a legally reviewed CLA before merge. Do not accept code under terms that silently destroy future commercial relicensing rights.
+- External contributions to dual-licensed Baga Platform/Adapter code may require a legally reviewed CLA before merge. Do not accept code under terms that prevent intended distribution/relicensing of the target component.
 - Trademark/certification claims such as `Baga Ink Compatible` are not granted merely by possessing source code.
 
 Mandatory validation:
@@ -116,7 +159,7 @@ python3 tools/check_licensing.py
 
 Do not weaken licensing/provenance guards merely to merge a contribution or dependency.
 
-## 5. Device Adapter / OEM port hard gate
+## 6. Device Adapter / OEM port hard gate
 
 Before device/OEM Adapter work, MUST read:
 
@@ -138,7 +181,7 @@ The Device Adapter Contract defines **what a port must provide**, not that Baga 
 
 Do not add Reader/UI frameworks, KPM/MRPI/installation routes, Home Entry, or build tooling to the Device Adapter root contract merely because they are device-related.
 
-## 6. Kindle implementation hard gate
+## 7. Kindle implementation hard gate
 
 Before work involving Kindle Platform, Client bootstrap/install routes, KPM/MRPI/KindleTool/KUAL/PEKI/sh_integration/AppMgr, KOReader/koreader-base integration, native build targets/ABI, or LifeBook Kindle execution/install/update/launch, MUST read:
 
@@ -162,7 +205,7 @@ Key frozen boundaries include:
 - Reader/UI, jailbreak routes, KPM/MRPI, Home Entry, and build tooling remain outside Device Adapter root contract;
 - Kindle Adapter should maximize reuse of pinned KOReader/koreader-base/FBInk/Kindle OS mechanisms.
 
-## 7. Platform-port Task / AI execution-prompt hard gate
+## 8. Platform-port Task / AI execution-prompt hard gate
 
 Before changing anything under:
 
@@ -213,14 +256,16 @@ Hard rules:
 - Execution Prompt task/version exactly mirrors an existing Task Design task/version.
 - Every execution version has `0000_执行索引_Execution-Index.md`.
 - Execution prompts may refine steps/tests/debug/real-device actions but MUST NOT silently change selected Task Design architecture/scope.
+- Task Design and Execution Prompt prose MUST satisfy the repository-wide public writing rule.
 
 Mandatory validation:
 
 ```text
 python3 tools/check_platform_port_plans.py
+python3 tools/check_public_writing.py
 ```
 
-## 8. Branch / PR governance
+## 9. Branch / PR governance
 
 Branches are short-lived construction scaffolding only.
 
@@ -238,7 +283,7 @@ main
 
 Do not preserve unique architecture/status/compatibility knowledge only in a branch or PR discussion.
 
-## 9. Project terminology
+## 10. Project terminology
 
 Use established terminology:
 
@@ -254,20 +299,21 @@ Do not introduce `Baga Runtime`, `Baga Platform Runtime`, or `LifeBook Runtime` 
 
 LifeBook is the flagship/reference App, not the Platform.
 
-## 10. Completion claims
+## 11. Completion claims
 
 Before claiming work complete:
 
 - inspect current Project Status;
 - run/inspect relevant tests/CI;
 - do not mark a Draft Standard Stable because prose is complete;
-- device Adapter compilation/documentation alone is not Compatibility evidence;
+- Device Adapter compilation/documentation alone is not Compatibility evidence;
 - formal device compatibility requires relevant Adapter Contract Tests + BICTS evidence;
-- public-doc changes require `tools/check_docs_i18n.py`;
+- localized public-doc structure changes require `tools/check_docs_i18n.py`;
+- all tracked Markdown changes require `tools/check_public_writing.py`;
 - licensing/provenance changes require `tools/check_licensing.py`;
 - platform-port plan changes require `tools/check_platform_port_plans.py`.
 
-## 11. Update Project Status
+## 12. Update Project Status
 
 Meaningful milestones MUST update:
 
@@ -276,4 +322,4 @@ docs/en/status/00_baga-ink-project-status.md
 docs/zh-CN/status/00_当前项目状态.md
 ```
 
-so a new human or AI can continue from `main` without reconstructing history from conversations.
+so a new human or AI can continue from `main` without reconstructing history from private conversations.
