@@ -29,7 +29,7 @@
       "legacy_path": "docs/standards/00_规范总览_Baga-Ink-Standards-Index.md",
       "zh_cn_path": "docs/zh-CN/standards/00_规范总览.md",
       "en_path": "docs/en/standards/00_baga-ink-standards-index.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.01",
@@ -38,7 +38,7 @@
       "legacy_path": "docs/standards/01_顶层战略与架构_Baga-Ink-Platform-Strategy.md",
       "zh_cn_path": "docs/zh-CN/standards/01_顶层战略与架构.md",
       "en_path": "docs/en/standards/01_baga-ink-platform-strategy.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.02",
@@ -47,7 +47,7 @@
       "legacy_path": "docs/standards/02_应用标准_Baga-Ink-App-Standard.md",
       "zh_cn_path": "docs/zh-CN/standards/02_应用标准.md",
       "en_path": "docs/en/standards/02_baga-ink-app-standard.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.03",
@@ -56,7 +56,7 @@
       "legacy_path": "docs/standards/03_API规范_Baga-Ink-API-Specification.md",
       "zh_cn_path": "docs/zh-CN/standards/03_API规范.md",
       "en_path": "docs/en/standards/03_baga-ink-api-specification.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.04",
@@ -65,7 +65,7 @@
       "legacy_path": "docs/standards/04_能力注册表_Baga-Ink-Capability-Registry.md",
       "zh_cn_path": "docs/zh-CN/standards/04_能力注册表.md",
       "en_path": "docs/en/standards/04_baga-ink-capability-registry.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.05",
@@ -74,7 +74,7 @@
       "legacy_path": "docs/standards/05_权限模型_Baga-Ink-Permission-Model.md",
       "zh_cn_path": "docs/zh-CN/standards/05_权限模型.md",
       "en_path": "docs/en/standards/05_baga-ink-permission-model.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.06",
@@ -83,7 +83,7 @@
       "legacy_path": "docs/standards/06_IKP应用包规范_IKP-Package-Specification.md",
       "zh_cn_path": "docs/zh-CN/standards/06_IKP应用包规范.md",
       "en_path": "docs/en/standards/06_ikp-package-specification.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.07",
