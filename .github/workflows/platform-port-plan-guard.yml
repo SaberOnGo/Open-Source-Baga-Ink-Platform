@@ -1,4 +1,4 @@
-name: Platform Port Plan Guard
+name: Repository Documentation Guard
 
 on:
   pull_request:
@@ -14,14 +14,23 @@ permissions:
 
 jobs:
   validate-platform-port-plans:
+    # Keep this job name stable because the main-branch Ruleset requires it.
     name: Validate task/prompt layout
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Compile plan guard tools
-        run: python3 -m py_compile tools/check_platform_port_plans.py tools/new_platform_port_task.py
+      - name: Compile documentation guard tools
+        run: >-
+          python3 -m py_compile
+          tools/check_platform_port_plans.py
+          tools/new_platform_port_task.py
+          tools/check_docs_i18n.py
+          tools/new_localized_doc.py
+
+      - name: Validate public documentation internationalization
+        run: python3 tools/check_docs_i18n.py
 
       - name: Validate platform-port plan structure
         run: python3 tools/check_platform_port_plans.py
