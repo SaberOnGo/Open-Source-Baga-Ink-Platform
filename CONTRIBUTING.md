@@ -12,6 +12,7 @@ Read:
 2. [`AGENTS.md`](AGENTS.md) if you are an AI/automation contributor
 3. [`docs/en/00_baga-ink-documentation-index.md`](docs/en/00_baga-ink-documentation-index.md)
 4. the governing Standard / Design / Reference App / Plan for your work
+5. [`docs/en/governance/02_baga-ink-licensing-policy.md`](docs/en/governance/02_baga-ink-licensing-policy.md) when your change adds code, dependencies, SDK output, examples, packaging, or distributable artifacts
 
 Use [`docs/localization/catalog.json`](docs/localization/catalog.json) to map stable public Document IDs to maintained locale paths.
 
@@ -71,6 +72,7 @@ As applicable:
 python3 tools/check_docs_i18n.py
 python3 tools/check_readme_languages.py
 python3 tools/check_platform_port_plans.py
+python3 tools/check_licensing.py
 ```
 
 Create new public localized docs with:
@@ -93,9 +95,21 @@ If implementation evidence requires changing an approved Standard, Design, or Ar
 
 ## License / provenance
 
-Baga-authored material defaults to Apache License 2.0 unless a file/directory says otherwise.
+Baga Ink uses a layered licensing model rather than one license for every asset.
 
-Third-party dependencies retain their upstream licenses. Contributions that add or change a dependency must record enough provenance to understand:
+The default for Baga-authored Platform/OEM-side software is the root community license unless a file/directory explicitly states otherwise. App-facing SDK/examples may carry a separate permissive license. LifeBook production code is proprietary and is not part of the public Baga Platform source distribution. Third-party dependencies always retain their upstream licenses.
+
+See:
+
+```text
+LICENSE
+docs/en/governance/02_baga-ink-licensing-policy.md
+COMMERCIAL_LICENSE.md
+LICENSE_HISTORY.md
+THIRD_PARTY_NOTICES.md
+```
+
+A contribution that adds or changes a dependency must record enough provenance to understand:
 
 ```text
 project / source
@@ -106,7 +120,21 @@ whether code is bundled / modified / linked / invoked externally
 required notices or source obligations
 ```
 
-See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+## Contribution rights / future dual licensing
+
+The project intends to support both community use and separately licensed commercial OEM/platform deployments. That model requires sufficient rights to distribute Baga-authored contributions under the applicable community and commercial terms.
+
+By submitting material, you must have the legal right to submit it. Do not copy third-party code into Baga-authored files merely because the code is publicly visible.
+
+External contributions to dual-licensed Baga Platform / Device Adapter code may require a Contributor License Agreement (CLA) before merge. Until a legally reviewed CLA is published and executed, maintainers may defer external code contributions that would make future commercial relicensing impossible or ambiguous.
+
+This rule does not mean ordinary App developers must buy a commercial Platform license. Building and selling an IKP App that targets the documented Baga App APIs is a different activity from shipping Baga Platform/Adapter code in a commercial device.
+
+## LifeBook boundary
+
+Public LifeBook Reference App documentation exists to validate Baga architecture. It is not an invitation to add the production LifeBook application source to this repository.
+
+Do not add proprietary LifeBook product code, backend code, product algorithms, credentials, commercial assets, or private product data to this public repository unless the project owner explicitly decides to publish a particular component under a stated license.
 
 ## Translations
 
@@ -130,4 +158,4 @@ A translation is an edition of the same logical document, not permission to crea
 
 ## Completion
 
-A feature is not complete only because it compiles. Run relevant tests, record real-device/conformance evidence where required, and update Project Status when a meaningful milestone changes.
+A feature is not complete only because it compiles. Run relevant tests, record real-device/conformance evidence where required, verify licensing/provenance for distributable changes, and update Project Status when a meaningful milestone changes.

@@ -75,7 +75,48 @@ python3 tools/check_docs_i18n.py
 
 Do not weaken validators or add exceptions merely to make invalid structure pass.
 
-## 4. Device Adapter / OEM port hard gate
+## 4. Licensing / provenance hard gate
+
+Before changing code, SDK output, examples, dependencies, packaging, distributable artifacts, LifeBook boundaries, or license/notice files, MUST read:
+
+```text
+docs/en/governance/02_baga-ink-licensing-policy.md
+or
+docs/zh-CN/governance/02_Baga-Ink授权策略.md
+```
+
+Canonical legal/governance entry points:
+
+```text
+LICENSE
+NOTICE
+COMMERCIAL_LICENSE.md
+LICENSE_HISTORY.md
+THIRD_PARTY_NOTICES.md
+```
+
+Hard rules:
+
+- The root `LICENSE` is the unmodified PolyForm Noncommercial License 1.0.0 for Baga-authored Platform/OEM-side software unless a file/directory explicitly states another license.
+- Do not edit the PolyForm text and still call the result PolyForm.
+- Ordinary IKP App development is separate from OEM/platform licensing. Do not add an OEM commercial-license requirement merely because an App uses documented Baga App APIs.
+- App-facing SDK/examples such as future `baga-probe.ikp` MAY use an explicit permissive license; that exception must be stated locally.
+- LifeBook production source is proprietary and MUST NOT be added to this public repository without an explicit owner decision and file-specific license.
+- Third-party code always retains its upstream license. Never replace GPL/AGPL/other upstream notices with the Baga community or commercial license.
+- A Baga Commercial License cannot waive third-party copyleft/source obligations.
+- Historical Apache-2.0 rights already granted before the cutover remain historical rights; do not rewrite license history.
+- External contributions to dual-licensed Baga Platform/Adapter code may require a legally reviewed CLA before merge. Do not accept code under terms that silently destroy future commercial relicensing rights.
+- Trademark/certification claims such as `Baga Ink Compatible` are not granted merely by possessing source code.
+
+Mandatory validation:
+
+```text
+python3 tools/check_licensing.py
+```
+
+Do not weaken licensing/provenance guards merely to merge a contribution or dependency.
+
+## 5. Device Adapter / OEM port hard gate
 
 Before device/OEM Adapter work, MUST read:
 
@@ -97,7 +138,7 @@ The Device Adapter Contract defines **what a port must provide**, not that Baga 
 
 Do not add Reader/UI frameworks, KPM/MRPI/installation routes, Home Entry, or build tooling to the Device Adapter root contract merely because they are device-related.
 
-## 5. Kindle implementation hard gate
+## 6. Kindle implementation hard gate
 
 Before work involving Kindle Platform, Client bootstrap/install routes, KPM/MRPI/KindleTool/KUAL/PEKI/sh_integration/AppMgr, KOReader/koreader-base integration, native build targets/ABI, or LifeBook Kindle execution/install/update/launch, MUST read:
 
@@ -121,7 +162,7 @@ Key frozen boundaries include:
 - Reader/UI, jailbreak routes, KPM/MRPI, Home Entry, and build tooling remain outside Device Adapter root contract;
 - Kindle Adapter should maximize reuse of pinned KOReader/koreader-base/FBInk/Kindle OS mechanisms.
 
-## 6. Platform-port Task / AI execution-prompt hard gate
+## 7. Platform-port Task / AI execution-prompt hard gate
 
 Before changing anything under:
 
@@ -179,7 +220,7 @@ Mandatory validation:
 python3 tools/check_platform_port_plans.py
 ```
 
-## 7. Branch / PR governance
+## 8. Branch / PR governance
 
 Branches are short-lived construction scaffolding only.
 
@@ -197,7 +238,7 @@ main
 
 Do not preserve unique architecture/status/compatibility knowledge only in a branch or PR discussion.
 
-## 8. Project terminology
+## 9. Project terminology
 
 Use established terminology:
 
@@ -213,7 +254,7 @@ Do not introduce `Baga Runtime`, `Baga Platform Runtime`, or `LifeBook Runtime` 
 
 LifeBook is the flagship/reference App, not the Platform.
 
-## 9. Completion claims
+## 10. Completion claims
 
 Before claiming work complete:
 
@@ -223,9 +264,10 @@ Before claiming work complete:
 - device Adapter compilation/documentation alone is not Compatibility evidence;
 - formal device compatibility requires relevant Adapter Contract Tests + BICTS evidence;
 - public-doc changes require `tools/check_docs_i18n.py`;
+- licensing/provenance changes require `tools/check_licensing.py`;
 - platform-port plan changes require `tools/check_platform_port_plans.py`.
 
-## 10. Update Project Status
+## 11. Update Project Status
 
 Meaningful milestones MUST update:
 

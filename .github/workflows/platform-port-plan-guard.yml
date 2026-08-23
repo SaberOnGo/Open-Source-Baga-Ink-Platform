@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Compile documentation guard tools
+      - name: Compile repository guard tools
         run: >-
           python3 -m py_compile
           tools/check_platform_port_plans.py
@@ -29,12 +29,16 @@ jobs:
           tools/check_docs_i18n.py
           tools/new_localized_doc.py
           tools/check_readme_languages.py
+          tools/check_licensing.py
 
       - name: Validate public documentation internationalization
         run: python3 tools/check_docs_i18n.py
 
       - name: Validate README language switch registry
         run: python3 tools/check_readme_languages.py
+
+      - name: Validate licensing architecture
+        run: python3 tools/check_licensing.py
 
       - name: Validate platform-port plan structure
         run: python3 tools/check_platform_port_plans.py
