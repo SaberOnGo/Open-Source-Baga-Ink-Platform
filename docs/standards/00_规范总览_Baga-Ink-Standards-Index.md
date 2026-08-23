@@ -1,7 +1,7 @@
 # Baga Ink 规范总览 / Baga Ink Standards Index
 
 > **目录级别：规范入口 / Standards Entry Point**  
-> **状态：Living Index v0.5**  
+> **状态：Living Index v0.6**  
 > **日期：2026-08-23**
 
 ---
@@ -27,13 +27,13 @@
 │   ├── 04 Capability 能力注册表
 │   ├── 05 Permission 权限模型
 │   ├── 06 IKP 应用包规范
-│   ├── 07 Device Adapter 设备适配器规范
+│   ├── 07 Device Adapter Contract
 │   ├── 08 Compatibility 兼容性标准
 │   └── 09 UI 规范
 │
-├── 测试、设备适配与标准库 10–19
+├── 测试、设备参考适配与标准库 10–19
 │   ├── 10 Compatibility Test Suite
-│   ├── 11 Kindle Adapter
+│   ├── 11 Kindle Device Adapter
 │   ├── 12 Android E-Paper Adapter
 │   └── 13 Standard Libraries / Adopted Components
 │
@@ -60,11 +60,11 @@ Baga Ink API + Baga Lua Profile / Standard Libraries
    ↓
 Baga Ink Platform Core
    ↓
-Device Adapter
+Device Adapter Contract
    ↓
-Kindle / Android E-Paper
+Kindle / Android E-Paper / future OEM devices
    ↓
-Compatibility Standard + BICTS
+Adapter Contract Tests + Compatibility Standard + BICTS
 ```
 
 关键区分：
@@ -72,6 +72,9 @@ Compatibility Standard + BICTS
 ```text
 baga.*
 → 统一设备 / OS / Platform 差异
+
+Device Adapter Contract
+→ 规定新设备接入 Baga 必须实现什么
 
 Standard Libraries / Adopted Components
 → 直接采用成熟通用软件能力
@@ -87,15 +90,50 @@ Automerge core
 → Adopted Local-first / CRDT Foundation
 → 可整体采用，也可拆模块采用
 
-KOReader / FBInk
-→ Kindle Platform / Adapter 内部成熟实现来源
+KOReader / FBInk / Vendor SDK / OS mechanisms
+→ Device/Platform 内部成熟实现来源
+→ 不因被复用就成为新的公共架构层
 ```
 
 如果这个闭环被 App 或设备私有接口绕开，平台会重新碎片化；如果成熟通用库被无意义重新包装，平台也会产生不必要的重复抽象。
 
 ---
 
-# 3. 分发安全闭环 / Distribution Security Loop
+# 3. Device Adapter 的正式定位
+
+`07 Device Adapter Contract` 面向：
+
+```text
+Baga Platform implementer
+OEM / device vendor
+第三方设备移植者
+Adapter maintainer
+```
+
+它定义：
+
+```text
+Root Adapter / Factory
+DeviceDescriptor
+Capability Snapshot
+Display/Input/Storage/Lifecycle/Power typed subsystems
+Optional Network/Light/Audio/Bluetooth/UserLibrary subsystems
+Event / Error model
+Device Profile / Quirk
+Self-test
+Contract Versioning
+Adapter Contract Tests
+```
+
+核心原则：
+
+> **Contract 定义“必须提供什么”，不要求重新实现设备已有能力。**
+
+例如 Kindle Adapter SHOULD 尽量复用 KOReader、FBInk、Kindle OS/Homebrew 已有成熟能力，仅完成 Baga contract 所需的薄映射、归一化、Profile/Quirk 与测试。
+
+---
+
+# 4. 分发安全闭环 / Distribution Security Loop
 
 ```text
 Publisher Identity
@@ -117,9 +155,9 @@ Staged Install → Health Check → Active / Rollback
 
 ---
 
-# 4. 正式文件清单 / Canonical Documents
+# 5. 正式文件清单 / Canonical Documents
 
-## 4.1 平台核心标准 00–09
+## 5.1 平台核心标准 00–09
 
 | 编号 | 文件 | 定位 |
 |---|---|---|
@@ -130,21 +168,21 @@ Staged Install → Health Check → Active / Rollback
 | 04 | `04_能力注册表_Baga-Ink-Capability-Registry.md` | Capability 命名、语义与稳定性 |
 | 05 | `05_权限模型_Baga-Ink-Permission-Model.md` | Permission 与最小权限原则 |
 | 06 | `06_IKP应用包规范_IKP-Package-Specification.md` | `.ikp` 包结构与验证 |
-| 07 | `07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md` | Device Adapter 边界 |
+| 07 | `07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md` | **Device Adapter Porting Contract / OEM implementer contract** |
 | 08 | `08_兼容性标准_Baga-Ink-Compatibility-Standard.md` | `Baga Ink Compatible` 认证要求 |
 | 09 | `09_UI规范_Baga-Ink-UI-Specification.md` | E-Paper UI 与刷新行为 |
 
-## 4.2 测试、设备适配与标准库 10–19
+## 5.2 测试、设备参考适配与标准库 10–19
 
 | 编号 | 文件 | 定位 |
 |---|---|---|
-| 10 | `10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md` | API/Profile/Standard Library 测试 |
-| 11 | `11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md` | Kindle 适配与成熟组件复用 |
-| 12 | `12_Android墨水屏适配规范_Baga-Ink-Android-E-Paper-Adapter.md` | Android E-Paper 适配 |
+| 10 | `10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md` | Adapter integration + API/Profile/Standard Library 整机测试 |
+| 11 | `11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md` | Kindle 对 `07` 的第一份 Reference Port；最大化复用成熟 Kindle 能力 |
+| 12 | `12_Android墨水屏适配规范_Baga-Ink-Android-E-Paper-Adapter.md` | Android E-Paper 对 `07` 的设备家族适配 |
 | 13 | `13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md` | SQLite/lsqlite3、Automerge 等成熟通用库采用原则 |
-| 14–19 | Reserved | 后续设备、Runtime Profile、测试补充 |
+| 14–19 | Reserved | 后续设备家族、Adapter/Test/Compatibility 补充 |
 
-## 4.3 市场与分发安全 20–29
+## 5.3 市场与分发安全 20–29
 
 | 编号 | 文件 | 定位 |
 |---|---|---|
@@ -161,29 +199,65 @@ Staged Install → Health Check → Active / Rollback
 
 ---
 
-# 5. Reference Apps
+# 6. Reference Apps / Kindle Implementation Freeze
 
 Reference App 不属于 Standards，不得覆盖上位规范。
 
 ```text
 docs/reference-apps/
 ├── 01_LifeBook参考实现_LifeBook-Reference-App.md
-└── 02_LifeBook架构与Kindle兼容实现_LifeBook-Architecture-and-Kindle-Compatibility.md
+├── 02_LifeBook-Kindle产品行为与外设扩展设计_LifeBook-Kindle-Product-Behavior-and-Accessory-Extension-Design.md
+├── 03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md
+└── 99_旧版LifeBook架构与Kindle兼容实现_LifeBook-Architecture-and-Kindle-Compatibility-Superseded.md
 ```
 
-LifeBook 是第一个旗舰 Reference App，用真实产品验证同一个 `lifebook.ikp` 跨 Kindle / Android E-Paper。
+权威边界：
+
+```text
+07 / 11
+→ Device Adapter Contract 与 Kindle Adapter Reference Port
+
+reference-apps/03
+→ Client/bootstrap/KPM/MRPI/Platform/IKP/Home Entry 等 Kindle 整体实现冻结
+```
+
+`reference-apps/03` 不取代 `07/11` 的 Device Adapter Contract。
 
 ---
 
-# 6. 阅读顺序 / Reading Order
+# 7. Approved Design
 
-## 6.1 第一次了解 Baga Ink
+与 Device Adapter 下一阶段实现直接相关：
+
+```text
+docs/design/02_设备适配器可执行契约与SDK设计_Baga-Ink-Device-Adapter-Executable-Contract-and-SDK-Design.md
+```
+
+该 Design 定义：
+
+```text
+machine-readable Adapter IDL
+Codegen
+Rust/C/Kotlin generated interfaces
+Mock/Headless Adapter
+Adapter SDK
+Contract Test harness
+Kindle/Android skeleton
+```
+
+它是实现设计，不得覆盖 `07` 的规范语义。
+
+---
+
+# 8. 阅读顺序 / Reading Order
+
+## 8.1 第一次了解 Baga Ink
 
 ```text
 00 → 01 → 02 → 03 → 13 → 07 → 08 → 20
 ```
 
-## 6.2 开发第三方 App
+## 8.2 开发第三方 App
 
 ```text
 02 → 03 → 13 → 04 → 05 → 06 → 09
@@ -203,25 +277,42 @@ Automerge → Adopted Foundation
 21 → 22 → 24 → 25 → 28
 ```
 
-## 6.3 开发 Device Adapter
+## 8.3 开发 Device Adapter / OEM Port
 
 ```text
-01 → 03 → 13 → 04 → 07 → 08 → 10 → 11/12
+01 → 03 → 04 → 07 → 10 → 对应设备 11/12/... → design/02
 ```
 
-## 6.4 OEM / 设备认证
+如果只是实现 Device Adapter，不需要先把 LifeBook 当作接口文档阅读；LifeBook 只用于后续 smoke/reference validation。
+
+## 8.4 Kindle Platform / Adapter 开发
 
 ```text
-08 → 10 → 07 → 13 → 对应 Device Adapter
+07 → 11 → reference-apps/03 → design/02 → 10
 ```
 
-## 6.5 Market / Repository
+必须同时保持：
+
+```text
+Device Adapter
+≠ jailbreak/install route
+≠ KPM/MRPI
+≠ Reader/UI framework
+```
+
+## 8.5 OEM / 设备认证
+
+```text
+07 → 对应设备 Adapter → 10 → 08
+```
+
+## 8.6 Market / Repository
 
 ```text
 20 → 21 → 22 → 23 → 24 → 25 → 27 → 28
 ```
 
-## 6.6 Baga Ink Client
+## 8.7 Baga Ink Client
 
 ```text
 20 → 23 → 25 → 26 → 28
@@ -229,7 +320,7 @@ Automerge → Adopted Foundation
 
 ---
 
-# 7. 文件命名与编号区间
+# 9. 文件命名与编号区间
 
 规范文件使用：
 
@@ -242,7 +333,7 @@ NN_中文名_English-Name.md
 ```text
 00        Index
 01–09     Platform Core Standards
-10–19     Tests / Device Adapters / Runtime Profiles / Standard Libraries
+10–19     Tests / Device Adapters / Standard Libraries / Compatibility supplements
 20–29     Market / Distribution / Signing / Supply Chain
 30–39     Sync / Cloud / Account / Cross-device Data Protocols
 40–49     Developer Tools / CLI / Simulator
@@ -255,7 +346,7 @@ NN_中文名_English-Name.md
 
 ---
 
-# 8. 规范权威边界 / Authority Boundaries
+# 10. 规范权威边界 / Authority Boundaries
 
 ```text
 01 负责：顶层战略 / 公共架构
@@ -264,9 +355,9 @@ NN_中文名_English-Name.md
 04 负责：Capability
 05 负责：Permission
 06 负责：IKP
-07 负责：Device Adapter
+07 负责：Device Adapter Porting Contract
 08 / 10 负责：Compatible / tests
-11 / 12 负责：具体设备家族
+11 / 12 负责：具体设备家族如何实现 07
 13 负责：Standard Libraries / Adopted Mature Components
 20–28 负责：分发、安全、更新、Catalog
 ```
@@ -275,16 +366,22 @@ NN_中文名_English-Name.md
 
 > **新增平台抽象前，必须先查看 `13`：如果成熟通用库已经有更好的抽象，应优先直接采用，而不是重新包装。**
 
+Device Adapter implementation 同样遵守：
+
+> **优先复用 OS / Vendor SDK / Homebrew / mature open-source capability，再只补 Contract 所需的薄映射。**
+
 ---
 
-# 9. 变更治理 / Change Governance
+# 11. 变更治理 / Change Governance
 
 - 修改 `01–03` 应经过架构级讨论；
 - Standard Library / Adopted Component 决策更新 `13`；
 - 新 Capability 更新 `04`；
 - 新 Permission 更新 `05`；
 - IKP 变化更新 `06`；
-- Adapter 变化更新 `07/11/12`；
+- Device Adapter Contract 变化更新 `07`；
+- Kindle/Android family implementation mapping 更新 `11/12`；
+- Adapter machine IDL 与 Codegen 必须同步 `07` 并运行 compatibility check；
 - Compatible 行为变化更新 `08/10`；
 - SQLite / lsqlite3 baseline 变化必须跑 BICTS regression；
 - Automerge 若升级为 developer-facing 稳定 Lua module 或正式 wire protocol，必须明确版本与 migration，不能写“最新版”；
@@ -292,9 +389,9 @@ NN_中文名_English-Name.md
 
 ---
 
-# 10. 两个核心闭环
+# 12. 三个核心闭环
 
-## 10.1 开发与设备闭环
+## 12.1 App / Platform 闭环
 
 ```text
 Developer
@@ -304,15 +401,25 @@ App Standard
 Baga API + Lua Profile / Standard Libraries
   ↓
 Platform Core
-  ↓
-Device Adapter
-  ↓
-Kindle / Android
-  ↓
-BICTS
 ```
 
-## 10.2 发布与更新闭环
+## 12.2 Device Port 闭环
+
+```text
+Platform Core
+  ↓
+Device Adapter Contract
+  ↓
+Device-family Adapter implementation
+  ↓
+OS / Vendor SDK / mature existing capability
+  ↓
+Adapter Contract Tests
+  ↓
+BICTS / Compatible
+```
+
+## 12.3 发布与更新闭环
 
 ```text
 Publisher
@@ -330,12 +437,12 @@ Stage / Activate / Health Check / Rollback
 
 ---
 
-# 11. 核心判断
+# 13. 核心判断
 
 Baga Ink 的统一来自：
 
 ```text
-设备差异 → 稳定 Baga API
+设备差异 → Device Adapter Contract → 稳定 Baga API
 成熟通用软件能力 → 直接采用优秀 Standard Library / Foundation
 安装/更新/权限/兼容 → 统一协议与测试
 ```
