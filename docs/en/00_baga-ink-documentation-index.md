@@ -3,7 +3,7 @@
 > **Document level:** Project documentation entry point  
 > **Document ID:** `docs.index.00`  
 > **Locale:** English (`en`)  
-> **Status:** Living Index v0.3  
+> **Status:** Living Index v0.4  
 > **Date:** 2026-08-23
 
 ---
@@ -17,8 +17,6 @@ Recommended reading order:
 ```text
 README.md
    ↓
-AGENTS.md                         (AI / automation contributors)
-   ↓
 docs/en/00_baga-ink-documentation-index.md
    ↓
 docs/en/status/00_baga-ink-project-status.md
@@ -29,6 +27,8 @@ relevant Design / Reference App / Plan
    ↓
 docs/en/governance/00_baga-ink-development-governance.md
 ```
+
+AI / automation contributors MUST also read `AGENTS.md`.
 
 ---
 
@@ -57,7 +57,7 @@ A shared number / Document ID means one logical document. English and Simplified
 
 ## 3. Current localized public documents
 
-### Governance / Status
+### Governance / Status — CURRENT
 
 ```text
 Development Governance
@@ -70,33 +70,53 @@ Project Status
 → docs/en/status/00_baga-ink-project-status.md
 ```
 
-### Standards 00–06 — CURRENT
+### Standards 00–13 — CURRENT
 
 ```text
-00  docs/en/standards/00_baga-ink-standards-index.md
-01  docs/en/standards/01_baga-ink-platform-strategy.md
-02  docs/en/standards/02_baga-ink-app-standard.md
-03  docs/en/standards/03_baga-ink-api-specification.md
-04  docs/en/standards/04_baga-ink-capability-registry.md
-05  docs/en/standards/05_baga-ink-permission-model.md
-06  docs/en/standards/06_ikp-package-specification.md
-```
-
-These have maintained Simplified Chinese counterparts under `docs/zh-CN/standards/` and are marked `current` in `docs/localization/catalog.json`.
-
-### Next standards migration batch
-
-```text
+00  Standards Index
+01  Platform Strategy / Architecture
+02  App Standard
+03  API Specification
+04  Capability Registry
+05  Permission Model
+06  IKP Package Specification
 07  Device Adapter Contract
 08  Compatibility Standard
 09  UI Specification
-10  BICTS
-11  Kindle Adapter
+10  BICTS / Compatibility Test Suite
+11  Kindle Device Adapter
 12  Android E-Paper Adapter
 13  Standard Libraries / Adopted Components
 ```
 
-Until a document is `current` in the catalog, use the catalog to resolve its migration state rather than assuming the new English target path is complete.
+English paths live under `docs/en/standards/`; maintained Simplified Chinese counterparts live under `docs/zh-CN/standards/`. All of Standards 00–13 are marked `current` in `docs/localization/catalog.json`.
+
+For device/OEM work, the most important current English path is:
+
+```text
+docs/en/standards/07_baga-ink-device-adapter-specification.md
+```
+
+For Kindle work:
+
+```text
+docs/en/standards/11_baga-ink-kindle-adapter.md
+```
+
+For Android E-Paper work:
+
+```text
+docs/en/standards/12_baga-ink-android-e-paper-adapter.md
+```
+
+### Next public-document migration batch
+
+```text
+Standards 20–28
+→ Market / Distribution / Signing / Repository / Update / Catalog
+```
+
+Design and Reference Apps follow after the distribution standards batch.
 
 ---
 
@@ -128,9 +148,9 @@ reference/
 tests/
 tools/
 .github/
-platform/     future/reference product source
-sdk/          future generated/platform SDK
-client/       future Baga Ink Client
+platform/
+sdk/
+client/
 ```
 
 API names, schema keys, error codes, CLI flags, source identifiers, code comments/docstrings, test names, dependency manifests, and commit subjects use English.
@@ -179,7 +199,11 @@ Current milestone:
 M0    internationalization foundation          COMPLETE
 M1-A  Governance + Status + Index              COMPLETE
 M1-B1 Standards 00–06                          COMPLETE
-M1-B2 Standards 07–13                          NEXT
+M1-B2 Standards 07–13                          COMPLETE
+M1-C  Standards 20–28                          NEXT
+M1-D  Design                                   PENDING
+M1-E  Reference Apps                           PENDING
+M4    Remove legacy public trees               PENDING
 ```
 
 ---
@@ -193,7 +217,5 @@ CONTRIBUTING.md
 docs/en/governance/00_baga-ink-development-governance.md
 docs/en/governance/01_documentation-internationalization-policy.md
 ```
-
-AI / automation contributors MUST also follow `AGENTS.md`.
 
 Repository CI guards public-document paths, locale structure, README language switching, and Platform Port task/prompt layout.
