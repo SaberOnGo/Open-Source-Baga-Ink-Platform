@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Lint tracked Markdown for private-discussion language in the public repository.
 
-This is a repository writing guard, not a general grammar checker.  Its purpose
+This is a repository writing guard, not a general grammar checker. Its purpose
 is to prevent a recurring class of documentation errors: text copied from a
 private owner/assistant discussion into material that is publicly committed.
 
 All tracked Markdown is in scope, including docs/plans, Task Designs and AI
-Execution Prompts.  Fenced code blocks and inline code spans are ignored so
+Execution Prompts. Fenced code blocks and inline code spans are ignored so
 Governance documents may show literal examples of prohibited wording.
 """
 
@@ -77,14 +77,20 @@ FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
 
 def tracked_markdown() -> list[Path]:
+    # NUL-delimited output avoids Git's C-style quoting of non-ASCII paths.
     proc = subprocess.run(
-        ["git", "ls-files", "--", "*.md"],
+        ["git", "-c", "core.quotepath=false", "ls-files", "-z", "--", "*.md"],
         cwd=ROOT,
         check=True,
         capture_output=True,
-        text=True,
     )
-    return [ROOT / line for line in proc.stdout.splitlines() if line.strip()]
+    paths: list[Path] = []
+    for raw in proc.stdout.split(b"\0"):
+        if not raw:
+            continue
+        rel = raw.decode("utf-8", errors="strict")
+        paths.append(ROOT / rel)
+    return paths
 
 
 def visible_lines(path: Path):
