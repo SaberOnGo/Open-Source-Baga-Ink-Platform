@@ -98,13 +98,24 @@ select exact Task Design version
 execution-prompts/<same Task directory>/<same vNNN>/
 ```
 
+When local/repository command execution is available, new Task structures MUST be created through:
+
+```text
+python3 tools/new_platform_port_task.py task ...
+python3 tools/new_platform_port_task.py version ...
+python3 tools/new_platform_port_task.py execution ...
+python3 tools/new_platform_port_task.py prompt ...
+```
+
+Do not manually `mkdir`, `touch`, or invent paths for these objects when the scaffolder is available. If the current tool cannot run repository commands, reproduce the same structure exactly and validate it through CI before claiming completion.
+
 Hard rules:
 
 - Do not invent another task, prompt, handoff, scratch, plan, notes, temp, date-based, milestone, or AI-output directory under a platform-port root.
 - A platform-port root may contain plan Markdown files plus only `task/` and `execution-prompts/` unless the governing rule and validator are deliberately changed first.
 - Task directories MUST use `NNNN_中文任务名_English-Task-Name`.
 - Task Design versions MUST use zero-padded `vNNN` such as `v001`, `v002`, `v010`; `v1`, `v2`, `v10`, date folders, and ad-hoc version names are forbidden.
-- Markdown files MUST use `数字前缀_中文名_English-Name.md`; files inside task/execution trees MUST use four-digit numeric prefixes.
+- ALL Markdown files under `docs/plans/platform-ports/` MUST use `NNNN_中文名_English-Name.md` with a four-digit prefix.
 - Every Task directory MUST have `0000_任务版本索引_Task-Version-Index.md` and at least one `vNNN` version.
 - Every Task Design version MUST have `0000_任务设计总纲_Task-Design-Overview.md`.
 - Every execution-prompt Task/version MUST exactly mirror an existing Task Design Task/version.
