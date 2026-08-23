@@ -3,14 +3,14 @@
 > **Document level:** Project documentation entry point  
 > **Document ID:** `docs.index.00`  
 > **Locale:** English (`en`)  
-> **Status:** Living Index v0.2  
+> **Status:** Living Index v0.3  
 > **Date:** 2026-08-23
 
 ---
 
 ## 1. Start here
 
-The long-term source of truth is the `main` branch: code, tests, machine-readable specifications, and approved documentation. Feature branches, chat history, and draft PR descriptions are not authoritative project memory.
+The long-term source of truth is `main`: code, tests, machine-readable specifications, and approved public documentation. Feature branches, chat history, and draft PR descriptions are not authoritative project memory.
 
 Recommended reading order:
 
@@ -23,18 +23,11 @@ docs/en/00_baga-ink-documentation-index.md
    ↓
 docs/en/status/00_baga-ink-project-status.md
    ↓
-relevant Standards
+docs/en/standards/00_baga-ink-standards-index.md
    ↓
 relevant Design / Reference App / Plan
    ↓
 docs/en/governance/00_baga-ink-development-governance.md
-```
-
-Current maintained governance:
-
-```text
-docs/en/governance/00_baga-ink-development-governance.md
-docs/en/governance/01_documentation-internationalization-policy.md
 ```
 
 ---
@@ -48,7 +41,7 @@ docs/en/
 docs/zh-CN/
 ```
 
-Each locale mirrors these public categories:
+Each locale mirrors:
 
 ```text
 standards/
@@ -58,25 +51,15 @@ governance/
 status/
 ```
 
-A document number is a stable identity within its category. Example pair:
-
-```text
-docs/en/standards/07_baga-ink-device-adapter-specification.md
-docs/zh-CN/standards/07_设备适配器规范.md
-```
-
-Both are editions of the same Standard 07, not separate protocols.
+A shared number / Document ID means one logical document. English and Simplified Chinese editions are not separate protocols.
 
 ---
 
-## 3. What is already migrated?
+## 3. Current localized public documents
 
-Current localized documents include:
+### Governance / Status
 
 ```text
-Documentation Index
-→ docs/en/00_baga-ink-documentation-index.md
-
 Development Governance
 → docs/en/governance/00_baga-ink-development-governance.md
 
@@ -87,39 +70,51 @@ Project Status
 → docs/en/status/00_baga-ink-project-status.md
 ```
 
-Standards, Design, and Reference Apps are being migrated in controlled batches. Their current paths and migration states are machine-tracked by:
+### Standards 00–06 — CURRENT
 
 ```text
-docs/localization/catalog.json
+00  docs/en/standards/00_baga-ink-standards-index.md
+01  docs/en/standards/01_baga-ink-platform-strategy.md
+02  docs/en/standards/02_baga-ink-app-standard.md
+03  docs/en/standards/03_baga-ink-api-specification.md
+04  docs/en/standards/04_baga-ink-capability-registry.md
+05  docs/en/standards/05_baga-ink-permission-model.md
+06  docs/en/standards/06_ikp-package-specification.md
 ```
 
-Do not treat a translation-pending document as a completed English Standard.
+These have maintained Simplified Chinese counterparts under `docs/zh-CN/standards/` and are marked `current` in `docs/localization/catalog.json`.
+
+### Next standards migration batch
+
+```text
+07  Device Adapter Contract
+08  Compatibility Standard
+09  UI Specification
+10  BICTS
+11  Kindle Adapter
+12  Android E-Paper Adapter
+13  Standard Libraries / Adopted Components
+```
+
+Until a document is `current` in the catalog, use the catalog to resolve its migration state rather than assuming the new English target path is complete.
 
 ---
 
 ## 4. Filename rules
 
-English public documents:
+English public docs:
 
 ```text
 NN_lowercase-kebab-case-name.md
 ```
 
-Examples:
-
-```text
-00_baga-ink-standards-index.md
-07_baga-ink-device-adapter-specification.md
-11_baga-ink-kindle-adapter.md
-```
-
-Simplified Chinese public documents:
+Simplified Chinese public docs:
 
 ```text
 NN_中文名称.md
 ```
 
-Canonical technical identities such as `Baga Ink`, `IKP`, `Device Adapter Contract`, `Capability`, `SQLite`, `Automerge`, `KOReader`, `FBInk`, and API identifiers remain recognizable across locales.
+Canonical identities such as `Baga Ink`, `IKP`, `Device Adapter Contract`, `Capability`, `SQLite`, `Automerge`, `KOReader`, and `FBInk` remain recognizable across locales.
 
 ---
 
@@ -138,7 +133,7 @@ sdk/          future generated/platform SDK
 client/       future Baga Ink Client
 ```
 
-API names, schema keys, error codes, CLI flags, source identifiers, code comments/docstrings, test names, dependency manifests, and commit subjects should use English.
+API names, schema keys, error codes, CLI flags, source identifiers, code comments/docstrings, test names, dependency manifests, and commit subjects use English.
 
 ---
 
@@ -154,13 +149,13 @@ docs/plans/platform-ports/kindle/
 
 may remain Chinese-first with its governed bilingual semantic filename convention.
 
-A stable fact that external implementers must rely on MUST be promoted into localized Standards, Design, Reference Apps, Governance, or Status rather than remaining authoritative only in an engineering task.
+A stable fact external implementers must rely on MUST be promoted into localized Standards, Design, Reference Apps, Governance, or Status.
 
 ---
 
 ## 7. Migration status
 
-The historical mixed-language public directories are frozen migration inputs:
+Historical mixed-language public directories are frozen migration inputs:
 
 ```text
 docs/standards/
@@ -170,7 +165,7 @@ docs/governance/
 docs/status/
 ```
 
-Their files are registered by `docs/localization/catalog.json` and protected by `docs/localization/legacy-lock.json` so agents cannot silently keep evolving the old layout.
+They are tracked by `docs/localization/catalog.json` and locked by `docs/localization/legacy-lock.json`.
 
 Migration plan:
 
@@ -181,9 +176,10 @@ docs/plans/02_文档国际化迁移计划_Documentation-Internationalization-Mig
 Current milestone:
 
 ```text
-M0   internationalization foundation       COMPLETE
-M1-A governance + status + index           IN PROGRESS / first localized pair complete
-M1-B Standards 00–13                       NEXT
+M0    internationalization foundation          COMPLETE
+M1-A  Governance + Status + Index              COMPLETE
+M1-B1 Standards 00–06                          COMPLETE
+M1-B2 Standards 07–13                          NEXT
 ```
 
 ---
@@ -198,10 +194,6 @@ docs/en/governance/00_baga-ink-development-governance.md
 docs/en/governance/01_documentation-internationalization-policy.md
 ```
 
-AI / automation contributors MUST also follow:
+AI / automation contributors MUST also follow `AGENTS.md`.
 
-```text
-AGENTS.md
-```
-
-The repository guards documentation structure, language paths, README locale switching, and high-volume Platform Port task layout in CI.
+Repository CI guards public-document paths, locale structure, README language switching, and Platform Port task/prompt layout.
