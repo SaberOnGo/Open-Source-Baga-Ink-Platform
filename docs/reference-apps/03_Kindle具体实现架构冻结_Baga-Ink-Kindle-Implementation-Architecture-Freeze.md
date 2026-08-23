@@ -1,7 +1,7 @@
 # Baga Ink Kindle 具体实现架构冻结 / Baga Ink Kindle Implementation Architecture Freeze
 
 > **文档级别：Kindle Reference Implementation Architecture Freeze / Kindle 参考实现架构冻结**  
-> **状态：FROZEN BASELINE v1.0**  
+> **状态：FROZEN BASELINE v1.0.1**  
 > **日期：2026-08-23**  
 > **适用范围：Baga Ink Client、Baga Ink Platform on Kindle、Baga Ink Kindle Adapter、LifeBook (`lifebook.ikp`)**  
 > **上位约束：`docs/standards/` 全部当前有效规范**  
@@ -116,7 +116,7 @@ legacy / future verified route                        │
 11. **Mesquito 不作为 Baga 直接采用模块。** 若某 route 内部使用它，那只是 route implementation detail。
 12. **KUAL / PEKI 不是正常用户路径，也不是 LifeBook dependency。** 只允许作为经 Compatibility DB 验证的 legacy/bootstrap/admin fallback。
 13. **KindleTool 是构建/打包工具，不是 Runtime，也不是 App Manager。**
-14. Kindle Home 正常产品路径必须是：**Kindle Home → LifeBook → Baga launcher → LifeBook**，不暴露 KOReader/KUAL 给普通用户。
+14. Kindle Home 的**用户产品路径**必须是：**Kindle Home → LifeBook**。其**内部执行链**为：`Kindle Home → LifeBook Home Entry → baga-launch com.lifebook → Baga Ink Platform Core → active lifebook.ikp → main.lua → LifeBook`。普通用户不得感知 KOReader、KUAL、KPM、MRPI 等底层 Homebrew 基础设施。
 15. 第一期首页入口优先采用成熟 `sh_integration` Scriptlet；更深的 AppMgr registration 作为后续可替换增强。
 
 ---
@@ -202,13 +202,15 @@ baga-platform_<version>_<target>.kpkg
 ```text
 Baga Platform Core native parts
 Kindle Adapter native parts
-Baga launcher
+baga-launch launcher component
 pinned KOReader/koreader-base components
 Lua/LuaJIT
 native libraries
 Platform install/update/uninstall hooks
 home-entry bootstrap assets
 ```
+
+`baga-launch` 是 Platform 内部的轻量启动组件/命令，不定义为独立的 “Baga Launcher” 产品或公共架构层。
 
 KPM **不得成为 Universal App contract**。
 
@@ -622,7 +624,15 @@ Device Adapter
 Platform Core
 ```
 
-安装后启动链：
+对普通用户呈现的产品路径只有：
+
+```text
+Kindle Home
+    ↓
+LifeBook
+```
+
+内部实现链为：
 
 ```text
 Kindle Home
@@ -643,7 +653,7 @@ Platform Core
     └─ initialize Baga Lua Profile
     │
     ▼
-validated main.lua
+active lifebook.ikp / validated main.lua
     │
     ▼
 LifeBook
@@ -1222,7 +1232,7 @@ MUST NOT create another Reader engine when KOReader/CREngine/MuPDF already satis
 4. 验证 KPM-compatible but missing KPM 的 bootstrap；
 5. 验证至少一个非 KPM/legacy installer envelope；
 6. 验证 sh_integration Home entry；
-7. 验证 `Kindle Home → baga-launch`。
+7. 验证内部链 `Kindle Home → LifeBook Home Entry → baga-launch <app-id>`；用户可见路径仍必须只有 `Kindle Home → LifeBook`。
 
 ## Phase 1：Minimum Platform Core
 
