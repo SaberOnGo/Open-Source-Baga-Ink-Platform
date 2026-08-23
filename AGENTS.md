@@ -23,6 +23,28 @@ Before making architecture or implementation decisions, read:
 
 Then read the specific standard/design/plan/reference document relevant to the task.
 
+### Device Adapter / OEM port hard gate
+
+Before any work involving:
+
+- a new device family or OEM port;
+- Kindle / Android E-Paper Device Adapter implementation;
+- display/input/storage/lifecycle/power/network device abstraction;
+- Device Profile / Quirk design;
+- Adapter Factory / Descriptor / Capability Snapshot;
+- Adapter IDL / Codegen / SDK / Mock Adapter;
+- Adapter Contract Tests or BICTS adapter integration;
+
+MUST read and follow:
+
+1. `docs/standards/07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`
+2. the relevant family standard such as `docs/standards/11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md` or `12_Android墨水屏适配规范_Baga-Ink-Android-E-Paper-Adapter.md`
+3. `docs/design/02_设备适配器可执行契约与SDK设计_Baga-Ink-Device-Adapter-Executable-Contract-and-SDK-Design.md` when implementing machine IDL/SDK/codegen/mock infrastructure.
+
+The Device Adapter Contract defines **what a device port must provide**, not that Baga must reimplement existing OS/vendor/homebrew/open-source capabilities. Prefer mature existing implementations and keep device-family Adapters thin.
+
+Do not add Reader/UI frameworks, KPM/MRPI/installation routes, or build tooling into the Device Adapter root contract merely because they are device-related.
+
 ### Kindle implementation hard gate
 
 Before any work involving:
@@ -34,7 +56,7 @@ Before any work involving:
 - Kindle native build target / ABI decisions;
 - LifeBook (`lifebook.ikp`) execution, install, update, launch or Kindle-specific integration;
 
-MUST read and follow:
+MUST also read and follow:
 
 `docs/reference-apps/03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md`
 
@@ -68,7 +90,7 @@ Do not introduce a separate heavyweight execution-layer product concept. Use the
 - Embedded Lua Interpreter
 - Baga Lua Profile
 - Baga Ink API
-- Baga Ink Device Adapter
+- Baga Ink Device Adapter Contract
 - IKP / `.ikp`
 
 Do not introduce `Baga Runtime`, `Baga Platform Runtime`, or `LifeBook Runtime` as formal architecture layers.
@@ -80,6 +102,8 @@ LifeBook is the flagship/reference App, not the platform itself.
 Check the current status document and run/inspect the relevant tests or CI evidence.
 
 Do not mark a Draft standard Stable merely because prose is complete. The executable-specification Stable Gate must be satisfied where applicable.
+
+For device ports, Adapter documentation or compilation alone is not enough: relevant Adapter Contract Tests and BICTS evidence are required before claiming compatibility.
 
 ## 6. Updating Project State
 
