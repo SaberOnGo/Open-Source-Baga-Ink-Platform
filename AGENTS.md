@@ -21,7 +21,26 @@ Before making architecture or implementation decisions, read:
 3. `docs/standards/00_规范总览_Baga-Ink-Standards-Index.md`
 4. `docs/governance/00_开发治理_Baga-Ink-Development-Governance.md`
 
-Then read the specific standard/design/plan relevant to the task.
+Then read the specific standard/design/plan/reference document relevant to the task.
+
+### Kindle implementation hard gate
+
+Before any work involving:
+
+- Baga Ink Platform on Kindle;
+- Baga Ink Client Kindle detection/bootstrap/install routes;
+- KPM / MRPI / KindleTool / KUAL / PEKI / sh_integration / AppMgr decisions;
+- KOReader / koreader-base integration or dependency selection;
+- Kindle native build target / ABI decisions;
+- LifeBook (`lifebook.ikp`) execution, install, update, launch or Kindle-specific integration;
+
+MUST read and follow:
+
+`docs/reference-apps/03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md`
+
+This Kindle Architecture Freeze is subordinate to `docs/standards/`, but authoritative over older Kindle reference/design notes and implementation prototypes.
+
+Do not silently change a frozen Kindle decision in code. If evidence requires a change, update the architecture decision/freeze first, then code and tests.
 
 ## 3. Branches Are Not Knowledge Storage
 
@@ -51,6 +70,8 @@ Do not introduce a separate heavyweight execution-layer product concept. Use the
 - Baga Ink API
 - Baga Ink Device Adapter
 - IKP / `.ikp`
+
+Do not introduce `Baga Runtime`, `Baga Platform Runtime`, or `LifeBook Runtime` as formal architecture layers.
 
 LifeBook is the flagship/reference App, not the platform itself.
 
