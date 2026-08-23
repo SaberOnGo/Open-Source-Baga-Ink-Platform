@@ -1,7 +1,16 @@
 {
   "schema_version": 1,
-  "maintained_locales": ["en", "zh-CN"],
-  "public_categories": ["standards", "design", "reference-apps", "governance", "status"],
+  "maintained_locales": [
+    "en",
+    "zh-CN"
+  ],
+  "public_categories": [
+    "standards",
+    "design",
+    "reference-apps",
+    "governance",
+    "status"
+  ],
   "documents": [
     {
       "id": "docs.index.00",
@@ -21,7 +30,6 @@
       "en_path": "docs/en/governance/01_documentation-internationalization-policy.md",
       "status": "current"
     },
-
     {
       "id": "standards.00",
       "category": "standards",
@@ -92,7 +100,7 @@
       "legacy_path": "docs/standards/07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md",
       "zh_cn_path": "docs/zh-CN/standards/07_设备适配器规范.md",
       "en_path": "docs/en/standards/07_baga-ink-device-adapter-specification.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.08",
@@ -101,7 +109,7 @@
       "legacy_path": "docs/standards/08_兼容性标准_Baga-Ink-Compatibility-Standard.md",
       "zh_cn_path": "docs/zh-CN/standards/08_兼容性标准.md",
       "en_path": "docs/en/standards/08_baga-ink-compatibility-standard.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.09",
@@ -110,7 +118,7 @@
       "legacy_path": "docs/standards/09_UI规范_Baga-Ink-UI-Specification.md",
       "zh_cn_path": "docs/zh-CN/standards/09_UI规范.md",
       "en_path": "docs/en/standards/09_baga-ink-ui-specification.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.10",
@@ -119,7 +127,7 @@
       "legacy_path": "docs/standards/10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md",
       "zh_cn_path": "docs/zh-CN/standards/10_兼容性测试套件.md",
       "en_path": "docs/en/standards/10_baga-ink-compatibility-test-suite.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.11",
@@ -128,7 +136,7 @@
       "legacy_path": "docs/standards/11_Kindle适配规范_Baga-Ink-Kindle-Adapter.md",
       "zh_cn_path": "docs/zh-CN/standards/11_Kindle适配规范.md",
       "en_path": "docs/en/standards/11_baga-ink-kindle-adapter.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.12",
@@ -137,7 +145,7 @@
       "legacy_path": "docs/standards/12_Android墨水屏适配规范_Baga-Ink-Android-E-Paper-Adapter.md",
       "zh_cn_path": "docs/zh-CN/standards/12_Android墨水屏适配规范.md",
       "en_path": "docs/en/standards/12_baga-ink-android-e-paper-adapter.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.13",
@@ -146,7 +154,7 @@
       "legacy_path": "docs/standards/13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md",
       "zh_cn_path": "docs/zh-CN/standards/13_标准库与成熟组件采用规范.md",
       "en_path": "docs/en/standards/13_baga-ink-standard-libraries-and-adopted-components.md",
-      "status": "migration-pending"
+      "status": "current"
     },
     {
       "id": "standards.20",
@@ -229,7 +237,6 @@
       "en_path": "docs/en/standards/28_baga-ink-catalog-and-app-discovery-specification.md",
       "status": "migration-pending"
     },
-
     {
       "id": "design.01",
       "category": "design",
@@ -248,7 +255,6 @@
       "en_path": "docs/en/design/02_baga-ink-device-adapter-executable-contract-and-sdk-design.md",
       "status": "migration-pending"
     },
-
     {
       "id": "reference-apps.01",
       "category": "reference-apps",
@@ -285,7 +291,6 @@
       "en_path": "docs/en/reference-apps/99_lifebook-architecture-and-kindle-compatibility-superseded.md",
       "status": "migration-pending"
     },
-
     {
       "id": "governance.00",
       "category": "governance",
