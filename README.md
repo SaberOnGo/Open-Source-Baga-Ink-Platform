@@ -11,7 +11,9 @@
 [![Documentation](https://img.shields.io/badge/docs-English-2ea44f.svg)](docs/en/00_baga-ink-documentation-index.md)
 
 <!-- BAGA-LANG-SWITCH:START -->
-**Languages:** **English** · [简体中文](README.zh-CN.md) · [＋ Add a language](CONTRIBUTING.md#translations)
+[![English](https://img.shields.io/badge/Language-English-111111?style=flat-square)](README.md)
+[![简体中文](https://img.shields.io/badge/语言-简体中文-2ea44f?style=flat-square)](README.zh-CN.md)
+[![Add a language](https://img.shields.io/badge/＋-Add%20a%20language-lightgrey?style=flat-square)](CONTRIBUTING.md#translations)
 <!-- BAGA-LANG-SWITCH:END -->
 
 </div>
