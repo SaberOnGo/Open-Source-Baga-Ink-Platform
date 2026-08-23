@@ -1,13 +1,16 @@
 # IKP 应用包规范 / IKP Package Specification
 
 > **文档级别：一级平台规范**  
+> **Document ID：`standards.06`**  
+> **语言：简体中文（`zh-CN`）**  
 > **状态：Draft v0.4**  
 > **日期：2026-08-22**  
-> **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
-> **应用规范：`02_应用标准_Baga-Ink-App-Standard.md`**  
-> **能力与权限：`04_能力注册表_Baga-Ink-Capability-Registry.md`、`05_权限模型_Baga-Ink-Permission-Model.md`**  
-> **身份与签名：`21_发布者身份与应用所有权标准_Baga-Ink-Publisher-Identity-and-App-Ownership-Standard.md`、`22_IKP签名与密钥生命周期标准_Baga-Ink-IKP-Signing-and-Key-Lifecycle-Standard.md`**  
-> **发布与更新：`24_应用发布审核与版本政策_Baga-Ink-App-Publishing-Review-and-Version-Policy.md`、`25_应用更新回滚与撤销协议_Baga-Ink-Update-Rollback-and-Revocation-Protocol.md`**
+> **上位文档：Standard 01 / `01_顶层战略与架构.md`**  
+> **应用规范：Standard 02 / `02_应用标准.md`**  
+> **Capability / Permission：Standards 04 / 05**  
+> **Identity / Signing：Standards 21 / 22**  
+> **Publishing / Update：Standards 24 / 25**  
+> **对应英文版：`docs/en/standards/06_ikp-package-specification.md`**
 
 ---
 
@@ -177,7 +180,7 @@ example.ikp
     └── signatures.json
 ```
 
-签名目录的精确语义由 `22` 号规范定义。
+签名目录的精确语义由 Standard 22 定义。
 
 ## 5.3 Entry Point
 
@@ -274,7 +277,7 @@ rollback
 
 ## 7.5 `release_sequence`
 
-单调递增整数；精确规则由 `24` 号规范定义。
+单调递增整数；精确规则由 Standard 24 定义。
 
 ## 7.6 `channel`
 
@@ -300,13 +303,13 @@ Platform 必须在执行应用代码前验证。
 
 ## 7.9 `permissions`
 
-权限名称必须来自 `05` 号 Permission Registry。
+权限名称必须来自 Standard 05 Permission Registry。
 
 App 不能在运行时申请 Manifest 未声明的 Permission。
 
 ## 7.10 `capabilities`
 
-Capability 名称必须来自 `04` 号 Registry。
+Capability 名称必须来自 Standard 04 Registry。
 
 缺少 Required Capability 时，Platform 必须报告 Incompatible。
 
@@ -314,7 +317,7 @@ Capability 名称必须来自 `04` 号 Registry。
 
 ## 7.11 `data_schema_version` 与 `rollback`
 
-用于 staged update、数据迁移和回滚判断；语义由 `25` 号规范定义。
+用于 staged update、数据迁移和回滚判断；语义由 Standard 25 定义。
 
 ---
 
@@ -338,7 +341,7 @@ Capability 名称必须来自 `04` 号 Registry。
 
 这些字段可以帮助 Catalog 生成，但不能改变应用身份与签名语义。
 
-Market 目录的正式字段由 `28` 号规范定义。
+Market 目录的正式字段由 Standard 28 定义。
 
 ---
 
@@ -408,6 +411,7 @@ Native Extension / Capability Provider 必须使用后续受控规范，不得�
 App 可以：
 
 - 使用 Baga Ink 标准 API；
+- 使用 Platform 提供的 Standard Libraries；
 - 将纯 Lua 第三方库打入自己的包；
 - 将自身静态资源打入包。
 
@@ -438,7 +442,7 @@ length
 sha256
 ```
 
-精确规范化、排序、Hash 与验证规则由 `22` 号规范定义。
+精确规范化、排序、Hash 与验证规则由 Standard 22 定义。
 
 Validator 必须拒绝：
 
@@ -471,7 +475,7 @@ IKP Release Signature
 Payload Files
 ```
 
-精确 Key ID、Canonical JSON、Threshold、Rotation、Recovery 和 Transfer 规则由 `21`、`22` 号规范定义。
+精确 Key ID、Canonical JSON、Threshold、Rotation、Recovery 和 Transfer 规则由 Standards 21、22 定义。
 
 Market 账号、Catalog 文案和 Repository URL 都不能替代该证明链。
 
@@ -502,7 +506,7 @@ Publisher Signature
 
 # 15. Canonical Encoding 与确定性打包
 
-签名 JSON 使用 `22` 号规范定义的 Canonical JSON Profile。
+签名 JSON 使用 Standard 22 定义的 Canonical JSON Profile。
 
 Baga Ink SDK 应支持确定性 IKP 生成：
 
@@ -566,7 +570,7 @@ Validator 必须防御：
 
 # 18. 安装、更新与回滚
 
-IKP 的 staged install、原子激活、健康确认、自动回滚、显式 Downgrade、Permission Diff 与 Data Schema Migration 全部由 `25` 号协议定义。
+IKP 的 staged install、原子激活、健康确认、自动回滚、显式 Downgrade、Permission Diff 与 Data Schema Migration 全部由 Standard 25 定义。
 
 本文件只要求：
 
@@ -674,7 +678,7 @@ Baga Ink Platform Core
 
 未签名 IKP 只允许 Developer Mode。
 
-规则由 `26` 号 Client / Offline Transfer Protocol 定义。
+规则由 Standard 26 Client / Offline Transfer Protocol 定义。
 
 它不得：
 
@@ -741,7 +745,7 @@ LifeBook 官方身份不能成为绕过 IKP Standard 的理由。
 - Cloud Backup Format；
 - Multi-process App Model。
 
-Delta 的安全边界已由 `25` 号协议规定，但具体差分算法留待实现验证。
+Delta 的安全边界已由 Standard 25 规定，但具体差分算法留待实现验证。
 
 ---
 
