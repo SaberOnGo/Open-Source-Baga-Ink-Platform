@@ -61,11 +61,47 @@ NN_中文名称.md
 
 `docs/plans/` 属于工程施工资料，不要求把每份 Task / AI Execution Prompt 做双语复制。
 
+## 翻译与多语言
+
+GitHub 项目首页默认使用英文 `README.md`。所有正式维护的 README 语言登记在：
+
+```text
+docs/localization/readme-languages.json
+```
+
+当前命名约定：
+
+```text
+README.md           English / 默认首页
+README.zh-CN.md     简体中文
+README.ja.md        未来日语示例
+README.de.md        未来德语示例
+README.fr.md        未来法语示例
+```
+
+增加一种正式维护的 README 语言时：
+
+1. 在 `docs/localization/readme-languages.json` 注册 Locale；
+2. 创建对应 `README.<locale>.md`；
+3. 同步更新所有 Current README 顶部的语言切换区；
+4. 如果该语言还要维护完整 Public Technical Documentation，则按国际化 Governance / Catalog 扩展，不要自己发明 `docs/chinese/`、`docs/japanese/` 等新规则；
+5. 运行 `python3 tools/check_readme_languages.py` 和 `python3 tools/check_docs_i18n.py`。
+
+翻译只是**同一个 Baga Ink 文档 / 协议的另一种语言表达**，不是另一套 Protocol。API 名、Identifier、Package Name、Error Code、Schema Key，以及 `docs/localization/terminology.json` 中规定的正式技术名必须保持一致。
+
 ## 代码和机器接口语言
 
 源码 Identifier、Comment / Docstring、Public API、Schema Key / ID、Machine Error Code、CLI Command / Flag、Test Name、Dependency Manifest、Commit Subject 使用英文。
 
 中文文档可以用中文解释，但稳定技术标识符不要强行翻成另一套名字。
+
+## License 与第三方代码贡献
+
+Baga 自研内容默认按仓库 Apache-2.0 条款接收和分发，除非某个目录或文件有更具体的许可证声明。主动提交并要求合入项目的 Contribution，应能在对应仓库许可证条款下合法分发。
+
+不要把第三方代码复制进 Baga 后改写成 Apache-2.0。任何 GPL / AGPL 或其他具有额外再分发要求的依赖，都必须保留上游许可证与来源，并在产品发行前明确评估组合/链接/修改/分发方式。
+
+详见：[`LICENSE`](LICENSE)、[`NOTICE`](NOTICE)、[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
 ## 强制检查
 
@@ -73,6 +109,7 @@ NN_中文名称.md
 
 ```bash
 python3 tools/check_docs_i18n.py
+python3 tools/check_readme_languages.py
 python3 tools/check_platform_port_plans.py
 ```
 
