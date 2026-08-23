@@ -1,6 +1,6 @@
 # 参与 Baga Ink 开发
 
-感谢参与 Baga Ink。这个项目从一开始就按长期、多设备平台、多国家、多语言、人类 + AI 协作来治理。
+感谢参与 Baga Ink。项目面向长期、多设备平台、多国家、多语言以及人类 + AI 协作进行治理。
 
 **English:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
@@ -11,10 +11,11 @@
 1. [`README.zh-CN.md`](README.zh-CN.md)
 2. AI / Automation Contributor 还必须阅读 [`AGENTS.md`](AGENTS.md)
 3. [`docs/zh-CN/00_项目文档入口.md`](docs/zh-CN/00_项目文档入口.md)
-4. 与当前工作相关的 Standard / Design / Reference App / Plan
-5. 如果改动涉及 Code、Dependency、SDK Output、Sample、Packaging 或可发行 Artifact，还必须阅读 [`docs/zh-CN/governance/02_Baga-Ink授权策略.md`](docs/zh-CN/governance/02_Baga-Ink授权策略.md)
+4. [`docs/zh-CN/governance/00_开发治理.md`](docs/zh-CN/governance/00_开发治理.md)
+5. 与当前工作相关的 Standard / Design / Reference App / Plan
+6. 如果改动涉及 Code、Dependency、SDK Output、Sample、Packaging 或可发行 Artifact，还必须阅读 [`docs/zh-CN/governance/02_Baga-Ink授权策略.md`](docs/zh-CN/governance/02_Baga-Ink授权策略.md)
 
-通过 [`docs/localization/catalog.json`](docs/localization/catalog.json) 查询稳定 Public Document ID 与各 Locale Path 的映射。
+通过 [`docs/localization/catalog.json`](docs/localization/catalog.json) 查询 Stable Localized Document ID 与各 Locale Path 的映射。
 
 ## Branch / PR 流程
 
@@ -29,18 +30,18 @@ main
 → merge main
 ```
 
-不要把永久 Feature Branch 当项目知识库。
+Permanent Feature Branch 不作为项目知识库。
 
 ## Public Documentation 语言
 
-公共、长期正文只允许存在于：
+长期 Localized Prose 放在：
 
 ```text
 docs/en/
 docs/zh-CN/
 ```
 
-Public Category 包括 Standards、Design、Reference Apps、Governance、Status。
+Localized Public Category 包括 Standards、Design、Reference Apps、Governance、Status。
 
 英文文件名：
 
@@ -54,15 +55,44 @@ NN_lowercase-kebab-case-name.md
 NN_中文名称.md
 ```
 
-禁止重新创建早期中英混合 Public Directories，也不要自行发明另一套 Locale Layout。
+禁止重新创建早期中英混合 Public Directory，也不得自行引入未经 Governance 定义的 Locale Layout。
 
-`docs/plans/` 属于工程施工资料，不要求把每份 Task / AI Execution Prompt 做多语言复制。
+`docs/plans/` 属于公开 Operational Engineering Material，不要求把每份 Task / AI Execution Prompt 做多语言复制，但仍然属于 Public Repository Documentation。
+
+## Public Writing Standard
+
+这个 Public Repository 中所有被 Git 跟踪的 Documentation 都面向 External Reader，包括 README、Contributor Guide、Governance、Standards、Design、Reference Apps、Status、`docs/plans/`、Task Design 与 AI Execution Prompt。
+
+Tracked Documentation 必须：
+
+- 直接陈述 Project Requirement、Decision、Implementation Step 与 Rationale；
+- 在没有 Private Conversation History 的情况下仍然可以独立理解；
+- 使用适合实际 Public Audience 的正式表达；
+- 将 Confidential Commercial Strategy 与 Private Project Discussion 保留在 Public Repository 之外。
+
+不得提交：
+
+- 对 Repository Owner 的个人建议或聊天式回复；
+- 引用私人对话中“前面 / 刚才 / 上面讨论”的表达；
+- 针对用户、Developer 或 OEM 心理反应的私人策略判断；
+- Confidential Monetization Rationale、Negotiation Tactics 或未公开 Pricing Strategy；
+- `我建议`、`我们认为` 等把私人咨询过程带入正式项目正文的表达。
+
+面向正式 Public Role 的 Normative Instruction 可以正常使用，例如 `Contributor MUST`、`Task MUST`、`OEM Port SHOULD`。
+
+Confidential Material 应保存在被忽略的本地 `private/` 目录或独立 Private Repository。
+
+强制检查：
+
+```bash
+python3 tools/check_public_writing.py
+```
 
 ## Code / Machine Interface 语言
 
 Source Identifier、Comment / Docstring、Public API、Schema Key / ID、Machine Error Code、CLI Command / Flag、Test Name、Dependency Manifest、Commit Subject 使用英文。
 
-稳定技术 Identifier 不要强行翻成不兼容的另一套名字。
+Stable Technical Identifier 不应被翻译成不兼容的另一套名称。
 
 ## 强制检查
 
@@ -73,6 +103,7 @@ python3 tools/check_docs_i18n.py
 python3 tools/check_readme_languages.py
 python3 tools/check_platform_port_plans.py
 python3 tools/check_licensing.py
+python3 tools/check_public_writing.py
 ```
 
 创建新的 Public Localized Doc 优先使用：
@@ -87,17 +118,17 @@ python3 tools/new_localized_doc.py ...
 python3 tools/new_platform_port_task.py ...
 ```
 
-不得为了让错误目录、文件名或 License Layout 通过而削弱 Validator。
+不得为了让 Invalid Structure 或 Invalid Content 通过而削弱 Validator。
 
 ## 架构变化
 
-如果真实实现证据要求改变 Approved Standard、Design 或 Architecture Freeze，应先修改对应 Governing Decision（或在同一个受 Review PR 中同步修改），不能只在代码或 Execution Prompt 里静默换架构。
+如果真实实现证据要求改变 Approved Standard、Design 或 Architecture Freeze，应先修改对应 Governing Decision，或在同一个 Reviewed PR 中同步修改；不能只在 Code 或 Execution Prompt 中静默改变 Architecture。
 
 ## License / Provenance
 
-Baga Ink 采用分层授权模型，不是一张 License 覆盖所有资产。
+Baga Ink 对不同 Asset Class 采用不同 Licensing Policy。
 
-Baga 自研 Platform / OEM 侧软件默认服从根 Community License，除非具体文件 / 目录另有声明。App-facing SDK / Sample 可以采用单独的宽松许可证。LifeBook 正式产品源码属于 Proprietary，不包含在公共 Baga Platform Source Distribution 中。第三方依赖永远保持上游 License。
+Baga 自研 Platform / OEM 侧软件默认服从根 Community License，除非具体文件 / 目录另有声明。App-facing SDK / Sample 可以采用独立 Permissive License。LifeBook 正式产品源码属于 Proprietary，不包含在公共 Baga Platform Source Distribution 中。第三方依赖保持上游 License。
 
 参见：
 
@@ -109,7 +140,7 @@ LICENSE_HISTORY.md
 THIRD_PARTY_NOTICES.md
 ```
 
-新增 / 变更依赖时，应记录足够的 Provenance：
+新增 / 变更依赖时，应记录足够 Provenance：
 
 ```text
 Project / Source
@@ -120,21 +151,21 @@ Bundled / Modified / Linked / External Invocation
 Required Notice / Source Obligation
 ```
 
-## Contribution Rights / 未来 Dual Licensing
+## Contribution Rights / Dual Licensing
 
-Baga Ink 希望同时支持 Community Use 和单独授权的 Commercial OEM / Platform Deployment。要维持这种模式，项目必须拥有足够权利，才能按 Community 与 Commercial Terms 分发 Baga 自研 Contribution。
+项目同时支持 Community Use 与单独授权的 Commercial OEM / Platform Deployment，因此需要具备按目标 Component 所适用 Community / Commercial Terms 分发 Baga 自研 Contribution 的权利。
 
-提交内容时，你必须拥有合法提交权。不要因为第三方代码“在 GitHub 上公开”就直接复制到 Baga 自研文件中。
+提交内容时，Contributor 必须拥有合法提交权。第三方代码不能仅因为公开可见就直接复制进 Baga 自研文件。
 
-针对需要 Dual Licensing 的 Baga Platform / Device Adapter 外部代码贡献，merge 前可能需要 Contributor License Agreement（CLA）。在正式、经过法律审核的 CLA 发布并完成签署前，Maintainer 可以暂缓会导致未来 Commercial Relicensing 不可能或不明确的外部代码贡献。
+针对可能同时采用 Community / Commercial Distribution 的 Baga Platform / Device Adapter 外部代码贡献，merge 前可以要求 Contributor License Agreement（CLA）。在正式、经过法律审核的 CLA 发布并完成签署前，Maintainer 可以暂缓 License Terms 与目标 Component Distribution Model 不兼容的外部 Contribution。
 
-这条规则不意味着普通 App 开发者需要购买 Platform Commercial License。开发并销售一个只使用公开 Baga App API 的 IKP App，与把 Baga Platform / Adapter 代码装进商业设备完全是两件事。
+开发并销售一个只使用公开 Baga App API 的 IKP App，与把 Baga Platform / Adapter 代码装进商业设备属于不同授权类别。
 
 ## LifeBook 边界
 
-公共仓库中的 LifeBook Reference App 文档用于验证 Baga Architecture，并不意味着 LifeBook 正式产品源码应进入本仓库。
+公共仓库中的 LifeBook Reference App 文档用于验证 Baga Architecture。LifeBook 正式产品 Application 是 Proprietary Product，不属于本 Public Repository 的 Platform Source Distribution。
 
-除非 Project Owner 明确决定公开某个组件并给出具体 License，否则不要向公共仓库提交：
+除非某个组件被明确决定公开并给出具体 License，否则不得向 Public Repository 提交：
 
 ```text
 LifeBook 正式 App Proprietary Source
@@ -155,18 +186,18 @@ docs/localization/readme-languages.json
 
 治理。
 
-增加一个新的 Maintained Locale：
+增加新的 Maintained Locale：
 
-1. 先通过 Documentation Governance 提议；
-2. 明确维护 / Review Owner；
+1. 通过 Documentation Governance 提议；
+2. 明确 Maintenance / Review Owner；
 3. 建立对应 Locale Tree 与必要 Terminology Guidance；
 4. 如果提供 Root README Translation，则登记 Registry；
 5. 同步所有受管理 Language Switch Block；
 6. 扩展 Localization CI / Registry Rule；
-7. 不允许临时手工建另一个语言目录。
+7. 不创建 Ad-hoc Language Directory。
 
-翻译是同一个逻辑文档的不同语言版本，不允许借翻译形成第二套 Protocol / Architecture。
+Translation 是同一个 Logical Document 的不同 Language Edition，不得形成第二套 Protocol / Architecture。
 
 ## 完成标准
 
-“能编译”不等于完成。应运行相关 Tests，需要时记录真机 / Conformance Evidence；涉及 Distribution 的改动要核对 License / Provenance；重要 Milestone 改变时更新 Project Status。
+Feature 不能仅以“能编译”作为完成条件。应运行相关 Tests，需要时记录 Real-device / Conformance Evidence；涉及 Distribution 的改动应核对 License / Provenance；Tracked Documentation 应通过 Public Writing Validation；重要 Milestone 改变时应更新 Project Status。
