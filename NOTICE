@@ -1,6 +1,14 @@
 Baga Ink Platform
 Copyright 2026 Baga Ink contributors
 
-This product includes software, specifications, documentation, tests, and tooling developed by Baga Ink contributors.
+Required Notice: Baga-authored Platform/OEM-side software is offered under the PolyForm Noncommercial License 1.0.0 unless a file or directory explicitly states another license.
+
+Baga Ink is developed in public for community use, research, education, individual developers, and device-porting work. Commercial OEM/device/platform deployment may require a separate Baga Ink Commercial License. See COMMERCIAL_LICENSE.md and docs/en/governance/02_baga-ink-licensing-policy.md.
+
+Ordinary IKP application development is treated separately from OEM/platform licensing. Building or selling an application that targets the published Baga App APIs does not by itself require a Baga OEM/platform commercial license.
+
+The production LifeBook application is proprietary first-party software and is not part of the public Baga Ink Platform source distribution unless a specific file explicitly states otherwise.
 
 Third-party projects and components retain their own copyright notices and licenses. See THIRD_PARTY_NOTICES.md and the dependency/license manifest of each concrete release or distribution.
+
+Historical Baga-authored material published before the licensing cutover retains the rights granted under its historical license. See LICENSE_HISTORY.md.
