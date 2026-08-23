@@ -3,7 +3,7 @@
 > **Document level:** Project documentation entry point  
 > **Document ID:** `docs.index.00`  
 > **Locale:** English (`en`)  
-> **Status:** Living Index v0.6  
+> **Status:** Living Index v0.7  
 > **Date:** 2026-08-23
 
 ## Start here
@@ -18,35 +18,44 @@ README.md
 
 AI / automation contributors also read `AGENTS.md`.
 
-## Public locale model
+## Localized public documentation — complete pairs
+
+The maintained locale trees are:
 
 ```text
-docs/en/{standards,design,reference-apps,governance,status}/
-docs/zh-CN/{standards,design,reference-apps,governance,status}/
+docs/en/
+docs/zh-CN/
 ```
 
-Matching Document ID / number means one logical document, not a language fork.
-
-## Current Standards
-
-All Standards 00–13 and 20–28 are `current` in both maintained locales.
-
-Key English entry points:
+The following public categories now have maintained English and Simplified Chinese editions:
 
 ```text
-App / API / IKP
+Standards       00–13, 20–28
+Design          01–02
+Reference Apps  01, 02, 03, 99
+Governance      00–01
+Status          00
+Documentation Index 00
+```
+
+`reference-apps.99` is intentionally marked `superseded`; it is a compatibility/history entry, not a current Kindle implementation baseline.
+
+## Key Standards
+
+```text
+App developers
 → docs/en/standards/02_baga-ink-app-standard.md
 → docs/en/standards/03_baga-ink-api-specification.md
 → docs/en/standards/06_ikp-package-specification.md
 
-Device / OEM porting
+Device / OEM porters
 → docs/en/standards/07_baga-ink-device-adapter-specification.md
 → docs/en/standards/10_baga-ink-compatibility-test-suite.md
 
-Kindle
+Kindle Adapter
 → docs/en/standards/11_baga-ink-kindle-adapter.md
 
-Android E-Paper
+Android E-Paper Adapter
 → docs/en/standards/12_baga-ink-android-e-paper-adapter.md
 
 Distribution / Market
@@ -54,54 +63,58 @@ Distribution / Market
 → Standards 21–28
 ```
 
-## Current Design — CURRENT
+## Key Design
 
 ```text
 Executable Specification Design
 → docs/en/design/01_baga-ink-executable-specification-design.md
 
-Device Adapter Executable Contract / SDK Design
+Device Adapter IDL / SDK Design
 → docs/en/design/02_baga-ink-device-adapter-executable-contract-and-sdk-design.md
 ```
 
-Both have maintained Simplified Chinese counterparts and Catalog status `current`.
-
-## Next localization work
+## Reference Apps
 
 ```text
-M1-E  Reference Apps
-M4    remove Legacy Public Trees and forbid them in CI
+LifeBook Reference App
+→ docs/en/reference-apps/01_lifebook-reference-app.md
+
+LifeBook Kindle product behavior / accessories
+→ docs/en/reference-apps/02_lifebook-kindle-product-behavior-and-accessory-extension-design.md
+
+Kindle Implementation Architecture Freeze
+→ docs/en/reference-apps/03_baga-ink-kindle-implementation-architecture-freeze.md
+
+Superseded compatibility entry
+→ docs/en/reference-apps/99_lifebook-architecture-and-kindle-compatibility-superseded.md
 ```
 
-Reference Apps include LifeBook and the Kindle Implementation Architecture Freeze.
+For Kindle implementation, **03 Kindle Implementation Architecture Freeze** is the current implementation baseline subordinate to Standards.
 
 ## Engineering plans
 
-`docs/plans/` is operational engineering material and is not fully locale-mirrored. `docs/plans/platform-ports/kindle/` may remain Chinese-first under its strict bilingual filename / Task / Execution Prompt rules. Stable external-facing decisions MUST be promoted into localized public docs.
+`docs/plans/` remains operational engineering material and is not fully mirrored by locale. Kindle work remains under:
 
-## Machine/code surfaces
+```text
+docs/plans/platform-ports/kindle/
+```
 
-`spec/`, `reference/`, `tests/`, `tools/`, `.github/`, `platform/`, `sdk/`, and `client/` remain English/language-neutral.
+Stable external-facing conclusions MUST be promoted into localized public docs.
 
-## Migration governance
+## Next: final migration cleanup
 
-Until final cleanup, old mixed-language public paths are frozen migration inputs tracked by `docs/localization/catalog.json` and `docs/localization/legacy-lock.json`.
+All maintained public-document pairs now exist. The remaining documentation-internationalization task is M4:
+
+```text
+update remaining old-path references
+set Catalog legacy_path values to null
+delete old mixed-language public trees
+retire legacy-lock.json
+change CI from legacy-lock mode to legacy-path-forbidden mode
+```
 
 Migration plan:
 
 ```text
 docs/plans/02_文档国际化迁移计划_Documentation-Internationalization-Migration-Plan.md
-```
-
-Current milestones:
-
-```text
-M0    Foundation                    COMPLETE
-M1-A  Governance / Status / Index   COMPLETE
-M1-B1 Standards 00–06               COMPLETE
-M1-B2 Standards 07–13               COMPLETE
-M1-C  Standards 20–28               COMPLETE
-M1-D  Design                        COMPLETE
-M1-E  Reference Apps                NEXT
-M4    Legacy removal                PENDING
 ```
