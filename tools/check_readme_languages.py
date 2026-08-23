@@ -107,7 +107,8 @@ def main() -> int:
     current_readmes = {entry["readme"] for entry in current if "readme" in entry}
 
     # Every current language README must exist and expose all current language
-    # destinations inside the managed switch block.
+    # labels inside the managed switch block. Other locales must be clickable;
+    # the active locale may be rendered as text/badge without a self-link.
     for entry in current:
         readme_path = REPO_ROOT / entry["readme"]
         if not readme_path.is_file():
@@ -132,7 +133,7 @@ def main() -> int:
         for language in current:
             if language["label"] not in block:
                 fail(readme_path, f"language switch is missing label: {language['label']}")
-            if language["readme"] not in block:
+            if language["locale"] != entry["locale"] and language["readme"] not in block:
                 fail(readme_path, f"language switch is missing README target: {language['readme']}")
 
         if "Add a language" not in block and "增加一种语言" not in block:
