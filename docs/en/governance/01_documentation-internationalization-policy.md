@@ -3,13 +3,13 @@
 > **Document level:** Project governance  
 > **Document ID:** `governance.localization.01`  
 > **Locale:** English (`en`)  
-> **Status:** Governance Baseline v1.0  
+> **Status:** Governance Baseline v1.1  
 > **Date:** 2026-08-23  
 > **Counterpart:** `docs/zh-CN/governance/01_文档国际化与本地化规范.md`
 
 ## 0. Purpose
 
-Baga Ink is maintained by contributors from multiple countries and language communities. Public documentation is therefore localized by locale tree instead of mixing multiple human languages in every filename or paragraph.
+Baga Ink is maintained by contributors from multiple countries and language communities. Long-lived localized documentation is therefore organized by locale tree instead of mixing multiple human languages in every filename or paragraph.
 
 Goals:
 
@@ -17,18 +17,19 @@ Goals:
 - Chinese maintainers can work from complete Simplified Chinese technical documentation;
 - human-language editions cannot drift into different protocols or architectures;
 - machine-readable contracts, code, tests, identifiers, and tooling remain shared and English/language-neutral;
-- high-volume operational engineering tasks do not need wasteful full localization.
+- high-volume operational engineering documents are not required to be duplicated across every locale;
+- every tracked documentation file remains suitable for publication in a public repository.
 
 ## 1. Permanent locale architecture
 
-Public long-lived prose exists only under:
+Long-lived localized prose exists under:
 
 ```text
 docs/en/
 docs/zh-CN/
 ```
 
-Governed public categories:
+Governed localized categories:
 
 ```text
 standards/
@@ -38,7 +39,7 @@ governance/
 status/
 ```
 
-Historical mixed-language public directories are not supported and MUST NOT exist.
+Historical mixed-language public directories are retired and MUST NOT exist.
 
 ## 2. One logical document, multiple language editions
 
@@ -67,11 +68,11 @@ approved project semantic decision + stable Document Identity
 maintained locale editions of that document
 ```
 
-A prose conflict between maintained locales is a documentation defect and must be reconciled before the affected requirement can be treated as Stable.
+A prose conflict between maintained locales is a documentation defect and MUST be reconciled before the affected requirement can be treated as Stable.
 
 ## 3. Stable Document Identity
 
-`docs/localization/catalog.json` records each public document's:
+`docs/localization/catalog.json` records each localized public document's:
 
 ```text
 id
@@ -83,7 +84,7 @@ status
 legacy_path = null
 ```
 
-The stable number is part of the document identity within its category.
+The stable number is part of the Document Identity within its category.
 
 Example:
 
@@ -117,18 +118,18 @@ NN_中文名称.md
 
 Requirements:
 
-- same stable number as English counterpart;
+- same stable number as the English counterpart;
 - Chinese descriptive name;
 - canonical technical identities may remain in English where that improves precision;
 - no redundant English suffix because the locale directory already identifies the audience.
 
-Root repository exceptions such as `README.md`, `README.zh-CN.md`, `CONTRIBUTING.md`, `CONTRIBUTING.zh-CN.md`, and `AGENTS.md` are governed separately.
+Root repository documents such as `README.md`, `README.zh-CN.md`, `CONTRIBUTING.md`, `CONTRIBUTING.zh-CN.md`, and `AGENTS.md` are governed separately for filename structure but remain subject to the repository-wide public writing rule.
 
 ## 5. Content-language rules
 
-English public files SHOULD use English prose.
+English localized files SHOULD use English prose.
 
-Simplified Chinese files SHOULD explain prose in Chinese, while preserving stable technical identities such as:
+Simplified Chinese files SHOULD use Chinese explanatory prose while preserving stable technical identities such as:
 
 ```text
 Baga Ink Platform
@@ -146,7 +147,7 @@ MRPI
 BICTS
 ```
 
-Do not mechanically translate identifiers in a way that creates a second technical vocabulary or incompatible API naming.
+Identifiers MUST NOT be mechanically translated in a way that creates a second technical vocabulary or incompatible API naming.
 
 Canonical terminology is machine-tracked by:
 
@@ -154,7 +155,44 @@ Canonical terminology is machine-tracked by:
 docs/localization/terminology.json
 ```
 
-## 6. English/language-neutral implementation surfaces
+## 6. Public writing voice applies to the whole repository
+
+This repository is public. Any documentation file committed to it is public-facing material, regardless of whether it is a Standard, Governance document, README, engineering plan, Task Design, or AI Execution Prompt.
+
+The localization model and the publication model are separate concerns:
+
+```text
+Localized Standards / Design / Reference Apps / Governance / Status
+        → mirrored by maintained locale where required
+
+Operational engineering plans under docs/plans/
+        → not required to be mirrored by locale
+
+Both classes
+        → public, third-party-readable, publication-quality prose
+```
+
+All tracked documentation MUST be understandable without private chat context and MUST use language appropriate to its intended external audience.
+
+Public prose MUST NOT contain private-discussion artifacts such as:
+
+- personal advice to the repository owner;
+- references to what was said earlier in a private conversation;
+- speculation about whether wording will annoy, frighten, persuade, or discourage users, developers, or OEMs;
+- confidential monetization rationale, negotiation tactics, unpublished pricing strategy, or other internal business reasoning;
+- conversational authorial phrases such as `I recommend` / `we think` where the project can state a requirement, decision, policy, or rationale directly.
+
+Operational documents may contain imperative engineering instructions when those instructions are addressed to their actual public audience, for example `Contributor MUST`, `Task MUST`, or `OEM Port SHOULD`.
+
+Confidential strategy belongs outside tracked public content, such as an ignored local `private/` directory or a separate private repository.
+
+Required repository-wide writing validation:
+
+```text
+python3 tools/check_public_writing.py
+```
+
+## 7. English/language-neutral implementation surfaces
 
 These are not duplicated by locale:
 
@@ -181,11 +219,11 @@ Use English for:
 - dependency manifests;
 - commit subjects and release tags.
 
-## 7. Operational engineering plans are different
+## 8. Operational engineering plans
 
 `docs/plans/` is an engineering work area, not a normative public protocol surface.
 
-It is not required to duplicate every Task Design / AI Execution Prompt across locales.
+It is not required to duplicate every Task Design / AI Execution Prompt across maintained locales.
 
 In particular:
 
@@ -195,19 +233,19 @@ docs/plans/platform-ports/kindle/
 
 may remain Chinese-first under its strict searchable bilingual filename convention.
 
-However:
+This does not make `docs/plans/` private. Plans are publicly visible and MUST satisfy the repository-wide public writing rule.
 
-> **A stable design fact that external implementers are expected to rely on MUST be promoted into localized Standards, Design, Reference Apps, Governance, or Status. It cannot remain authoritative only inside a maintainer-language task or prompt.**
+A stable design fact that external implementers are expected to rely on MUST be promoted into localized Standards, Design, Reference Apps, Governance, or Status. It cannot remain authoritative only inside a maintainer-language task or prompt.
 
-## 8. Synchronization rule for maintained pairs
+## 9. Synchronization rule for maintained pairs
 
 For a Catalog Entry marked `current`, semantic changes SHOULD update all maintained locale editions in the same reviewed PR.
 
-If synchronization genuinely cannot be completed immediately, the Catalog must explicitly mark the affected edition as pending/stale; Stable release processes cannot treat the pair as synchronized.
+If synchronization cannot be completed immediately, the Catalog MUST explicitly mark the affected edition as pending/stale; Stable release processes cannot treat the pair as synchronized.
 
 `superseded` is a valid state for historical compatibility entries that intentionally remain non-authoritative.
 
-## 9. Root repository language model
+## 10. Root repository language model
 
 For international discoverability:
 
@@ -225,9 +263,9 @@ README locale registration lives at:
 docs/localization/readme-languages.json
 ```
 
-Every current README locale must expose the same managed language-switch set.
+Every current README locale MUST expose the same managed language-switch set.
 
-## 10. Adding future locales
+## 11. Adding future locales
 
 New locales such as `ja`, `de`, `fr`, or `ko` require an explicit governance change.
 
@@ -251,20 +289,26 @@ zh/
 docs/standards/en/
 ```
 
-## 11. AI / contributor hard gate
+## 12. AI / contributor hard gate
 
-Before creating, renaming, moving, translating, or editing public long-lived documentation, contributors and AI agents MUST follow this policy.
+Before creating, renaming, moving, translating, or editing tracked documentation, contributors and AI agents MUST apply the relevant structure rules and the repository-wide public writing rule.
 
-Preferred scaffolder:
+Preferred localized-document scaffolder:
 
 ```text
 python3 tools/new_localized_doc.py ...
 ```
 
-Required validation:
+Required validation for localized public docs:
 
 ```text
 python3 tools/check_docs_i18n.py
+```
+
+Required validation for all tracked documentation:
+
+```text
+python3 tools/check_public_writing.py
 ```
 
 CI rejects at least:
@@ -272,14 +316,15 @@ CI rejects at least:
 - recreation of legacy mixed-language public directories;
 - invalid locale paths;
 - invalid English/Chinese filenames;
-- uncataloged public documents;
+- uncataloged localized public documents;
 - duplicate Document IDs/target paths;
 - non-null `legacy_path` after migration completion;
-- missing counterparts for `current` / `superseded` documents;
-- ad-hoc nested category structures.
+- missing counterparts for `current` / `superseded` localized documents;
+- ad-hoc nested category structures;
+- known private-discussion or internal-strategy writing patterns in tracked Markdown.
 
-Agents MUST NOT weaken the guard, broaden allowlists, or modify the Catalog merely to make an invalid layout pass.
+Agents MUST NOT weaken guards, broaden allowlists, or modify Catalog/validator rules merely to make invalid content pass.
 
-## 12. Final rule
+## 13. Final rule
 
-> **Public project knowledge is localized by locale tree; protocol and implementation contracts remain one project; operational engineering plans may stay maintainer-language; machine surfaces remain shared and English/language-neutral. No language edition may become a hidden fork of Baga Ink.**
+> **Localized project knowledge uses governed locale trees; protocol and implementation contracts remain one project; operational engineering plans may remain maintainer-language but are still public documents; machine surfaces remain shared and English/language-neutral; every tracked document is written for an external repository audience.**
