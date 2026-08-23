@@ -3,7 +3,7 @@
 > **Document level:** Canonical Project Status  
 > **Document ID:** `status.00`  
 > **Locale:** English (`en`)  
-> **Status:** Living Status v0.3  
+> **Status:** Living Status v0.4  
 > **Date:** 2026-08-23  
 > **Counterpart:** `docs/zh-CN/status/00_当前项目状态.md`  
 > **Authoritative branch:** `main`
@@ -18,33 +18,32 @@ This document answers one question:
 
 Feature branches, chat history, PR titles, old tasks, and future roadmaps do not override the actual code, tests, machine-readable specifications, and approved public documentation on `main`.
 
-If this document conflicts with the implementation on `main`, verify the code / tests / conformance evidence first and fix the status document immediately.
-
 ---
 
 ## 1. One-page status
 
 Overall phase:
 
-> **Baga Ink has moved beyond concept discussion into the Standards + Executable Conformance + Reference Platform Implementation preparation stage. The protocol family, Device Adapter Contract, Kindle reference architecture, and distribution-security machine-spec foundation exist, but there is not yet a production-ready Baga Platform / Kindle port / Market / Client for end users.**
+> **Baga Ink has moved beyond concept discussion into Standards + Executable Conformance + Reference Platform implementation preparation. The public platform contract is now substantial and internationally readable through Standards 00–13, but production Baga Platform / Kindle / Android E-Paper / Client / Market implementations are not complete.**
 
-What already exists at a meaningful baseline:
+Meaningful baselines already present:
 
 ```text
-substantial Draft / Baseline Standards system
-distribution / signing / repository machine-readable specification foundation
-Python reference implementation + tests
-Device Adapter Contract
-Kindle / Android E-Paper Adapter Standards
+Draft / Baseline Standards 00–28
+maintained English + Simplified Chinese Standards 00–13
+machine-readable distribution/signing/repository specification foundation
+Python reference implementation + conformance tests
+Baga Device Adapter Contract
+Kindle / Android E-Paper Device Adapter Standards
 Kindle Implementation Architecture Freeze
 Device Adapter Executable Contract / SDK Design
-Kindle Implementation Master Plan + Task/Execution Prompt governance
-public documentation internationalization architecture
-repository Ruleset + documentation guards
-Apache-2.0 project licensing baseline
+Kindle Implementation Master Plan + governed Task/Execution Prompt model
+English-default project homepage + scalable locale switch
+Apache-2.0 project licensing baseline + third-party license boundary
+protected main + required documentation/conformance CI
 ```
 
-What the project **cannot** currently claim:
+The project **cannot** currently claim:
 
 ```text
 Baga Ink Platform product implementation complete
@@ -61,9 +60,9 @@ Standards Stable release
 
 ## 2. Standards status
 
-The current Draft / Baseline standards cover:
+### Standards 00–13
 
-### Platform Core 00–09
+The following have maintained English and Simplified Chinese editions and are `current` in `docs/localization/catalog.json`:
 
 ```text
 00  Standards Index
@@ -76,18 +75,27 @@ The current Draft / Baseline standards cover:
 07  Device Adapter Contract
 08  Compatibility Standard
 09  UI Specification
-```
-
-### Compatibility / Device Adapter / Standard Libraries 10–13
-
-```text
 10  BICTS / Compatibility Test Suite
 11  Kindle Device Adapter
-12  Android E-Paper Adapter
+12  Android E-Paper Device Adapter
 13  Standard Libraries / Adopted Components
 ```
 
-### Market / Distribution / Signing 20–28
+English:
+
+```text
+docs/en/standards/
+```
+
+Simplified Chinese:
+
+```text
+docs/zh-CN/standards/
+```
+
+### Standards 20–28
+
+These exist as Draft/Baseline legacy documents and are the next public-document localization batch:
 
 ```text
 20  Market / Distribution Architecture
@@ -101,22 +109,13 @@ The current Draft / Baseline standards cover:
 28  Catalog / App Discovery
 ```
 
-The existence of these documents does not mean they are production-Stable.
-
-Public documentation is currently being migrated from the historical mixed-language layout into:
-
-```text
-docs/en/
-docs/zh-CN/
-```
-
-Migration state is tracked by `docs/localization/catalog.json`.
+They are not Stable merely because machine-readable implementation work has begun.
 
 ---
 
-## 3. Completed: executable-specification foundation
+## 3. Executable-specification foundation
 
-The current `main` branch includes:
+The repository contains:
 
 ```text
 spec/
@@ -125,80 +124,40 @@ tests/
 .github/workflows/conformance.yml
 ```
 
-Important implemented foundations include:
+Implemented foundations include:
 
-### Strict JSON / canonicalization
-
-- strict UTF-8 parsing;
-- duplicate object key rejection;
-- NaN / Infinity rejection;
-- input size / nesting depth limits;
+- strict UTF-8 JSON parsing;
+- duplicate-key / NaN / Infinity rejection;
+- size / nesting limits;
 - RFC 8785 JCS canonicalization;
-- SHA-256 helpers.
-
-### Schema / identity / signing
-
-- JSON Schema Draft 2020-12 foundation;
-- Schema Registry / Loader;
-- Ed25519;
-- Publisher ID / Genesis;
+- SHA-256 and Ed25519 helpers;
+- JSON Schema Draft 2020-12 registry/loader;
+- Publisher Identity / Genesis;
 - App Ownership;
 - App Signing Key Delegation;
-- Delegation Channel / Sequence / Expiry;
-- IKP `files.json` / Payload Hash / Release Statement / Signature Set.
+- IKP `files.json`, payload hashing, Release Statement, Signature Set;
+- ZIP safety, duplicate-entry rejection, path traversal protection, resource limits;
+- Publisher → Ownership → Delegation → Release offline validation;
+- invalid fixtures / negative corpus in CI.
 
-### IKP Validator foundation
-
-- ZIP safety checks;
-- duplicate ZIP entry rejection;
-- path traversal rejection;
-- compression / size limits;
-- Universal IKP native executable rejection;
-- Publisher → Ownership → Delegation → Release offline validation chain;
-- Manifest / Release cross-consistency checks.
-
-### Tests / negative corpus
-
-Python conformance tests and invalid fixtures are integrated into CI.
-
-However:
-
-> **Passing this stage does not mean Standards 21–28 have passed their Stable Gate.**
-
----
-
-## 4. Distribution conformance is still in progress
-
-Major remaining work includes:
+Still required before distribution Standards can be called Stable:
 
 ```text
-Reference Repository / Client behavior completion
-python-tuf / TUF conformance deepening
-Independent Rust Verifier
-Python ↔ Rust cross-language vectors
+Reference Repository / Client completion
+TUF conformance deepening
+Independent Rust verifier
+Python ↔ Rust vectors
 Repository → Client → Device E2E
 Offline Transfer prototype
 Update / Rollback / Revocation E2E
-Stable Gate
-```
-
-The target is not "complete-looking Markdown". Distribution security should ultimately be constrained by:
-
-```text
-Spec
-+ Machine Schema
-+ Canonical Vector
-+ Reference Implementation
-+ Independent Implementation
-+ Negative Tests
-+ E2E / Conformance
+Stable Gate evidence
 ```
 
 ---
 
-## 5. Device Adapter Contract status
+## 4. Device Adapter Contract status
 
-The `07 Device Adapter Contract` already defines:
+Standard 07 now has maintained English and Chinese editions and defines:
 
 ```text
 AdapterFactory / probe / create
@@ -217,51 +176,57 @@ Mock / Headless Adapter requirement
 OEM / third-party porting flow
 ```
 
-The key engineering principle is frozen:
+Frozen engineering principle:
 
-> **The standard defines what a device must provide; a concrete Adapter should stand on proven OS / Vendor SDK / Homebrew / mature open-source mechanisms instead of reimplementing the device.**
+> **The Contract defines what a device must provide; a concrete Adapter should reuse proven OS, Vendor SDK, Homebrew, and mature open-source mechanisms rather than reimplement the device.**
 
-Machine IDL / generated SDK / Mock Adapter / reusable Contract Test Harness are not yet complete.
+Not yet complete:
+
+```text
+spec/adapter machine IDL
+code generation
+generated SDK interfaces
+Mock / Headless Adapter
+reusable Adapter Contract Test Harness
+```
 
 ---
 
-## 6. Kindle Reference Platform status
+## 5. Kindle Reference Platform status
 
 Kindle is the first Reference Platform Port.
 
-The architecture boundary is defined roughly as:
+Frozen architecture direction:
 
 ```text
 Baga Ink Client
 → jailbreak/bootstrap route when needed
-→ Homebrew-ready
-→ KPM where compatible, MRPI/legacy envelope where necessary
+→ Homebrew-ready device
+→ KPM where compatible; MRPI/legacy envelope where required
 → Baga Ink Platform
 → IKP Package Manager
 → lifebook.ikp / other Baga Apps
 → Kindle Home Entry
 ```
 
-Important frozen decisions include:
+Important decisions:
 
-- `.ikp` is not converted into `.kpkg`;
-- KPM manages the native Baga Platform while the IKP Package Manager manages Baga Apps;
-- KPM not installed ≠ KPM incompatible;
-- KOReader / koreader-base / FBInk are internal adopted components, not LifeBook APIs;
-- LifeBook does not directly depend on Kindle / KOReader private APIs;
-- the Kindle Device Adapter maximizes reuse of mature mechanisms;
-- `kindlehf` is the first real bring-up path;
-- a Probe IKP should validate the Platform before the full LifeBook product is attempted.
+- `.ikp` is not converted to `.kpkg`;
+- KPM manages the native Baga Platform; IKP Package Manager manages Baga Apps;
+- KPM missing and KPM incompatible are different states;
+- KOReader / koreader-base / FBInk are internal adopted mechanisms, not LifeBook APIs;
+- LifeBook does not directly depend on Kindle or KOReader private APIs;
+- the Kindle Device Adapter maximizes mature capability reuse;
+- `kindlehf` is the first representative real-device bring-up path;
+- a Probe IKP should validate the Platform before full LifeBook product work.
 
-The engineering plan lives under:
+Engineering plan:
 
 ```text
 docs/plans/platform-ports/kindle/
 ```
 
-with governed Task Design / Version / Execution Prompt / CI rules.
-
-### Not yet complete
+Not yet implemented:
 
 ```text
 platform/adapters/kindle/
@@ -274,15 +239,13 @@ Base BICTS
 real baga-probe.ikp on Kindle
 ```
 
-Therefore:
-
-> **Architecture readiness ≠ Kindle product implementation completion.**
+Architecture readiness is not product completion.
 
 ---
 
-## 7. Android E-Paper status
+## 6. Android E-Paper status
 
-Android E-Paper already has a Device Family Adapter Standard direction:
+The Android E-Paper Standard defines:
 
 ```text
 Generic Android Base Adapter
@@ -290,63 +253,51 @@ Generic Android Base Adapter
 Vendor Specialization
 ```
 
-Vendor specialization should cover only real differences such as:
+Vendor specialization should absorb only true differences such as refresh modes, pen, front light, and vendor APIs.
 
-```text
-E-Paper Refresh Mode
-Pen
-Frontlight
-Vendor SDK / Private API bridge
-```
-
-A complete Reference Implementation / Device BICTS phase has not yet been reached.
+A complete Android Reference Adapter / BICTS implementation is not yet present.
 
 ---
 
-## 8. Documentation / collaboration infrastructure status
+## 7. Public documentation internationalization
 
 Completed:
 
 ```text
-README.md                  English default project homepage
-README.zh-CN.md            Simplified Chinese homepage
-CONTRIBUTING.md / zh-CN
-AGENTS.md
-
-docs/en/
-docs/zh-CN/
-docs/localization/catalog.json
-docs/localization/terminology.json
-docs/localization/legacy-lock.json
-
-tools/check_docs_i18n.py
-tools/check_readme_languages.py
-tools/check_platform_port_plans.py
+M0    locale architecture / governance / guards / README / licensing
+M1-A  Governance + Status + Documentation Index
+M1-B1 Standards 00–06
+M1-B2 Standards 07–13
 ```
 
-`main` is protected by a branch Ruleset requiring the PR / CI flow, an up-to-date branch, force-push protection, and deletion protection.
+Next:
 
-The required documentation guard job is:
+```text
+M1-C  Standards 20–28
+M1-D  Design
+M1-E  Reference Apps
+M4    remove legacy public trees and forbid them in CI
+```
+
+The historical mixed-language trees remain hash-locked migration inputs until all important references have moved.
+
+---
+
+## 8. Repository governance and licensing
+
+`main` is protected by a GitHub Ruleset requiring the normal PR / CI path. The required documentation job remains:
 
 ```text
 Validate task/prompt layout
 ```
 
-Public documentation internationalization is currently:
+That job now covers public-doc i18n validation, README locale-switch validation, and Platform Port task/prompt layout validation.
 
-> **M0 complete, M1 started.**
-
-This document and `governance.00` are the first formal M1-A migrated documents.
-
----
-
-## 9. License status
-
-Baga-authored material currently defaults to:
+Baga-authored material defaults to:
 
 > **Apache License 2.0**
 
-Repository entry points:
+Repository license entry points:
 
 ```text
 LICENSE
@@ -354,13 +305,11 @@ NOTICE
 THIRD_PARTY_NOTICES.md
 ```
 
-Third-party projects retain their upstream licenses.
-
-The Kindle architecture uses or plans to reuse projects with AGPL/GPL licensing, including KOReader / koreader-base / FBInk / KPM-related components. Future concrete Baga Platform releases therefore require release-specific dependency/license manifests and compliance review based on what is actually shipped.
+Third-party projects retain their upstream licenses. Concrete releases that bundle or derive from AGPL/GPL components such as KOReader / koreader-base / FBInk / KPM-related software must satisfy the relevant upstream obligations.
 
 ---
 
-## 10. No formal Compatibility Claim exists yet
+## 9. No formal Compatibility Claim exists yet
 
 The project must not currently claim:
 
@@ -371,22 +320,7 @@ Android E-Paper Compatible
 BOOX Compatible
 ```
 
-A formal Compatibility Record must bind at least:
-
-```text
-Device Model
-Firmware / OS tested range
-Native Build Target
-Device Profile
-Quirk Set
-Baga Platform Version
-Adapter Version
-Adapter Contract Version
-Lua Profile Version
-Adopted Component commits/digests
-Adapter Contract Test result
-BICTS result
-```
+A formal Compatibility Record must bind real test evidence to the exact Device / Firmware / Platform / Adapter / Profile / Quirk / Contract / Lua Profile / BICTS combination.
 
 Evidence-based states are:
 
@@ -398,43 +332,34 @@ Unsupported
 
 ---
 
-## 11. Current priorities
+## 10. Current priorities
 
 ### Track A — Distribution Conformance
 
-Continue:
-
 ```text
-Repository / Client reference behavior
+Reference Repository / Client
 Independent verifier
 Cross-language vectors
 E2E / offline transfer / rollback
 Stable Gate
 ```
 
-### Track B — Public Documentation Migration
-
-Follow the migration plan:
+### Track B — Documentation migration
 
 ```text
-M1-A  Governance + Status + Index
-M1-B  Standards 00–13
-M1-C  Standards 20–28
-M1-D  Design
-M1-E  Reference Apps
-M2    English review / synchronization
-M4    remove legacy public trees
+Standards 20–28
+→ Design
+→ Reference Apps
+→ remove Legacy Public Trees
 ```
 
 ### Track C — Device Adapter / Kindle
-
-Next implementation sequence:
 
 ```text
 spec/adapter IDL
 → generated interface
 → Mock Adapter
-→ Adapter Contract Test harness
+→ Adapter Contract Test Harness
 → kindlehf substrate bring-up
 → Kindle Base Adapter
 → baga-probe.ikp
@@ -445,7 +370,7 @@ Do not begin with the full LifeBook product or automated jailbreak Client path.
 
 ---
 
-## 12. Current project entry points
+## 11. Current project entry points
 
 English:
 
@@ -453,6 +378,7 @@ English:
 README.md
 docs/en/00_baga-ink-documentation-index.md
 docs/en/status/00_baga-ink-project-status.md
+docs/en/standards/00_baga-ink-standards-index.md
 docs/en/governance/00_baga-ink-development-governance.md
 ```
 
@@ -462,20 +388,15 @@ Simplified Chinese:
 README.zh-CN.md
 docs/zh-CN/00_项目文档入口.md
 docs/zh-CN/status/00_当前项目状态.md
+docs/zh-CN/standards/00_规范总览.md
 docs/zh-CN/governance/00_开发治理.md
-```
-
-Standards / Design / Reference Apps still in migration are resolved through:
-
-```text
-docs/localization/catalog.json
 ```
 
 ---
 
-## 13. Final status rule
+## 12. Final status rule
 
-> **A document existing does not mean the implementation is complete; code compiling does not mean a device is Compatible; one successful device launch does not mean Stable.**
+> **A document existing does not mean the implementation is complete; code compiling does not mean a device is Compatible; one successful launch does not mean Stable.**
 
 Baga Ink status must ultimately be supported by:
 
