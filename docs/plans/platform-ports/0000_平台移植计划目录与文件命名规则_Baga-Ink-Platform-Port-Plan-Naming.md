@@ -1,7 +1,7 @@
 # Baga Ink 平台移植计划目录与文件命名规则 / Baga Ink Platform Port Plan Naming
 
 > **文档级别：Implementation Plan Directory Rule / 平台移植计划目录规则**  
-> **状态：Mandatory Naming Rule v0.2**  
+> **状态：Mandatory Naming Rule v0.3**  
 > **日期：2026-08-23**  
 > **适用范围：`docs/plans/platform-ports/` 及未来所有设备/OS 平台子目录**
 
@@ -113,7 +113,7 @@ execution-prompts/
 
 # 3. Task 目录命名
 
-真正代表一个功能/模块/验证目标的 Task 目录 SHOULD 采用：
+真正代表一个功能/模块/验证目标的 Task 目录 MUST 采用：
 
 ```text
 <四位Task编号>_<中文任务名>_<English-Task-Name>/
@@ -139,7 +139,7 @@ v001/
 v002/
 ```
 
-不受“中文名 + 英文名”文件命名规则约束；该规则针对 Markdown 文件名。Task 业务目录仍 SHOULD 使用上面的双语命名方式。
+不受“中文名 + 英文名”文件命名规则约束；该规则针对 Markdown 文件名。Task 业务目录仍 MUST 使用上面的双语命名方式。
 
 ---
 
@@ -180,7 +180,7 @@ Task 新版本表示**任务设计发生了值得保留的变化**，例如：
 
 # 5. Markdown 文件默认四位数字前缀
 
-预计长期增长的目录 SHOULD 使用：
+预计长期增长的 `task/` 与 `execution-prompts/` 目录 MUST 使用：
 
 ```text
 0000_
@@ -224,8 +224,6 @@ Task 新版本表示**任务设计发生了值得保留的变化**，例如：
 ```
 
 无需重命名后续大量文件。
-
-现有已经满足“数字前缀 + 中文名 + 英文名”的历史文件可以保留原位；新文件必须遵守本规则。
 
 ---
 
@@ -333,3 +331,68 @@ Status / Compatibility
 > **`数字前缀_中文名_英文名.md`**
 
 这套结构的目标是：即使未来单个平台积累数百个 Task、每个 Task 又派生大量 AI 执行文档，仍然能通过稳定 Task ID、版本号、文件编号和双语语义名快速定位。
+
+---
+
+# 10. 自动化强制校验
+
+本规则不是仅靠人工或 AI 自觉遵守。
+
+仓库提供强制校验脚本：
+
+```text
+tools/check_platform_port_plans.py
+```
+
+任何修改 `docs/plans/platform-ports/` 的人或 AI，在完成工作前 MUST 执行：
+
+```bash
+python3 tools/check_platform_port_plans.py
+```
+
+校验失败时不得宣称任务完成。
+
+GitHub Actions 同时运行：
+
+```text
+.github/workflows/platform-port-plan-guard.yml
+```
+
+该 Gate 会检查至少以下内容：
+
+```text
+Markdown 文件名是否符合 数字前缀_中文名_English-Name.md
+Task / execution 文档是否使用四位数字前缀
+Task 目录是否符合 NNNN_中文任务名_English-Task-Name
+是否有人私自创建 task / execution-prompts 之外的顶层执行目录
+Task Version 是否严格使用 vNNN
+每个 Task 是否存在版本索引
+每个 Task Design Version 是否存在任务设计总纲
+execution-prompts 是否精确镜像已有 Task + Version
+每个 execution version 是否存在执行索引
+是否出现 README.md、v1、v10、日期式任务目录、handoff 平铺等非标准结构
+```
+
+AI MUST NOT：
+
+```text
+为了让 CI 通过而删除校验
+添加 broad exception / ignore pattern
+降低 MUST 为 SHOULD
+把非法目录加入 allowlist
+绕过脚本后直接宣称完成
+```
+
+如果确实需要引入新的正式目录类型或修改命名模型，正确流程是：
+
+```text
+先讨论并修改本规则
+        ↓
+同步修改 AGENTS.md
+        ↓
+同步修改校验脚本及测试/CI
+        ↓
+再创建新结构
+```
+
+不能反过来先乱建目录，再修改脚本给既成事实放行。
