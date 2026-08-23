@@ -1,7 +1,7 @@
 # Baga Ink 能力注册表 / Baga Ink Capability Registry
 
 > **文档级别：一级平台规范**  
-> **状态：Draft v0.3**  
+> **状态：Draft v0.4**  
 > **日期：2026-08-23**  
 > **上位文档：`01_顶层战略与架构_Baga-Ink-Platform-Strategy.md`**  
 > **配套规范：`03_API规范_Baga-Ink-API-Specification.md`、`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`、`08_兼容性标准_Baga-Ink-Compatibility-Standard.md`、`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`**
@@ -14,14 +14,9 @@ Capability Registry 定义：
 
 > **设备或 Platform 具有什么跨设备能力，App 应以什么稳定语义查询。**
 
-它不是：
+它不是开源库、Standard Library、数据库或内部 implementation 名称清单。
 
-```text
-开源库清单
-Standard Library 清单
-数据库能力清单
-内部 implementation 名称清单
-```
+正式正文只列当前注册的 Capability 与当前有效规则。
 
 ---
 
@@ -34,7 +29,7 @@ category.feature
 category.feature.variant
 ```
 
-例如：
+当前示例：
 
 ```text
 display.partial_refresh
@@ -51,15 +46,6 @@ reader.anchor
 - MUST 不包含内部实现库名；
 - MUST 描述跨设备能力语义，而不是 Library/API 名；
 - 已发布稳定 Capability SHOULD 不轻易重命名。
-
-正确 / 错误例：
-
-```text
-reader.anchor          ✓
-reader.koreader        ✕
-data.sqlite             ✕
-sync.automerge         ✕
-```
 
 SQLite / `lsqlite3` 属 Baga Lua Profile Standard Library；Automerge 属 Adopted Foundation。二者都不进入 Capability Registry。
 
@@ -98,13 +84,13 @@ platform.lifecycle
 
 Standard Libraries 的可用性由 **Baga Lua Profile / Platform version** 定义并由 BICTS 验证，不通过 Device Capability 表达。
 
-例如：
+当前 SQLite 标准库通过：
 
-```text
+```lua
 require("lsqlite3")
-→ Lua Profile Standard Library
-→ 不是 storage.sqlite / data.sqlite Capability
 ```
+
+提供。
 
 ---
 
@@ -157,7 +143,7 @@ network.connectivity_events
 
 这些表示 Platform 可提供对应网络能力，不规定内部 HTTP/TLS library。
 
-Automerge sync protocol（若某业务采用）不是 `network.*` Capability。
+Automerge sync protocol（若某业务采用）属于 Local-first 数据同步语义，不是网络硬件 Capability。
 
 ---
 
@@ -179,13 +165,7 @@ Platform 可以提供用户选择/授权文件访问。
 
 存在可访问扩展存储，例如 SD 卡。
 
-注意：
-
-```text
-SQLite database
-→ App sandbox 中的 Standard Library 使用场景
-→ 不需要 storage.sqlite Capability
-```
+SQLite database 作为 App sandbox 中的 Standard Library 使用场景，不注册独立 Device Capability。
 
 ---
 
@@ -265,7 +245,7 @@ resolve_anchor
 - App 不解析 Reader-private fields；
 - approximate recovery 必须明确，不冒充 exact。
 
-`reader.anchor` v0.3 仍为 provisional，待 Kindle/Android、多格式 BICTS 验证后再升级 stable。
+`reader.anchor` v0.4 仍为 provisional，待 Kindle/Android、多格式 BICTS 验证后再升级 stable。
 
 ---
 
@@ -311,8 +291,8 @@ removed
 ```text
 需求出现
   ↓
-先判断是否只是成熟 Standard Library 问题
-  ├─ 是 → 去 13，不新增 Capability
+判断是否只是成熟 Standard Library 问题
+  ├─ 是 → 按 13 号规范处理
   └─ 否 → 判断是否是真实跨设备 Platform/Device 能力
   ↓
 定义中立语义
@@ -326,13 +306,7 @@ API / Adapter / BICTS
 稳定后 stable
 ```
 
-禁止：
-
-```text
-Vendor API 名 → Capability
-Library 名 → Capability
-SQLite / Automerge / KOReader 名 → Capability
-```
+厂商私有 API 名、内部 Library 名以及具体开源项目名不得直接成为标准 Capability 名称。
 
 ---
 
@@ -348,7 +322,7 @@ x.vendor.feature
 
 ---
 
-# 17. v0.3 Registry 摘要
+# 17. v0.4 Registry 摘要
 
 ```text
 Base
@@ -425,4 +399,4 @@ Reader
 
 > **Capability Registry 是跨设备能力语义契约，不是成熟开源库的包装注册表。**
 
-SQLite、Automerge、KOReader 等该去哪里，由 API / Standard Library / Platform implementation 各自边界决定。
+SQLite、Automerge、KOReader 等分别由 Standard Library、Adopted Component 或 Platform implementation 的正式边界管理。
