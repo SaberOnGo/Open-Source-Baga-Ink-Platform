@@ -112,15 +112,21 @@ Plan 可以完成后保留作为实施历史，但当前进度必须回写 `docs
 
 ## `docs/reference-apps/`
 
-保存旗舰 / Reference App 如何遵守并验证 Baga Ink 标准。
+保存旗舰 / Reference App 如何遵守并验证 Baga Ink 标准，以及与 Reference App 直接相关的设备实现冻结。
 
-当前第一份：
+当前关键入口：
 
 ```text
 01_LifeBook参考实现_LifeBook-Reference-App.md
+→ LifeBook Universal App 高层参考实现
+
+03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md
+→ Kindle 代码开工、依赖选型、bootstrap/install、Platform/IKP 与 KOReader/KPM/MRPI 等具体实现的冻结基线
 ```
 
 LifeBook 是 App，不是 Baga Ink Platform。
+
+Kindle 具体实现必须先服从 `docs/standards/`，再服从上述 `03` Kindle Architecture Freeze；不得从历史聊天或已经 superseded 的 Reference 文档恢复旧架构。
 
 ---
 
@@ -223,6 +229,9 @@ Executable specification implementation plan
 
 LifeBook reference application
 → docs/reference-apps/01_LifeBook参考实现_LifeBook-Reference-App.md
+
+Kindle implementation architecture freeze
+→ docs/reference-apps/03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md
 ```
 
 ---
