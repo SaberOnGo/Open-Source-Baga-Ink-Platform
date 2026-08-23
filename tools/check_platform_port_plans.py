@@ -22,17 +22,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BASE = REPO_ROOT / "docs" / "plans" / "platform-ports"
 
-# All Markdown under platform-ports MUST be:
-#   NNNN_<Chinese name>_<English-Name>.md
-# The Chinese segment may contain ASCII product names, but must contain at least
-# one CJK ideograph. The English segment is ASCII and hyphen-separated.
+EN_PATTERN = r"[A-Za-z0-9]+(?:[-.][A-Za-z0-9]+)*"
 MARKDOWN_RE = re.compile(
-    r"^(?P<number>\d{4})_(?P<zh>[^_]+)_(?P<en>[A-Za-z0-9][A-Za-z0-9.-]*(?:-[A-Za-z0-9][A-Za-z0-9.-]*)*)\.md$"
+    rf"^(?P<number>\d{{4}})_(?P<zh>[^_]+)_(?P<en>{EN_PATTERN})\.md$"
 )
-
-# Task directories use the same bilingual convention and a four-digit stable ID.
 TASK_DIR_RE = re.compile(
-    r"^(?P<number>\d{4})_(?P<zh>[^_]+)_(?P<en>[A-Za-z0-9][A-Za-z0-9.-]*(?:-[A-Za-z0-9][A-Za-z0-9.-]*)*)$"
+    rf"^(?P<number>\d{{4}})_(?P<zh>[^_]+)_(?P<en>{EN_PATTERN})$"
 )
 VERSION_RE = re.compile(r"^v\d{3}$")
 PLATFORM_DIR_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -220,9 +215,6 @@ def validate_platform(platform_dir: Path) -> None:
     if not PLATFORM_DIR_RE.fullmatch(platform_dir.name):
         fail(platform_dir, "platform directory must be lowercase kebab-case, e.g. kindle or android-e-paper")
 
-    # A platform root may contain numbered bilingual Markdown documents plus
-    # exactly task/ and execution-prompts/. Any new top-level directory type
-    # requires an intentional governance + validator change first.
     for entry in platform_dir.iterdir():
         if entry.is_file():
             if entry.suffix != ".md":
