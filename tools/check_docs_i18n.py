@@ -26,6 +26,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS = REPO_ROOT / "docs"
 CATALOG_PATH = DOCS / "localization" / "catalog.json"
 LEGACY_LOCK_PATH = DOCS / "localization" / "legacy-lock.json"
+TERMINOLOGY_PATH = DOCS / "localization" / "terminology.json"
 
 EN_NAME_RE = re.compile(r"^(?P<number>\d{2})_(?P<name>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$")
 ZH_NAME_RE = re.compile(r"^(?P<number>\d{2})_(?P<name>[^_]+)\.md$")
@@ -33,6 +34,7 @@ CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff]")
 
 PUBLIC_CATEGORIES = {"standards", "design", "reference-apps", "governance", "status"}
 ALLOWED_STATUS = {"migration-pending", "translation-pending", "current", "stale", "superseded"}
+ALLOWED_TERM_POLICIES = {"keep", "keep-or-explain"}
 LEGACY_PUBLIC_DIRS = {
     DOCS / "standards",
     DOCS / "design",
@@ -82,6 +84,36 @@ def load_catalog() -> dict:
         fail(CATALOG_PATH, "documents must be an array")
         data["documents"] = []
     return data
+
+
+def validate_terminology() -> None:
+    data = load_json(TERMINOLOGY_PATH, "localization terminology catalog")
+    if data.get("locale") != "zh-CN":
+        fail(TERMINOLOGY_PATH, "locale must currently be zh-CN")
+    if not isinstance(data.get("default_rule"), str) or not data.get("default_rule"):
+        fail(TERMINOLOGY_PATH, "default_rule must be a non-empty string")
+
+    terms = data.get("terms")
+    if not isinstance(terms, list):
+        fail(TERMINOLOGY_PATH, "terms must be an array")
+        return
+
+    seen: set[str] = set()
+    for i, item in enumerate(terms):
+        label = f"terminology.terms[{i}]"
+        if not isinstance(item, dict):
+            fail(label, "entry must be an object")
+            continue
+        term = item.get("term")
+        policy = item.get("policy")
+        if not isinstance(term, str) or not term:
+            fail(label, "term must be a non-empty string")
+            continue
+        if term in seen:
+            fail(label, f"duplicate term: {term}")
+        seen.add(term)
+        if policy not in ALLOWED_TERM_POLICIES:
+            fail(label, f"policy must be one of {sorted(ALLOWED_TERM_POLICIES)}")
 
 
 def validate_en_filename(path: Path, expected_number: str | None = None) -> None:
@@ -155,8 +187,6 @@ def walk_localized_docs(locale: str) -> set[str]:
             fail(entry, f"unexpected localized public category; allowed: {sorted(PUBLIC_CATEGORIES)}")
             continue
 
-        # Public categories intentionally remain flat. If a future Standard
-        # family needs subdirectories, change governance + catalog + guard first.
         for item in entry.iterdir():
             if item.is_dir():
                 fail(item, "public localized categories are flat; ad-hoc subdirectories are not allowed")
@@ -185,8 +215,6 @@ def validate_legacy_lock(catalog_legacy_paths: set[str], actual_legacy: set[str]
 
     lock_paths = set(files)
 
-    # Catalog and lock must describe the same currently present legacy surface.
-    # When a document migrates, remove its legacy_path/lock entry in the same PR.
     if lock_paths != actual_legacy:
         for path_text in sorted(actual_legacy - lock_paths):
             fail(path_text, "legacy file exists but is not locked")
@@ -296,8 +324,6 @@ def validate_catalog(data: dict, localized_files: set[str]) -> None:
             if not zh_exists or not en_exists:
                 fail(label, "stale entry still requires both locale editions to exist")
 
-    # Every localized public Markdown file must be registered. This prevents an
-    # agent from inventing an uncataloged protocol/design document.
     uncataloged = localized_files - catalog_targets
     for path_text in sorted(uncataloged):
         fail(path_text, "localized public document is not registered in catalog.json")
@@ -318,6 +344,8 @@ def validate_root_contract() -> None:
     required = [
         REPO_ROOT / "README.md",
         REPO_ROOT / "README.zh-CN.md",
+        REPO_ROOT / "CONTRIBUTING.md",
+        REPO_ROOT / "CONTRIBUTING.zh-CN.md",
         DOCS / "README.md",
         DOCS / "README.zh-CN.md",
         DOCS / "en" / "00_baga-ink-documentation-index.md",
@@ -326,6 +354,7 @@ def validate_root_contract() -> None:
         DOCS / "zh-CN" / "governance" / "01_文档国际化与本地化规范.md",
         CATALOG_PATH,
         LEGACY_LOCK_PATH,
+        TERMINOLOGY_PATH,
     ]
     for path in required:
         if not path.is_file():
@@ -334,6 +363,7 @@ def validate_root_contract() -> None:
 
 def main() -> int:
     validate_root_contract()
+    validate_terminology()
     data = load_catalog()
 
     localized_files = walk_localized_docs("en") | walk_localized_docs("zh-CN")
