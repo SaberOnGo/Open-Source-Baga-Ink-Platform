@@ -1,14 +1,14 @@
 # Baga Ink 文档国际化迁移计划 / Documentation Internationalization Migration Plan
 
 > **文档级别：Implementation Plan / 文档基础设施迁移计划**  
-> **状态：Plan Baseline v0.6**  
+> **状态：Plan Baseline v0.7**  
 > **日期：2026-08-23**
 
-## 0. Goal
+## Goal
 
-把公共长期文档稳定迁移到 `docs/en/` 与 `docs/zh-CN/`，两种语言共享同一 Document Identity；Machine Spec / Code / Tests 不按语言分叉；高频工程 Task / Execution Prompt 不强制全文翻译。
+公共长期文档使用 `docs/en/` 与 `docs/zh-CN/`；两种语言共享同一 Document Identity；Machine Spec / Code / Tests 不按语言分叉；高频工程 Task / Execution Prompt 不强制全文翻译。
 
-## 1. Completed
+## Completed localization milestones
 
 ```text
 M0    Foundation / README / License / Guards          COMPLETE
@@ -17,68 +17,71 @@ M1-B1 Standards 00–06                                COMPLETE
 M1-B2 Standards 07–13                                COMPLETE
 M1-C  Standards 20–28                                COMPLETE
 M1-D  Design 01–02                                   COMPLETE
+M1-E  Reference Apps 01 / 02 / 03 / 99               COMPLETE
 ```
 
-M1-D current pairs:
+All maintained public-document locale pairs now exist.
+
+Reference Apps:
 
 ```text
-docs/en/design/01_baga-ink-executable-specification-design.md
-docs/zh-CN/design/01_规范可执行化设计.md
-
-docs/en/design/02_baga-ink-device-adapter-executable-contract-and-sdk-design.md
-docs/zh-CN/design/02_设备适配器可执行契约与SDK设计.md
+01 LifeBook Reference App                    current
+02 LifeBook Kindle Product Behavior          current
+03 Kindle Implementation Architecture Freeze current
+99 Superseded compatibility entry            superseded
 ```
 
-Catalog marks both Design documents `current`.
-
-## 2. Next — M1-E Reference Apps
-
-Migrate and fully localize:
+The current Kindle implementation baseline is:
 
 ```text
-01 LifeBook Reference App
-02 LifeBook Kindle Product Behavior / Accessories
-03 Kindle Implementation Architecture Freeze
-99 Superseded compatibility document
+docs/zh-CN/reference-apps/03_Kindle具体实现架构冻结.md
+docs/en/reference-apps/03_baga-ink-kindle-implementation-architecture-freeze.md
 ```
 
-The Kindle Architecture Freeze is critical because international Kindle contributors must read exactly the same frozen implementation decisions as Chinese maintainers.
+## Remaining work — M4 only
 
-## 3. Final cleanup — M4
+The internationalization migration is not finished until legacy mixed-language public paths are removed.
 
-After M1-E:
+M4 sequence:
 
-1. update `AGENTS.md`, Status, Indexes and important Plans to localized paths;
-2. set every Catalog `legacy_path` to `null`;
-3. delete old `docs/standards/`, `docs/design/`, `docs/reference-apps/`, `docs/governance/`, `docs/status/`, and the old root documentation index;
-4. retire/delete `docs/localization/legacy-lock.json`;
-5. change `tools/check_docs_i18n.py` from Legacy-lock mode to **Legacy public paths MUST NOT exist**;
-6. run Repository Documentation Guard and all existing Conformance CI;
-7. merge only when green.
+```text
+1. Update AGENTS.md and remaining important old-path references
+2. Set every catalog legacy_path to null
+3. Delete old docs/standards/
+4. Delete old docs/design/
+5. Delete old docs/reference-apps/
+6. Delete old docs/governance/
+7. Delete old docs/status/
+8. Delete old docs/00_项目文档入口_Baga-Ink-Documentation-Index.md
+9. Remove legacy-lock.json
+10. Change check_docs_i18n.py to forbid legacy public paths entirely
+11. Update Status / Index / Governance to migration COMPLETE
+12. Run Repository Documentation Guard + existing Conformance CI
+```
 
-## 4. Permanent naming model
+## Permanent naming model
 
-English public docs:
+English:
 
 ```text
 NN_lowercase-kebab-case-name.md
 ```
 
-Simplified Chinese public docs:
+Simplified Chinese:
 
 ```text
 NN_中文名称.md
 ```
 
-Counterparts use the same stable Document Number / ID.
+Counterparts share the same stable number / Document ID.
 
-`docs/plans/platform-ports/` keeps its independent four-digit bilingual task/prompt rule.
+`docs/plans/platform-ports/` retains its independent four-digit bilingual Task / Execution Prompt naming rule.
 
-## 5. Pair synchronization
+## Pair synchronization
 
-For every Catalog Entry marked `current`, semantic changes SHOULD update maintained locale counterparts in the same reviewed PR. A translation cannot silently fork Architecture, Requirement, API Contract, Permission, Compatibility, Signing, or Security semantics.
+For any Catalog Entry marked `current`, semantic changes SHOULD update maintained locale counterparts in the same reviewed PR. A language edition MUST NOT silently fork Architecture, Requirement, API Contract, Permission, Compatibility, Signing, Distribution, or Security semantics.
 
-## 6. Completion Gate
+## Completion Gate
 
 ```text
 [x] locale tree stable
@@ -87,10 +90,10 @@ For every Catalog Entry marked `current`, semantic changes SHOULD update maintai
 [x] Governance / Status localized
 [x] Standards 00–28 localized
 [x] Design localized
-[ ] Reference Apps localized
-[ ] important old-path references migrated
+[x] Reference Apps localized
+[ ] old-path references migrated
 [ ] Legacy Public Trees removed
 [ ] CI forbids Legacy Public Trees
 ```
 
-> **Final goal: Chinese and international contributors can implement and review the same Baga Ink Platform from their own language entry points without protocol or architecture forks.**
+> **Final goal: international and Chinese contributors use different language entry points but implement and review one Baga Ink Platform.**
