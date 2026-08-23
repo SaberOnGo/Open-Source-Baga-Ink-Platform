@@ -1,7 +1,7 @@
 # Baga Ink Kindle 适配规范 / Baga Ink Kindle Adapter
 
 > **文档级别：首发设备适配规范**  
-> **状态：Draft v0.2**  
+> **状态：Draft v0.3**  
 > **日期：2026-08-23**  
 > **上位文档：`07_设备适配器规范_Baga-Ink-Device-Adapter-Specification.md`**  
 > **认证依据：`08_兼容性标准_Baga-Ink-Compatibility-Standard.md`、`10_兼容性测试套件_Baga-Ink-Compatibility-Test-Suite.md`**
@@ -870,3 +870,58 @@ Kindle Adapter 不负责：
 更具体地说：
 
 > **开发者只面对统一 `baga.*`；Kindle 实现内部则应大胆、谨慎地复用 KOReader、FBInk、SQLite、Automerge 与 Homebrew 社区已经验证过的优秀轮子，而不把这些轮子变成新的公共架构层。**
+
+---
+
+# 31. Kindle Reference Implementation Mapping / Kindle 参考实现映射
+
+本节给出当前 **Baga Ink API 在 Kindle 上的参考实现映射**，用于指导 Baga Ink Platform / Kindle Adapter 的工程实现和后续 AI/开发者判断“优先复用什么”。
+
+> **本图不是 Baga Ink 公共架构图，也不定义新的软件层。**  
+> **KOReader、Automerge、SQLite 等只是 Baga Ink API 在 Kindle 上的具体实现所复用的开源组件。**
+
+```text
+Baga Ink on Kindle
+│
+├─ baga.reader
+│   └─ 主要复用 KOReader
+│       ├─ CREngine
+│       ├─ MuPDF
+│       ├─ ReaderUI
+│       ├─ annotation / bookmark / highlight
+│       └─ position / search / selection / anchor
+│
+├─ baga.ui
+│   └─ 可复用 KOReader Lua UI / widget / UIManager
+│
+├─ baga.display
+│   └─ KOReader Kindle device/display knowledge + FBInk
+│
+├─ baga.input
+│   └─ KOReader Kindle input / key / touch handling
+│
+├─ baga.data
+│   └─ SQLite 或同等级成熟事务存储
+│
+├─ baga.sync
+│   ├─ Baga 标准语义：联网 / Wi-Fi / sleep-wake / trigger / retry policy
+│   └─ 真正需要并发离线合并的业务场景：可复用 Automerge
+│
+├─ baga.network
+│   └─ 复用成熟 HTTP / TLS / KOReader 已验证网络能力与 Kindle 网络桥接
+│
+└─ baga.power
+    └─ Kindle 系统能力 / KOReader 已有 lifecycle / power 相关实现
+```
+
+映射规则：
+
+1. `baga.*` 是第三方 IKP 开发者可依赖的稳定边界；
+2. 上述开源组件是 Kindle implementation detail，可整体采用、组合或拆分复用；
+3. 某库被采用，不意味着该库的对象模型、API、术语、文件格式自动成为 Baga Ink 标准；
+4. 不应因为采用一个库，就额外创造 `KOReader Layer`、`SQLite Provider`、`Automerge Engine` 等公共层；
+5. 如果已有成熟组件能可靠实现某项 `baga.*` 语义，SHOULD 优先复用，而不是为了“完全自研”重新造轮子；
+6. 如果某成熟组件在特定 Kindle 硬件/固件/ABI 上不适用，可以替换内部实现或降级对应能力，但不改变 `baga.*` 契约；
+7. 所有实现最终仍必须通过 BICTS，兼容性由公开 Baga 语义验证，而不是由“采用了某个知名库”自动获得。
+
+未在上图逐项展开的其他 `baga.*` API 同样遵循这一原则：**先寻找成熟、许可证兼容、可验证的实现；仅在确实缺少可用实现时再开发必要代码，而且不因内部实现方式改变 Baga Ink 的公共架构。**
