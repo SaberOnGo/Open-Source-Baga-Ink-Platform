@@ -1,7 +1,7 @@
 # Baga Ink 规范总览 / Baga Ink Standards Index
 
 > **目录级别：规范入口 / Standards Entry Point**  
-> **状态：Living Index v0.4**  
+> **状态：Living Index v0.5**  
 > **日期：2026-08-23**
 
 ---
@@ -11,6 +11,8 @@
 `docs/standards/` 是 Baga Ink Platform 的唯一正式规范目录。
 
 编号表达规范重要性、依赖顺序和领域分组，不是创建时间。
+
+正式规范只描述**当前有效设计**。被替换、否决或未采用的接口名、namespace、架构草案不保留在正文中；历史由 Git commit / diff 保存。
 
 ---
 
@@ -80,7 +82,6 @@ Standard Libraries / Adopted Components
 ```text
 SQLite + lsqlite3
 → Stable Standard Library
-→ 不再定义 baga.data
 
 Automerge core
 → Adopted Local-first / CRDT Foundation
@@ -193,8 +194,7 @@ LifeBook 是第一个旗舰 Reference App，用真实产品验证同一个 `life
 ```text
 设备能力 → baga.*
 关系数据库 → require("lsqlite3")
-不存在 baga.data
-Automerge → Adopted Foundation，不是强制 baga.* API
+Automerge → Adopted Foundation
 ```
 
 准备发布继续：
@@ -273,7 +273,7 @@ NN_中文名_English-Name.md
 
 关键规则：
 
-> **新增 `baga.*` 前，必须先查看 `13`：如果成熟通用库已经有更好的抽象，应优先直接采用，而不是重新包装。**
+> **新增平台抽象前，必须先查看 `13`：如果成熟通用库已经有更好的抽象，应优先直接采用，而不是重新包装。**
 
 ---
 
@@ -287,7 +287,8 @@ NN_中文名_English-Name.md
 - Adapter 变化更新 `07/11/12`；
 - Compatible 行为变化更新 `08/10`；
 - SQLite / lsqlite3 baseline 变化必须跑 BICTS regression；
-- Automerge 若升级为 developer-facing 稳定 Lua module 或正式 wire protocol，必须明确版本与 migration，不能写“最新版”。
+- Automerge 若升级为 developer-facing 稳定 Lua module 或正式 wire protocol，必须明确版本与 migration，不能写“最新版”；
+- 被替换或否决的接口名、namespace、架构草案 MUST 从 Standards 与 Reference Apps 正文移除，历史只保留在 Git。
 
 ---
 
@@ -331,9 +332,7 @@ Stage / Activate / Health Check / Rollback
 
 # 11. 核心判断
 
-Baga Ink 不是通过“把所有东西都命名成 `baga.xxx`”来统一生态。
-
-真正的统一来自：
+Baga Ink 的统一来自：
 
 ```text
 设备差异 → 稳定 Baga API
