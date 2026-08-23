@@ -23,7 +23,7 @@
 
 当前阶段：
 
-> **平台标准体系已经建立；分发安全规范已经进入“可执行规范 / Conformance Kit”实施阶段。**
+> **平台标准体系已经建立；分发安全规范已经进入“可执行规范 / Conformance Kit”实施阶段；Kindle Reference Implementation 的具体架构已经形成 FROZEN BASELINE，但 Kindle 产品代码尚未进入正式实现完成阶段。**
 
 还没有进入：
 
@@ -33,9 +33,11 @@
 - LifeBook 在真实 Kindle + Android E-Paper 上的完整跨设备产品闭环完成；
 - Standards Stable 发布。
 
-当前重点是：
+当前重点仍是：
 
 > **先证明 21–28 号身份、签名、Repository、更新与分发规范能够被机器严格执行，再继续扩大实现。**
+
+Kindle 代码未来开工时，必须以已经落库的 Kindle Architecture Freeze 为实现与模块选型基线，不再从历史聊天恢复架构。
 
 ---
 
@@ -84,9 +86,9 @@
 
 ---
 
-# 3. 已完成：Reference App 定义
+# 3. 已完成：Reference App 与 Kindle 实现架构冻结
 
-已有：
+Reference App 主入口：
 
 ```text
 docs/reference-apps/
@@ -100,7 +102,7 @@ LifeBook
    ↓
 同一个 lifebook.ikp
    ↓
-Baga Ink API
+Baga Ink API / Baga Lua Profile
    ↓
 Baga Ink Platform
    ↓
@@ -110,6 +112,59 @@ Kindle / Android E-Paper
 ```
 
 LifeBook 是旗舰 / Reference App，不是 Baga Ink Platform 本身。
+
+## 3.1 Kindle Reference Implementation Architecture Freeze
+
+已建立：
+
+```text
+docs/reference-apps/
+03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md
+```
+
+状态：
+
+> **FROZEN BASELINE v1.0**
+
+该文档已经冻结后续 Kindle 代码开工必须遵守的关键实现边界，包括：
+
+```text
+Client → jailbreak/bootstrap → Homebrew foundation
+→ native Platform installer → Baga Ink Platform
+→ IKP Package Manager → lifebook.ikp → Kindle Home launch
+```
+
+以及：
+
+- `.ikp` 不转换成 `.kpkg`；
+- KPM 管 Platform native package，IKP Package Manager 管 Baga App；
+- KPM 未安装与 KPM 不兼容严格分离；
+- KPM-compatible 但缺失时先 bootstrap KPM；
+- KPM-incompatible / unvalidated target 才使用 MRPI / legacy Platform installer envelope；
+- 不建立 `Baga Platform Runtime` / `LifeBook Runtime` 正式架构层；
+- Platform Core 保持最小职责；
+- KOReader / koreader-base 由 Baga 私有、锁版本复用，LifeBook 不直接依赖 private API；
+- sh_integration 作为第一阶段 Home/Library 入口；AppMgr 深化集成后续验证；
+- KUAL / PEKI 为 legacy/admin/bootstrap fallback，不是正常 LifeBook 路径；
+- KindleTool 是 build/package tooling；
+- WinterBreak / SpringBreak / Sanctuary / Véra 只属于 Client Installation Route DB；
+- Mesquito 不作为 Baga 直接采用模块；
+- 同一个 `lifebook.ikp` 不随 `kindlepw2` / `kindlehf` 等 native target 分叉；
+- Platform update 与 IKP App update 分离；
+- USB Mass Storage 使用文件式 handshake/mailbox，不假设 remote exec；
+- 用户书籍、Kindle 笔记、App data / SQLite DB 必须受到保护。
+
+旧：
+
+```text
+02_LifeBook架构与Kindle兼容实现_LifeBook-Architecture-and-Kindle-Compatibility.md
+```
+
+已标记 `SUPERSEDED / 兼容入口`，只指向 `03`，不再作为独立 Kindle implementation baseline。
+
+`01_LifeBook参考实现...` 已同步修正其 Kindle Homebrew / KPM / MRPI / KUAL / KOReader 角色表述，避免与 `03` 竞争。
+
+**注意：架构冻结完成不等于 Kindle Platform 产品实现完成，也不等于任何具体 Kindle model/firmware 已通过 BICTS。**
 
 ---
 
@@ -353,7 +408,7 @@ Stage / Activate / Rollback
 
 # 9. 当前下一步 / Next
 
-当前工程优先级：
+当前工程优先级仍然是：
 
 ```text
 1. 完成 python-tuf Reference Repository
@@ -368,6 +423,14 @@ Stage / Activate / Rollback
 ```
 
 在此之前，不应优先扩展 Market UI、付费、DRM 等非核心功能。
+
+当进入 Kindle 产品实现阶段时，第一入口不是重新做架构讨论，而是直接按：
+
+```text
+docs/reference-apps/03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md
+```
+
+中已经定义的 Compatibility/Bootstrap PoC → Minimum Platform Core → KOReader mapping → LifeBook skeleton → 多设备扩展顺序执行。
 
 ---
 
@@ -415,6 +478,12 @@ feat/executable-spec-conformance
 
 开发治理
 → docs/governance/00_开发治理_Baga-Ink-Development-Governance.md
+
+LifeBook Reference App
+→ docs/reference-apps/01_LifeBook参考实现_LifeBook-Reference-App.md
+
+Kindle Implementation Architecture Freeze
+→ docs/reference-apps/03_Kindle具体实现架构冻结_Baga-Ink-Kindle-Implementation-Architecture-Freeze.md
 ```
 
 ---
@@ -428,6 +497,7 @@ feat/executable-spec-conformance
 - 重要 CI Gate 通过；
 - 新设备 Adapter 正式支持；
 - LifeBook 跨设备里程碑完成；
+- Kindle Freeze 发生正式 Architecture Decision revision；
 - Draft → Stable；
 - 当前优先级发生变化；
 - 某项“未完成”变为“完成”。
