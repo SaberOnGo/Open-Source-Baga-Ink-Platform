@@ -1,266 +1,411 @@
 # LifeBook IKP 架构与 Kindle 兼容实现 / LifeBook IKP Architecture and Kindle Compatibility
 
-> **文档级别：Reference App 技术实现补充 / Reference App Technical Implementation Companion**  
-> **状态：Baseline v0.3**  
+> **文档级别：Reference App 技术实现补充**  
+> **状态：Baseline v0.4**  
 > **日期：2026-08-23**  
 > **适用对象：LifeBook (`lifebook.ikp`) on Baga Ink Platform**  
 > **上位文档：`docs/standards/` 全部正式规范**  
-> **配套文档：`01_LifeBook参考实现_LifeBook-Reference-App.md`**  
-> **本文件不是 Baga Ink Standard，不得覆盖或修改上位标准。**
+> **配套文档：`01_LifeBook参考实现_LifeBook-Reference-App.md`**
 
 ---
 
-## 0. 目的
+## 0. 本轮关键纠偏
 
-本文档总结 LifeBook 墨水屏版本当前确定的技术架构、开源组件选型、Kindle 硬件/固件/ABI 差异处理方式，以及离线优先、阅读、社区内容、其他用户笔记等功能如何落到 Baga Ink Platform。
+本版本正式撤销此前 `baga.data → SQLite` 的设计。
 
-本次 v0.2 的关键澄清是：
-
-> **KOReader、SQLite、Automerge、FBInk、KPM、Hotfix 等是 Baga Ink 在 Kindle 上实现标准 API 时复用的成熟组件，不是 Baga Ink 新增的架构层。**
-
-本文件严格遵守：
-
-> **Reuse before reimplement. Standardize semantics, not internal implementation layering.**
-
----
-
-# 1. 最终架构不变
-
-此前讨论过：
+当前结论：
 
 ```text
-LifeBook App
-  ↓
+设备 / OS / Platform 差异
+→ baga.*
+
+关系数据库
+→ Baga Lua Profile Standard Library: lsqlite3 / SQLite
+
+Local-first / CRDT
+→ Automerge core 为正式 Adopted Foundation，可整体或拆模块复用
+
+Reader / Kindle UI / device knowledge
+→ 最大化复用 KOReader / koreader-base / FBInk
+```
+
+原则：
+
+> **SQLite 就直接用 SQLite；Automerge 就充分复用 Automerge；不为了“Baga 风格统一”再套一层更弱抽象。**
+
+---
+
+# 1. 架构不变
+
+```text
+LifeBook — lifebook.ikp
+        │
+        ▼
+Baga Ink API / Baga Lua Profile
+        │
+        ▼
+Baga Ink Platform Core
+        │
+        ▼
+Baga Ink Kindle Adapter
+        │
+        ▼
+Kindle OS
+```
+
+没有：
+
+```text
 LifeBook Runtime
-  ↓
-KOReader
+SQLite Layer
+Automerge Layer
+KOReader Provider Layer
+CRDT Engine Layer
 ```
 
-**不采用。**
-
-也不采用：
-
-```text
-Baga API
-  ↓
-Provider Layer
-  ↓
-Engine Layer
-  ↓
-Device Adapter
-```
-
-仅因为内部用了某个开源库，不应人为增加一层。
-
-正式架构仍然是 Baga Ink Standards 定义的四段关系：
-
-```text
-┌────────────────────────────────────────────┐
-│          LifeBook — `lifebook.ikp`         │
-│                                            │
-│ Account / Library / Articles / Q&A         │
-│ Comments / Public Notes / My Notes         │
-│ Life Records / Time Capsule / AI           │
-│ Offline Domain Logic / Sync Domain Logic   │
-└───────────────────┬────────────────────────┘
-                    │ only baga.*
-                    ▼
-┌────────────────────────────────────────────┐
-│             Baga Ink API                   │
-│                                            │
-│ app / ui / display / input / device        │
-│ storage / data / library / network         │
-│ power / reader / sync / permissions / log  │
-└───────────────────┬────────────────────────┘
-                    ▼
-┌────────────────────────────────────────────┐
-│          Baga Ink Platform Core            │
-└───────────────────┬────────────────────────┘
-                    ▼
-┌────────────────────────────────────────────┐
-│          Baga Ink Kindle Adapter           │
-└───────────────────┬────────────────────────┘
-                    ▼
-                Kindle OS
-```
-
-**这张图是架构。**
-
-KOReader、koreader-base、FBInk、SQLite、Automerge、KPM、Hotfix、KUAL、MRPI 等属于上图内部具体实现和设备基础设施，不在这里再画成一层。
+Standard Library 也不是新架构层。
 
 ---
 
-# 2. LifeBook IKP 自己负责什么
-
-`lifebook.ikp` 只负责产品业务与跨设备逻辑。
+# 2. LifeBook 自己负责什么
 
 ```text
-LifeBook
-├── Account / Session
-├── Library Product Logic
-├── Articles
-├── Q&A
-├── Comments
-├── Public / Community Notes
-├── My Notes / Highlights
-├── Life Records
-├── Time Capsule
-├── AI
-├── Offline Product Logic
-└── Sync Domain Logic
+Account / Session
+Library Product Logic
+Articles
+Q&A / Comments
+Public Notes
+My Notes / Highlights
+Life Records
+Time Capsule
+AI
+Offline Cache Policy
+Sync Domain Policy
+SQLite schema / migration / queries
 ```
 
 LifeBook 不负责：
 
 ```text
 Kindle framebuffer
-Kindle touch/keycode
-Kindle sleep/wake bridge
-Kindle system path
-EPUB/PDF/MOBI parser
-数据库引擎
+Kindle input
+Kindle sleep/wake
+文档 parser/render engine
+SQLite database engine
 通用 CRDT 算法
 Kindle Homebrew 生命周期
-具体越狱/Enablement Route
-```
-
-推荐 IKP 目录：
-
-```text
-lifebook.ikp
-├── manifest.json
-├── main.lua
-├── src/
-│   ├── application/
-│   ├── domain/
-│   ├── views/
-│   ├── persistence/
-│   ├── reader/
-│   └── sync/
-├── assets/
-├── locales/
-└── signature/
-```
-
-Universal IKP MUST NOT 打入 Kindle native bridge、KOReader binary、SQLite native binary、Automerge native runtime、Device Adapter 或 Platform Core。
-
----
-
-# 3. “充分复用成熟轮子”的正确理解
-
-Baga Ink 统一的是开发者 API，而不是要求底层全部自研。
-
-Kindle 实现可以直接这样工作：
-
-```text
-baga.reader
-→ 内部复用 KOReader / koreader-base / CREngine / MuPDF
-
-baga.ui / display / input
-→ 内部复用 KOReader UIManager / widgets / Kindle device knowledge / FBInk
-
-baga.data
-→ 内部使用 SQLite 或其他经过验证的事务数据库
-
-需要并发离线合并的具体业务
-→ 内部评估 Automerge 等成熟 Local-first / CRDT 实现
-
-Kindle Platform / Homebrew 生命周期
-→ 内部复用 KPM / Hotfix / MRPI / KUAL 等成熟基础
-```
-
-这并不意味着存在：
-
-```text
-KOReader Layer
-SQLite Layer
-Automerge Layer
-Homebrew Layer
-Provider Layer
-```
-
-开发者永远只面对：
-
-```text
-baga.*
+jailbreak / enablement route
 ```
 
 ---
 
-# 4. LifeBook 不只是 Reader
+# 3. Kindle Reference Implementation Mapping
 
-LifeBook 的内容类型至少包括：
-
-```text
-Books / Documents
-Articles
-Q&A
-Comments
-Other users' notes
-My notes / highlights
-Life Records
-Time Capsule
-AI
-Profiles / community content
-```
-
-所以：
+> **这是实现映射，不是架构图。**
 
 ```text
-文章 / 问答 / 评论 / 人生记录 / AI
-→ LifeBook Domain + baga.ui
-
-书籍 / 文档阅读
-→ baga.reader
+Baga Ink on Kindle
+│
+├─ baga.reader
+│   └─ KOReader
+│       ├─ ReaderUI
+│       ├─ CREngine
+│       ├─ MuPDF
+│       ├─ ReaderAnnotation / Highlight / Bookmark
+│       └─ position / search / selection / anchor
+│
+├─ baga.ui
+│   └─ KOReader Lua UI / widget / UIManager
+│
+├─ baga.display
+│   └─ KOReader Kindle device/display knowledge + FBInk
+│
+├─ baga.input
+│   └─ KOReader Kindle input / key / touch handling
+│
+├─ baga.storage
+│   └─ Kindle filesystem + Baga sandbox/path mapping
+│
+├─ Baga Lua Profile Standard Library
+│   └─ lsqlite3
+│       └─ Platform-managed libsqlite3
+│
+├─ KOReader internals
+│   └─ lua-ljsqlite3
+│       └─ 与 lsqlite3 共享同一 libsqlite3
+│
+├─ baga.sync
+│   └─ when_online / Wi-Fi / sleep-wake / charging / trigger / retry
+│
+├─ Automerge core（真正需要 Local-first CRDT 的业务）
+│   ├─ document / merge / history
+│   ├─ binary persistence
+│   ├─ sync protocol（可选）
+│   ├─ automerge-c / Rust core bridge
+│   └─ patch / cursor（按需）
+│
+├─ baga.network
+│   └─ 成熟 HTTP / TLS / Kindle 网络桥接
+│
+└─ baga.power
+    └─ Kindle 系统能力 / KOReader/Homebrew 已验证机制
 ```
 
-文章、问答、评论不需要转 EPUB，更不需要先进入 KOReader ReaderUI。
+### 3.1 绝不能误读
+
+```text
+lsqlite3
+≠ baga.data
+
+Automerge
+≠ baga.sync
+
+KOReader
+≠ Baga Reader 公共层
+```
 
 ---
 
-# 5. E-Ink UI 实现
+# 4. SQLite binding 决策
 
-LifeBook IKP 只使用：
+## 4.1 IKP 对外：`lsqlite3`
 
-```text
-baga.ui
-baga.input
-baga.display
+正式选择：
+
+```lua
+local sqlite3 = require("lsqlite3")
 ```
 
-Kindle 第一实现内部可以大量复用 KOReader 的 Lua UI / widget / UIManager。
+原因：
 
-正确理解：
+- thin wrapper；
+- 保留成熟 SQLite 模型；
+- MIT/X11；
+- 支持普通 Lua 5.1–5.5，不把 Baga Lua Profile 永久锁死 LuaJIT；
+- 动态链接 Platform SQLite；
+- 仍有活跃维护。
 
-```text
-LifeBook 调 baga.ui
-        ↓
-Baga Ink Kindle implementation
-        ↓
-内部可以直接调用/组合 KOReader UI 代码
+LifeBook 可以直接写：
+
+```lua
+local path = baga.storage.resolve_path("appdata/lifebook.sqlite3")
+local db = sqlite3.open(path)
+
+db:exec([[CREATE TABLE ...]])
 ```
 
-而不是把“KOReader UI”提升成开发者必须理解的中间层。
+## 4.2 KOReader 内部：继续 `lua-ljsqlite3`
 
-UI 产品原则：
+KOReader 已经长期使用：
 
-- 高对比；
-- page-first；
-- 长列表虚拟化；
-- Touch + Focus；
-- 物理翻页键映射语义动作；
-- 少动画；
-- dirty region；
-- ghosting / waveform 归 Platform / Adapter；
-- Color / Pen / Fast Refresh 均为渐进增强。
+```lua
+require("lua-ljsqlite3/init")
+```
+
+Baga 不要求把 KOReader 内部代码迁移到 `lsqlite3`。
+
+正确实现：
+
+```text
+Platform-managed libsqlite3
+├─ lsqlite3       → IKP / LifeBook
+└─ lua-ljsqlite3  → KOReader internals
+```
+
+## 4.3 不用 `lsqlite3complete`
+
+避免在同一 Platform 进程静态塞入第二份 SQLite runtime。
 
 ---
 
-# 6. Reader：正式采用 KOReader，但不泄漏 KOReader API
+# 5. LifeBook SQLite Schema Philosophy
 
-Kindle 上第一 Reader 实现正式优先采用：
+LifeBook 自己决定 schema，而 Baga 不包一层 database repository API。
 
-> **KOReader / koreader-base**
+典型表可能包括：
+
+```text
+books / library_index
+reading_progress
+account_session
+cached_articles
+cached_questions
+cached_comments
+public_note_cache
+sync_metadata
+local_settings
+search_index / FTS
+Automerge object metadata
+```
+
+这不是标准 schema，只是 LifeBook 产品实现。
+
+SQLite 的 transaction、JOIN、INDEX、foreign key、FTS5、JSON 等成熟能力都可正常利用。
+
+---
+
+# 6. SQLite 文件路径与 Sandbox
+
+```lua
+local path = baga.storage.resolve_path("appdata/lifebook.sqlite3")
+```
+
+`resolve_path()` 只做：
+
+```text
+Baga logical app path
+→ 当前设备安全真实路径
+```
+
+不做数据库抽象。
+
+在 Kindle 上必须额外验证：
+
+- `../` 逃逸；
+- absolute path；
+- ATTACH database path；
+- URI/path trick；
+- SQLite extension loading；
+- other-App private DB access。
+
+因为 Kindle 不像 Android 那样天然拥有现代 per-App sandbox。
+
+---
+
+# 7. Automerge 正式采纳哲学
+
+Automerge 不是“参考思想”，而是优先成熟基础实现。
+
+但采用 Automerge 不表示把整个生态一股脑全搬进来。
+
+LifeBook / Platform MAY：
+
+```text
+A 完整 core：document + merge + binary + sync
+B 只用 document / merge / history
+C Automerge binary 存 SQLite BLOB / file
+D 只用 sync protocol
+E 通过 automerge-c / Rust core
+F 只用 patches / cursors
+```
+
+不强制采用 `automerge-repo`。
+
+---
+
+# 8. 为什么不把 automerge-repo 变成 Baga 架构
+
+Automerge Repo 是高层多文档 / storage adapter / network adapter 管理库。
+
+它很优秀，但并不等于 Automerge core，而且不同 Repo 语言实现的 filesystem layout / network protocol 可能并不兼容。
+
+所以 Baga 不复制：
+
+```text
+Automerge Repo
+  ↓
+Storage Adapter
+  ↓
+Network Adapter
+```
+
+成为自己的公共层级。
+
+能复用模块就复用模块，需要跨实现互操作时锁定明确 core binary/sync protocol 版本。
+
+---
+
+# 9. Automerge Lua API 状态
+
+当前尚未发现足够成熟、官方维护且适合 Baga 的 Automerge Lua binding。
+
+因此当前是：
+
+```text
+Automerge Foundation → ADOPTED
+Developer-facing Lua binding → PROVISIONAL / NOT FROZEN
+```
+
+绝不为了“完整”现在生造：
+
+```text
+baga.automerge
+baga.crdt
+```
+
+Kindle 第一阶段可以研究：
+
+```text
+automerge-c
+Rust core bridge
+LuaJIT FFI
+其他受控集成
+```
+
+重点实测二进制体积、RAM、CPU、armel/armhf 构建。
+
+---
+
+# 10. SQLite + Automerge 组合
+
+两者是天然互补：
+
+```text
+SQLite
+├─ relational metadata
+├─ cache
+├─ index / FTS
+├─ reading progress
+└─ Automerge binary/change metadata
+
+Automerge
+├─ My Notes（真正并发时）
+├─ Life Records
+├─ Time Capsule drafts
+└─ Article drafts
+```
+
+不是所有笔记都必须 CRDT，也不是所有数据都应该 Automerge。
+
+---
+
+# 11. Offline-first 三个问题
+
+```text
+1. Local persistence
+   → SQLite / files
+
+2. Concurrent merge
+   → business rule / Automerge（适用时）
+
+3. Scheduling / transport
+   → baga.sync + baga.network
+```
+
+这三个不能混成一个 `Data/Sync Engine`。
+
+---
+
+# 12. 阅读位置同步
+
+Reading Position 通常不需要 CRDT。
+
+例如两台设备：
+
+```text
+Kindle → 40%
+Phone  → 70%
+```
+
+可以通过明确业务规则选择更靠后的有效阅读位置，并保留 timestamp/device history。
+
+复杂文本笔记才更可能需要 Automerge。
+
+---
+
+# 13. Reader / KOReader
+
+Kindle Reader 第一选择 KOReader。
 
 LifeBook 只调用：
 
@@ -269,847 +414,230 @@ baga.reader.supports(source)
 baga.reader.open(source)
 ```
 
-以及 Reader Session 的标准能力。
-
-Kindle 内部可以直接复用：
+KOReader 内部可完整复用：
 
 ```text
 ReaderUI
 CREngine
 MuPDF
-ReaderHighlight
-ReaderAnnotation
-ReaderBookmark
-Reader position / search / selection
+Annotation
+Highlight
+Bookmark
+Search
+Selection
+Position
 ```
 
-LifeBook 不依赖：
-
-```text
-ReaderUI private object
-KOReader plugin object
-KOReader internal path
-KOReader sidecar schema
-CREngine object
-MuPDF object
-```
+LifeBook 不依赖其 private object。
 
 ---
 
-# 7. LifeBook / Baga Reader 绝不以 EPUB 为中心
+# 14. Reader 不以 EPUB 为中心
 
-LifeBook 的 Reader 抽象不是：
+实际支持范围来自当前 Reader implementation。
 
-> “EPUB Reader + 其他格式兼容”
-
-而是：
-
-> **当前 Baga Reader implementation 能稳定支持什么文档，LifeBook 就通过统一 API 使用什么文档。**
-
-KOReader 本身已经支持多种 reflowable 与 fixed-page 文档类型，因此应充分利用其成熟能力。
-
-典型可支持范围可能包括：
+可能包括：
 
 ```text
 EPUB
 PDF
-MOBI / AZW family（按实际实现）
+MOBI/AZW family
 FB2
-TXT / HTML
+TXT/HTML
 DjVu
-CBZ / comic
-其他 Reader implementation 已支持格式
+CBZ/comics
+其他 KOReader 已支持格式
 ```
 
-格式清单属于 implementation capability，不应把 LifeBook 产品定义冻结成 EPUB。
+LifeBook 产品定义不冻结成 EPUB Reader。
 
 ---
 
-# 8. Reader Anchor：不重新发明格式定位算法
+# 15. Reader Anchor
 
-这是“其他用户笔记”功能的关键。
-
-## 8.1 KOReader 已经做了什么
-
-KOReader 已有成熟的阅读位置、Bookmark、Highlight 与 Annotation 体系。
-
-其内部并没有假装所有格式共用一种 Locator，而是根据 Reader 模型使用适合的机制：
+KOReader 已有不同定位模型：
 
 ```text
-rolling / reflowable
-→ XPointer-like start/end position 等
+rolling/reflowable
+→ XPointer-like positions
 
-paging / fixed-page
-→ page number + page-local position / boxes 等
+paging/fixed-page
+→ page + local positions / boxes
 ```
 
-这正说明 Baga Ink 不应该自己分别重写：
+Baga `reader.anchor` 直接站在这些能力上，不重写各格式 Locator。
+
+LifeBook 只保存 opaque Anchor。
+
+Readium Locator / EPUB CFI / W3C Annotation 只作设计参考。
+
+---
+
+# 16. LifeBook 文章/Q&A/评论
+
+这些不是 Book Reader 文档。
 
 ```text
-EPUB locator
-PDF locator
-MOBI locator
-FB2 locator
-TXT locator
-DjVu locator
-CBZ locator
+LifeBook Server / SQLite Cache
+        ↓
+LifeBook Domain
+        ↓
+baga.ui
 ```
 
-## 8.2 Baga Reader Anchor
+不转 EPUB，不经过 KOReader ReaderUI。
 
-LifeBook 只做：
+---
 
-```lua
-local anchor = session:create_anchor(selection)
-
-save_note({
-    anchor = anchor,
-    ...
-})
-```
-
-恢复时：
-
-```lua
-session:goto_anchor(anchor)
-```
-
-Anchor 对 LifeBook 是 opaque 的 Baga 值。
-
-LifeBook：
-
-- 保存它；
-- 同步它；
-- 关联公开/个人笔记；
-- 把它交还 Reader；
-- 不解析其内部 XPointer / pboxes / locator。
-
-Kindle Baga implementation 优先用 KOReader 已有定位实现。
-
-## 8.3 跨 Reader / 跨设备恢复
-
-精确原生位置无法直接跨实现解析时，可以由 `baga.reader.resolve_anchor()` 利用标准 fallback evidence 尝试恢复。
-
-可能参考：
+# 17. `baga.library`
 
 ```text
-quote/context
-page/region
-progression
-other stable evidence
+Kindle existing books
+       ↓
+Kindle Adapter / Platform
+       ↓
+baga.library
+       ↓
+LifeBook
 ```
 
-但 approximate 必须明确为 approximate。
-
-Readium Locator、EPUB CFI、W3C Web Annotation 可以提供设计启发，但**只作参考**，不成为 LifeBook/Baga Reader 的默认格式边界。
+LifeBook 不扫描 `/documents`，Library handle 可交给 Reader。
 
 ---
 
-# 9. 具体采纳的开源组件地图
+# 18. Kindle ABI / 固件
 
-下面的“实现位置”不是新架构层，而是说明某个库在哪里被 Baga Ink Kindle 实现利用。
+LifeBook 不按型号维护 IKP。
 
-| 项目 | License | 实现位置 / 用途 | 决策 |
-|---|---|---|---|
-| KOReader | AGPL-3.0 | `baga.reader`、Kindle Reader/UI/device/input 的主要成熟实现来源 | **正式优先采纳** |
-| koreader-base | AGPL-3.0 | LuaJIT、文档引擎、Kindle target、native foundation | **正式优先采纳** |
-| MuPDF / CREngine（经 KOReader） | 按各项目许可证 | PDF/fixed-page 与 reflowable 文档能力 | **随 KOReader 复用** |
-| FBInk | GPL-3.0-or-later | framebuffer / bootstrap / diagnostics / refresh fallback | **正式复用** |
-| SQLite | Public Domain | `baga.data` 的首选 Kindle/Android 事务本地存储候选 | **正式优先评估/采用** |
-| Automerge | MIT | 真正存在多设备并发离线编辑的数据 CRDT/Local-first 候选 | **选择性正式评估，禁止全数据滥用** |
-| KPM | GPL-3.0 | Kindle Platform/Homebrew 组件安装/启动/卸载 | **内部复用；不是 IKP 包格式** |
-| Universal Hotfix | GPL-3.0 | Kindle Homebrew 基础、armel/armhf 环境等 | **优先复用** |
-| KindleTool | GPL-3.0+ | Kindle package/device/build tooling | **开发/部署工具** |
-| koxtoolchain | 按仓库许可证 | armel / armhf cross-build | **需要 native component 时复用** |
-| KUAL | 需按实际版本审查 | legacy launcher / maintenance fallback | **仅 fallback，用户日常不可见** |
-| MRPI | 按实际组件许可证 | legacy package/install bridge | **兼容旧生态** |
-| sh_integration | 发布前完成许可证审计 | Kindle Home/Library app entry 研究 | **重点研究** |
+KOReader target 是重要工程参考：
 
-## 9.1 不作为当前主实现
-
-| 项目 | 原因 |
-|---|---|
-| Mesquito | 固件范围/Web Runtime/维护状态限制，不适合作为 Universal UI 基础 |
-| KWebBrew | 旧 Web 环境限制 |
-| PEKI | NonCommercial 许可证风险，不作为商业默认组件 |
-| slint-kindle-backend | 方向优秀但 Kindle 覆盖仍不足，可继续 R&D |
-| KindleForge 等 | 架构/ABI/Market 设计参考，不作为基础依赖 |
-
----
-
-# 10. 许可证原则
-
-`lifebook.ikp` 本身不直接携带 Kindle native 开源组件。
-
-许可证责任主要发生在具体 Baga Ink Platform / Kindle implementation 的组合与分发方式上。
-
-发布前必须：
-
-- 锁定实际 tag/commit；
-- 记录 dependency manifest；
-- 满足 AGPL/GPL/MIT 等要求；
-- 对组合/修改/进程边界做正式许可证审查；
-- 不使用不适合商业分发的组件作为默认依赖。
-
----
-
-# 11. Kindle 硬件与 ABI
-
-LifeBook 不按每一款 Kindle 打一个 IKP。
-
-关键工程边界由 Kindle Platform / Adapter 处理。
-
-KOReader 已有 target 是重要实现参考：
-
-| 平台族 | KOReader target | 典型工程含义 |
+| 平台族 | target | 工程含义 |
 |---|---|---|
-| Legacy | `kindle-legacy` | Kindle 2 / 3 / DXG 时代；低资源/按键/旧 ABI |
-| Classic | `kindle` | K4 / Touch / PW1 等较老环境 |
-| PW2+ soft-float | `kindlepw2` | PW2+ soft-float 优化路径 |
-| Hard-float | `kindlehf` | Firmware `>= 5.16.3` 的 hard-float 设备族 |
+| Legacy | `kindle-legacy` | K2/K3/DXG；旧 ABI / 低资源 |
+| Classic | `kindle` | K4/Touch/PW1 |
+| PW2+ soft-float | `kindlepw2` | PW2+ soft-float |
+| Hard-float | `kindlehf` | Firmware `>=5.16.3` |
 
-核心：
+> **5.16.3 是 soft-float / hard-float 重要边界。**
 
-> **5.16.3 是重要 soft-float / hard-float 工程边界。**
-
-变化发生在：
-
-```text
-Platform binary
-Kindle Adapter implementation
-KOReader build
-FBInk/native bridge
-Homebrew foundation
-```
-
-不发生在：
-
-```text
-lifebook.ikp
-```
+SQLite/lsqlite3 与 Automerge bridge 的 native build 也必须跟随对应 ABI，但 SQL / LifeBook 业务代码不分叉。
 
 ---
 
-# 12. Kindle 硬件能力渐进增强
+# 19. 不同 Kindle 硬件
 
-LifeBook 不按型号判断，而按 Capability。
-
-| 硬件差异 | Baga Capability / 行为 |
+| 条件 | LifeBook 行为 |
 |---|---|
-| Touch | `input.touch`；点击、选择、软键盘增强 |
-| 物理翻页键 | `input.physical_page_key` → page_next/page_previous |
-| 非触摸旧机 | `input.navigation` + Focus 完成基础操作 |
-| Scribe Pen | `input.pen*` 通过测试后渐进启用 |
-| Colorsoft | `display.color` 通过测试后增强；黑白仍完整 |
-| Fast Refresh | `display.fast_refresh` 可增强交互 |
-| Warm light | `light.frontlight.temperature` |
-| Audio | `audio.output` |
-| Bluetooth | `bluetooth.*` |
-
-同系列其他机型具备某硬件，不等于当前设备 automatically has capability。
+| Touch | `input.touch` 增强 |
+| Physical page keys | page_next/page_previous |
+| No touch | Focus + navigation |
+| Scribe pen | input.pen* 通过 BICTS 后增强 |
+| Colorsoft | display.color 增强，黑白仍完整 |
+| No fast refresh | TEXT/QUALITY 降级 |
+| No audio | 隐藏 Audio/TTS |
+| No Bluetooth | 隐藏 Bluetooth 增强 |
+| Low RAM/CPU | 缩小 cache/图片/并发任务 |
+| Automerge 太重 | 对应并发编辑增强降级，不影响 Base LifeBook |
 
 ---
 
-# 13. 固件 / OS / 系统差异
+# 20. Firmware / Installation Route
 
-兼容性对象必须是：
+兼容性对象：
 
 ```text
 Device Model
 + Firmware Range
-+ Baga Platform Version
-+ Kindle Adapter Version
++ Platform Version
++ Adapter Version
++ Lua Profile Version
 + BICTS Version
 ```
 
-同一型号可以：
+WinterBreak / SpringBreak / Sanctuary / Véra 等只属于 Installation Route Database。
 
-```text
-Firmware A → Compatible
-Firmware B → Experimental
-Firmware C → Unsupported
-```
-
-LifeBook App 内禁止：
-
-```lua
-if firmware >= "5.16.4" then ... end
-```
-
-需要吸收的差异包括：
-
-```text
-soft-float ↔ hard-float
-USB Mass Storage ↔ MTP
-framebuffer / waveform
-Touch controller
-physical key
-frontlight / warm light
-sleep/wake event
-system service / LIPC behavior
-Home UI / launcher integration
-```
-
-归：
-
-```text
-Kindle Adapter
-Compatibility Database
-Quirk Database
-Installation Route Database
-```
+LifeBook 不知道使用哪条 enablement route。
 
 ---
 
-# 14. WinterBreak / SpringBreak / Sanctuary / Véra
+# 21. Home Screen
 
-它们是 Kindle **Enablement / Installation Routes**。
-
-不是：
-
-```text
-LifeBook library
-Baga Ink API
-App architecture layer
-```
-
-关系：
-
-```text
-WinterBreak / SpringBreak / Sanctuary / Véra / future routes
-                 ↓
-让具体设备获得可用 Homebrew/Baga installation condition
-                 ↓
-Baga Ink Platform on Kindle
-                 ↓
-lifebook.ikp
-```
-
-具体型号/固件支持随社区变化，必须由可更新 Installation Route Database 维护，不由 LifeBook 或稳定 API 冻结。
-
-普通用户只应看到：
-
-```text
-Compatible
-Experimental
-Unsupported
-```
-
----
-
-# 15. Offline-first：必须区分三层问题
-
-## 15.1 Local Data
-
-用户操作先落盘：
-
-```text
-User Action
-   ↓
-baga.data transaction
-   ↓
-commit success
-   ↓
-UI confirm
-```
-
-这叫本地可靠数据，不叫同步。
-
-## 15.2 Sync Scheduling / Transport
-
-```text
-baga.network
-baga.sync
-sleep/wake
-wifi_only
-when_online
-when_charging
-retry / cancel
-```
-
-负责“什么时候同步”。
-
-## 15.3 Business Merge
-
-LifeBook 负责“同步后数据如何解释”：
-
-```text
-object identity
-idempotency
-version history
-business merge
-server-authoritative policy
-conflict policy
-```
-
-这三个概念不得混在一起。
-
----
-
-# 16. `baga.data`：不自己造数据库
-
-Baga API v0.3 已正式补充事务型 `baga.data`。
-
-LifeBook 使用 Repository abstraction：
-
-```text
-LifeBook Domain
-      ↓
-LifeBook Repository
-      ↓
-baga.data
-```
-
-Kindle/Android 实现内部优先复用 SQLite 或同等级成熟事务数据库。
-
-LifeBook 不知道：
-
-```text
-SQL
-SQLite DB path
-WAL
-pragma
-Android Room
-```
-
-大文件/图片/下载书籍仍使用 `baga.storage`。
-
----
-
-# 17. Automerge：优先复用，但只用于真正需要 CRDT 的数据
-
-不应自己发明通用 CRDT。
-
-**优先评估 Automerge** 的对象：
-
-```text
-My Notes
-Life Records
-Time Capsule drafts
-Article drafts
-其他真正可能在多个离线设备同时修改的可编辑对象
-```
-
-通常不需要 Automerge：
-
-```text
-Reading Position
-→ 简单业务 merge
-
-Feed / Comments / Public Notes
-→ Server authoritative + local cache
-
-Book Files
-→ content hash + file transfer
-```
-
-Automerge 是实现选择，而不是一层，也不是 `baga.sync` 的同义词。
-
-如果未来 Baga 要让不同实现直接交换 Automerge wire format，必须通过独立标准锁定协议版本；不能把“最新版 Automerge”当规范。
-
-老 Kindle 的 CPU/RAM/ABI 必须实测；如果 Automerge binary 对某设备族过重，应允许该功能降级或采用等价内部实现，而不能牺牲 Baga 基础兼容性。
-
----
-
-# 18. `baga.library`：正式解决书库边界
-
-Baga API v0.3 已正式补充：
-
-```text
-baga.library
-```
-
-它与现有：
-
-```text
-storage.user_library Capability
-library.read / library.write Permission
-```
-
-形成闭环。
-
-LifeBook：
-
-```text
-baga.library.list/get/open
-→ 获得 opaque Library Item / source
-→ baga.reader.open(source)
-```
-
-不再扫描 Kindle `/documents`。
-
-不再让 App 理解 Android vendor bookshelf。
-
-不限定 EPUB。
-
----
-
-# 19. 文章 / 问答 / 评论 / 社区内容
-
-这些不是 Book Reader 文件。
-
-```text
-LifeBook Server / Local Cache
-           ↓
-     LifeBook Domain
-           ↓
-        baga.ui
-```
-
-离线时显示本地 cache；联网后按业务规则更新。
-
-其他用户的文章、问答、评论、用户主页均属于 LifeBook Domain，不需要 KOReader。
-
----
-
-# 20. 其他用户笔记
-
-这是 LifeBook 的重要差异化功能。
-
-```text
-Book/document content → baga.reader
-Public note data      → LifeBook Domain/API
-```
-
-关联通过：
-
-```text
-Baga Reader Anchor
-```
-
-LifeBook Server 可以保存：
-
-```text
-publication/document identity
-anchor
-note body
-user / visibility / metadata
-```
-
-LifeBook 不把 KOReader private annotation schema 固化成云协议。
-
-在 Kindle 端，Anchor 解析优先利用 KOReader 已有定位能力；在 Android / future Reader 上由对应 Baga implementation 解析。
-
----
-
-# 21. 首页启动体验
-
-产品目标：
+目标：
 
 ```text
 Kindle Home
-    ↓ one action
+   ↓ one action
 LifeBook
 ```
 
-用户心理模型：
+用户不经过 KUAL → KOReader → Plugin。
 
-> “我的 Kindle 安装了 LifeBook App。”
-
-而不是：
-
-```text
-KUAL → KOReader → Plugin → LifeBook
-```
-
-KUAL/MRPI/KOReader/KPM/Hotfix 对普通用户全部隐身。
-
-具体 Home/App registration 归 Kindle Platform / Adapter implementation。
+KUAL/MRPI/KPM/Hotfix/KOReader 都是内部工具或实现。
 
 ---
 
-# 22. 更新与回滚
+# 22. 更新 / Migration / Rollback
 
-LifeBook 更新完全使用 Baga IKP 标准：
+LifeBook 更新仍使用 Baga IKP signing/staging/rollback。
 
-```text
-Signed lifebook.ikp
-        ↓
-Verify identity/signature
-        ↓
-Stage
-        ↓
-Health check
-   ┌────┴────┐
- success   failure
-   │           │
- activate    rollback
-```
+SQLite migration 属 LifeBook app-data migration：
 
-KPM 等 Kindle package manager 只负责 Kindle Platform/Homebrew 组件，不代替 IKP identity/signature/update protocol。
+- migration 必须事务化；
+- 失败不得留下半迁移 schema；
+- rollback 到旧 App 前必须确认旧版可读取当前 DB，或恢复 migration snapshot；
+- App package 与 DB 分离；
+- 更新失败不删除 DB。
 
-用户数据与 App package 必须分离。
+Automerge document format 升级同样需要明确版本兼容策略。
 
 ---
 
-# 23. Manifest Capability 建议
-
-LifeBook Base 应尽量只 Required 必需能力。
-
-Required baseline：
+# 23. 第一阶段实测重点
 
 ```text
-display.basic
-input.navigation
-storage.app_sandbox
-power.sleep_wake
-platform.lifecycle
-```
-
-Reading 版本可 Required：
-
-```text
-reader.open
-```
-
-其他尽量 Optional：
-
-```text
-reader.anchor
-input.touch
-input.physical_page_key
-display.partial_refresh
-display.fast_refresh
-display.grayscale
-display.color
-network.wifi
-network.https
-storage.user_library
-light.frontlight
-light.frontlight.temperature
-input.pen
-audio.output
-bluetooth.available
-```
-
-“当前 online”不是 capability，也不能成为离线启动的前置条件。
-
----
-
-# 24. Permission 建议
-
-按功能渐进声明：
-
-```text
-network
-library.read
-notes.read
-notes.write
-```
-
-写书库/用户文件/设备控制时再加入：
-
-```text
-library.write
-user_files.read
-user_files.write
-audio.output
-bluetooth
-frontlight.control
-power.keep_awake
-```
-
-`baga.data` 访问 App 自身沙箱数据不需要额外用户资料权限。
-
----
-
-# 25. 低端 Kindle 降级策略
-
-| 条件 | LifeBook 行为 |
-|---|---|
-| 低 RAM / 老 CPU | 缩小缓存、图片与并发任务；避免重型同步在前台运行 |
-| 无 Touch | Focus + physical navigation |
-| 无 Fast Refresh | TEXT/QUALITY 降级，不影响业务 |
-| 无 Color | 黑白/灰阶完整使用 |
-| 无 Pen | 不显示手写增强 |
-| 无 Audio | 隐藏 audio/TTS |
-| 无 Bluetooth | 隐藏蓝牙增强 |
-| Wi-Fi off | 完整离线启动；同步暂停 |
-| Automerge/CRDT 不适合该硬件 | 不影响 Base App；并发编辑功能按产品策略降级 |
-
-核心：
-
-> **能力少意味着渐进降级，不意味着另一份 LifeBook。**
-
----
-
-# 26. 当前冻结技术决策
-
-1. **LifeBook 正式应用包只有 `lifebook.ikp`。**
-2. **没有 LifeBook Runtime。**
-3. **LifeBook 不直接适配 Kindle。**
-4. **LifeBook 只调用 `baga.*`。**
-5. **内部采用成熟库不新增公共架构层。**
-6. **Kindle Reader 第一选择 KOReader / koreader-base。**
-7. **Kindle UI/display/input 第一实现可大量复用 KOReader / FBInk。**
-8. **Reader 不是 EPUB-centric；支持范围来自当前 Reader implementation。**
-9. **Reader Anchor 复用 Reader 已有原生定位，不为每种格式重造 Locator。**
-10. **`baga.data` 是结构化事务本地存储；内部首选 SQLite 等成熟实现。**
-11. **`baga.library` 是标准用户书库边界；App 不扫描真实设备路径。**
-12. **`baga.sync` 是调度/策略，不等于 CRDT。**
-13. **真正并发离线编辑优先评估 Automerge，而不是自研 CRDT。**
-14. **Automerge 不滥用于 Feed、评论、公开笔记 cache、书籍文件、简单阅读进度。**
-15. **KPM/Hotfix/MRPI/KUAL 是 Kindle Platform/Homebrew 内部工具，不是 IKP App contract。**
-16. **WinterBreak / SpringBreak / Sanctuary / Véra 只属于 Installation Route。**
-17. **5.16.3 是重要 soft-float/hard-float 工程边界；IKP 不随 ABI 分叉。**
-18. **所有 model/firmware quirks 留在 Adapter / Compatibility DB。**
-19. **LifeBook 必须 Offline-first。**
-20. **文章/Q&A/评论由 LifeBook + `baga.ui` 渲染。**
-21. **Public Notes 用 Baga Reader Anchor 与正文关联。**
-22. **Kindle Home 一次点击进入 LifeBook，底层工具隐身。**
-23. **更新使用 Baga IKP signing/staging/rollback。**
-
----
-
-# 27. 本轮 Standards 缺口已经如何解决
-
-此前记录的三个缺口已在 2026-08-23 的 Standards 增强中正式处理：
-
-## 27.1 Transactional Offline Data
-
-原问题：只有 `baga.storage`，缺少结构化事务本地数据。
-
-现结论：
-
-```text
-新增 baga.data
-```
-
-标准化事务语义，不标准化 SQLite。
-
-内部优先复用 SQLite 等成熟数据库。
-
-## 27.2 Cross-reader Content Anchor
-
-原问题：LifeBook Public Notes 需要跨设备稳定定位正文，但不能固化 KOReader private schema，也不能变成 EPUB-only。
-
-现结论：
-
-```text
-reader.anchor Capability
-+
-baga.reader create_anchor / goto_anchor / resolve_anchor
-```
-
-标准化 Reader Anchor 行为，真实定位算法交给 Reader implementation；Kindle 优先复用 KOReader 已有 rolling/paging 位置机制。
-
-## 27.3 Library API
-
-原问题：已有 `storage.user_library` 与 `library.read/write`，但缺少公开 namespace。
-
-现结论：
-
-```text
-新增 baga.library
-```
-
-统一 list/get/open/import/remove 等书库边界，App 不接触 Kindle/Android 真实路径。
-
----
-
-# 28. 后续仍需实测，而不是继续造抽象
-
-下一阶段应把精力放在真实验证，而不是继续增加层：
-
-```text
-KOReader → baga.reader mapping prototype
-KOReader UI → baga.ui mapping prototype
-SQLite → baga.data transaction/crash tests
-Kindle / Android baga.library bridge prototype
+KOReader → baga.reader mapping
+KOReader UI → baga.ui mapping
+lsqlite3 → KOReader/koreader-base libsqlite3
+SQLite FTS5 / JSON / WAL / transaction tests
+Kindle sandbox + resolve_path + SQLite ATTACH/path escape tests
+baga.library bridge
 Reader Anchor rolling + paging round-trip
-Automerge 在 armel/armhf Kindle 的 binary size / RAM / CPU / merge 性能
-Home screen direct LifeBook launch
-BICTS regression across representative Kindle families
+Automerge core / automerge-c on armel + armhf
+Automerge RAM / CPU / binary size
+Home direct LifeBook launch
+BICTS across representative Kindle families
 ```
-
-如果某成熟轮子在特定老 Kindle 不适合，应先换实现或降级 capability，而不是改变 LifeBook IKP 架构。
 
 ---
 
-# 29. 最终一句话
+# 24. 当前冻结决策
 
-> **LifeBook 是一个标准 `lifebook.ikp`；开发者只面对 Baga Ink API；Baga Ink 在 Kindle 上则最大程度直接、组合或拆分复用 KOReader、koreader-base、FBInk、SQLite、Automerge 以及成熟 Homebrew 生态来实现这些 API。标准统一语义，不强迫内部自研，也不因为使用一个优秀开源库就生造一个新的架构层。**
+1. LifeBook 正式包是 `lifebook.ikp`。
+2. 没有 LifeBook Runtime。
+3. LifeBook 设备能力只调用 `baga.*`。
+4. `baga.data` 正式撤销。
+5. SQLite 是 Baga Lua Profile Standard Library 基础。
+6. Developer-facing SQLite binding 采用 `lsqlite3`。
+7. KOReader 内部继续 `lua-ljsqlite3`，不要求迁移。
+8. `lsqlite3` 与 `lua-ljsqlite3` 优先共享单一 Platform `libsqlite3`。
+9. 不采用 `lsqlite3complete` 作为 Reference 默认方案。
+10. LifeBook 直接使用 SQL / transaction / FTS / JSON。
+11. Automerge core 正式 Adopted，可整体或拆模块采用。
+12. 不强制 automerge-repo。
+13. Automerge Lua binding 尚未冻结，不生造 `baga.crdt` / `baga.automerge`。
+14. `baga.sync` 只管 scheduling/policy，不等于 Automerge。
+15. Reader 第一选择 KOReader。
+16. Reader 不以 EPUB 为中心。
+17. Reader Anchor 复用 KOReader 原生定位。
+18. `baga.library` 是用户书库边界。
+19. 5.16.3 是 Kindle ABI 重要边界。
+20. 所有 model/firmware quirks 留在 Platform/Adapter。
+21. LifeBook 必须 offline-first。
+22. Kindle Home 一次操作进入 LifeBook。
+23. 更新必须保护书籍、笔记和 SQLite DB。
 
 ---
 
-# 30. 外部实现参考
+# 25. 最终一句话
 
-- KOReader: https://github.com/koreader/koreader
-- KOReader Base: https://github.com/koreader/koreader-base
-- FBInk: https://github.com/NiLuJe/FBInk
-- SQLite: https://sqlite.org/
-- Automerge: https://github.com/automerge/automerge
-- Automerge Docs: https://automerge.org/
-- KindleTool: https://github.com/NiLuJe/KindleTool
-- KOReader Toolchain: https://github.com/koreader/koxtoolchain
-- KindleModding KPM: https://github.com/KindleModding/KPM
-- KindleModding Universal Hotfix: https://github.com/KindleModding/Hotfix
-- KindleModding SH Integration: https://github.com/KindleModding/sh_integration
-- KindleModding documentation: https://kindlemodding.org/
-- Readium Locator（仅设计参考，不作为 Baga Reader 格式边界）: https://readium.org/architecture/models/locators/
-- W3C Web Annotation（仅设计参考）: https://www.w3.org/TR/annotation-model/
-
-外部项目的支持范围、许可证与 API 会变化；实际发布版本必须锁定 tag/commit，并由 Baga Ink Platform dependency manifest 记录。
-
----
-
-# 31. Kindle Reference Implementation Mapping / Kindle 参考实现映射
-
-本节把前文已经分散说明的 Kindle 复用关系收敛成一张明确的实现映射图，供 LifeBook、Baga Ink Platform 实现者和后续 AI 直接使用。
-
-> **本图不是 LifeBook/Baga Ink 的新架构层，而是 `baga.*` 在 Kindle 上的参考实现映射。**  
-> **KOReader、Automerge、SQLite 是 Baga Ink API 在 Kindle 上的具体实现所复用的开源组件。**
-
-```text
-Baga Ink on Kindle
-│
-├─ baga.reader
-│   └─ 主要复用 KOReader
-│       ├─ CREngine
-│       ├─ MuPDF
-│       ├─ ReaderUI
-│       ├─ annotation / bookmark / highlight
-│       └─ position / search / selection / anchor
-│
-├─ baga.ui
-│   └─ 可复用 KOReader Lua UI / widget / UIManager
-│
-├─ baga.display
-│   └─ KOReader Kindle device/display knowledge + FBInk
-│
-├─ baga.input
-│   └─ KOReader Kindle input / key / touch handling
-│
-├─ baga.data
-│   └─ SQLite 或同等级成熟事务存储
-│
-├─ baga.sync
-│   ├─ Baga 标准语义：联网 / Wi-Fi / sleep-wake / trigger / retry policy
-│   └─ 真正需要并发离线合并的业务场景：可复用 Automerge
-│
-├─ baga.network
-│   └─ 复用成熟 HTTP / TLS / KOReader 已验证网络能力与 Kindle 网络桥接
-│
-└─ baga.power
-    └─ Kindle 系统能力 / KOReader 已有 lifecycle / power 相关实现
-```
-
-对 LifeBook 的含义：
-
-- LifeBook 只调用 `baga.*`；
-- LifeBook 不 `require()` KOReader 私有模块，不执行 SQL，不直接调用 Automerge runtime；
-- Kindle 平台实现者应先检查 KOReader/SQLite/Automerge/FBInk/Homebrew 生态是否已经有可靠实现，再决定是否编写新代码；
-- 某个内部库被替换时，只要 `baga.*` 语义保持一致，`lifebook.ikp` 不应修改；
-- 某个旧 Kindle 无法承载某内部实现时，应优先替换实现或降级对应能力，而不是为该型号维护另一份 LifeBook。
-
-这张映射图必须和顶层架构分开理解：
-
-```text
-架构：
-LifeBook IKP → Baga Ink API → Platform Core → Kindle Adapter → Kindle OS
-
-实现映射：
-某个 baga.* 在 Kindle 内部优先复用哪个成熟轮子
-```
-
-两者不能混为一谈。
+> **LifeBook 在 Kindle 上不需要再造 Reader、数据库或 CRDT：Reader 大量复用 KOReader；关系数据直接使用 `lsqlite3` / SQLite；真正 Local-first 并发对象优先复用 Automerge core，并允许整体或拆模块采用。Baga Ink 只统一真正需要统一的设备/平台边界。**
