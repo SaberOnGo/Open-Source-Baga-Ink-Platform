@@ -7,7 +7,8 @@ Public, long-lived prose is localized under:
     docs/zh-CN/
 
 The historical mixed-language public directories are temporarily allowed only
-as a frozen migration zone described by docs/localization/catalog.json.
+as a frozen migration zone described by docs/localization/catalog.json and
+locked by docs/localization/legacy-lock.json.
 
 This script uses only the Python standard library and exits non-zero on any
 violation so it can run locally and in GitHub Actions.
@@ -15,6 +16,7 @@ violation so it can run locally and in GitHub Actions.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -23,12 +25,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS = REPO_ROOT / "docs"
 CATALOG_PATH = DOCS / "localization" / "catalog.json"
+LEGACY_LOCK_PATH = DOCS / "localization" / "legacy-lock.json"
 
 EN_NAME_RE = re.compile(r"^(?P<number>\d{2})_(?P<name>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$")
 ZH_NAME_RE = re.compile(r"^(?P<number>\d{2})_(?P<name>[^_]+)\.md$")
 CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff]")
 
-LOCALES = {"en", "zh-CN"}
 PUBLIC_CATEGORIES = {"standards", "design", "reference-apps", "governance", "status"}
 ALLOWED_STATUS = {"migration-pending", "translation-pending", "current", "stale", "superseded"}
 LEGACY_PUBLIC_DIRS = {
@@ -55,16 +57,23 @@ def fail(path: Path | str, message: str) -> None:
     errors.append(f"{label}: {message}")
 
 
-def load_catalog() -> dict:
-    if not CATALOG_PATH.is_file():
-        fail(CATALOG_PATH, "localization catalog is missing")
-        return {"documents": []}
+def load_json(path: Path, label: str) -> dict:
+    if not path.is_file():
+        fail(path, f"{label} is missing")
+        return {}
     try:
-        data = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        fail(CATALOG_PATH, f"invalid UTF-8/JSON: {exc}")
-        return {"documents": []}
+        fail(path, f"invalid UTF-8/JSON: {exc}")
+        return {}
+    if not isinstance(data, dict):
+        fail(path, f"{label} root must be an object")
+        return {}
+    return data
 
+
+def load_catalog() -> dict:
+    data = load_json(CATALOG_PATH, "localization catalog")
     if data.get("maintained_locales") != ["en", "zh-CN"]:
         fail(CATALOG_PATH, "maintained_locales must currently be exactly ['en', 'zh-CN']")
     if set(data.get("public_categories", [])) != PUBLIC_CATEGORIES:
@@ -125,11 +134,13 @@ def walk_localized_docs(locale: str) -> set[str]:
         fail(root, "locale root is missing")
         return found
 
+    expected_index = "00_baga-ink-documentation-index.md" if locale == "en" else "00_项目文档入口.md"
+
     for entry in root.iterdir():
         if entry.is_file():
             if entry.suffix != ".md":
                 fail(entry, "only Markdown index documents are allowed at a locale root")
-            elif entry.name != ("00_baga-ink-documentation-index.md" if locale == "en" else "00_项目文档入口.md"):
+            elif entry.name != expected_index:
                 fail(entry, "unexpected locale-root document")
             else:
                 (validate_en_filename if locale == "en" else validate_zh_filename)(entry)
@@ -144,7 +155,9 @@ def walk_localized_docs(locale: str) -> set[str]:
             fail(entry, f"unexpected localized public category; allowed: {sorted(PUBLIC_CATEGORIES)}")
             continue
 
-        for item in entry.rglob("*"):
+        # Public categories intentionally remain flat. If a future Standard
+        # family needs subdirectories, change governance + catalog + guard first.
+        for item in entry.iterdir():
             if item.is_dir():
                 fail(item, "public localized categories are flat; ad-hoc subdirectories are not allowed")
                 continue
@@ -157,11 +170,55 @@ def walk_localized_docs(locale: str) -> set[str]:
     return found
 
 
+def git_blob_sha(path: Path) -> str:
+    data = path.read_bytes()
+    header = f"blob {len(data)}\0".encode("ascii")
+    return hashlib.sha1(header + data).hexdigest()
+
+
+def validate_legacy_lock(catalog_legacy_paths: set[str], actual_legacy: set[str]) -> None:
+    data = load_json(LEGACY_LOCK_PATH, "legacy documentation lock")
+    files = data.get("files")
+    if not isinstance(files, dict):
+        fail(LEGACY_LOCK_PATH, "files must be an object mapping repo path to Git blob SHA")
+        return
+
+    lock_paths = set(files)
+
+    # Catalog and lock must describe the same currently present legacy surface.
+    # When a document migrates, remove its legacy_path/lock entry in the same PR.
+    if lock_paths != actual_legacy:
+        for path_text in sorted(actual_legacy - lock_paths):
+            fail(path_text, "legacy file exists but is not locked")
+        for path_text in sorted(lock_paths - actual_legacy):
+            fail(path_text, "legacy lock points to a file that no longer exists; update catalog/lock as part of migration")
+
+    if actual_legacy != catalog_legacy_paths:
+        for path_text in sorted(actual_legacy - catalog_legacy_paths):
+            fail(path_text, "legacy file is not registered by catalog.json")
+        for path_text in sorted(catalog_legacy_paths - actual_legacy):
+            fail(path_text, "catalog legacy_path does not exist")
+
+    for path_text, expected in files.items():
+        path = REPO_ROOT / path_text
+        if not path.is_file():
+            continue
+        if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{40}", expected):
+            fail(LEGACY_LOCK_PATH, f"invalid Git blob SHA for {path_text}")
+            continue
+        actual = git_blob_sha(path)
+        if actual != expected:
+            fail(
+                path,
+                "legacy public document content changed in place; migrate it to docs/zh-CN + docs/en instead of editing the legacy file",
+            )
+
+
 def validate_catalog(data: dict, localized_files: set[str]) -> None:
     seen_ids: set[str] = set()
     seen_targets: set[str] = set()
     catalog_targets: set[str] = set()
-    legacy_paths: set[str] = set()
+    catalog_legacy_paths: set[str] = set()
 
     for i, doc in enumerate(data.get("documents", [])):
         label = f"catalog.documents[{i}]"
@@ -220,7 +277,7 @@ def validate_catalog(data: dict, localized_files: set[str]) -> None:
             if not isinstance(legacy, str):
                 fail(label, "legacy_path must be null or a string")
             else:
-                legacy_paths.add(legacy)
+                catalog_legacy_paths.add(legacy)
                 legacy_exists = (REPO_ROOT / legacy).is_file()
 
         zh_exists = isinstance(zh_path, str) and (REPO_ROOT / zh_path).is_file()
@@ -245,8 +302,6 @@ def validate_catalog(data: dict, localized_files: set[str]) -> None:
     for path_text in sorted(uncataloged):
         fail(path_text, "localized public document is not registered in catalog.json")
 
-    # Freeze the historical mixed-language public directories: no new file may
-    # appear there outside the explicitly cataloged migration list.
     actual_legacy: set[str] = set()
     for directory in LEGACY_PUBLIC_DIRS:
         if directory.is_dir():
@@ -256,18 +311,21 @@ def validate_catalog(data: dict, localized_files: set[str]) -> None:
     if LEGACY_ROOT_INDEX.is_file():
         actual_legacy.add(rel(LEGACY_ROOT_INDEX))
 
-    for path_text in sorted(actual_legacy - legacy_paths):
-        fail(path_text, "new/uncataloged public doc in legacy migration zone is forbidden")
+    validate_legacy_lock(catalog_legacy_paths, actual_legacy)
 
 
 def validate_root_contract() -> None:
     required = [
+        REPO_ROOT / "README.md",
+        REPO_ROOT / "README.zh-CN.md",
         DOCS / "README.md",
         DOCS / "README.zh-CN.md",
         DOCS / "en" / "00_baga-ink-documentation-index.md",
         DOCS / "zh-CN" / "00_项目文档入口.md",
         DOCS / "en" / "governance" / "01_documentation-internationalization-policy.md",
         DOCS / "zh-CN" / "governance" / "01_文档国际化与本地化规范.md",
+        CATALOG_PATH,
+        LEGACY_LOCK_PATH,
     ]
     for path in required:
         if not path.is_file():
@@ -286,7 +344,7 @@ def main() -> int:
         for error in errors:
             print(f" - {error}", file=sys.stderr)
         print(
-            "\nPublic docs must use docs/en and docs/zh-CN. Legacy mixed-language public dirs are migration-only.",
+            "\nPublic docs must use docs/en and docs/zh-CN. Legacy mixed-language public docs are locked migration-only inputs.",
             file=sys.stderr,
         )
         return 1
