@@ -1,7 +1,7 @@
 # Baga Ink 顶层战略与架构 / Baga Ink Platform Strategy & Architecture
 
 > **文档级别：Strategic Source of Truth / 项目最高层级定义**  
-> **状态：Strategic Baseline v0.5**  
+> **状态：Strategic Baseline v0.6**  
 > **日期：2026-08-23**  
 > **规范入口：`00_规范总览_Baga-Ink-Standards-Index.md`**
 
@@ -64,22 +64,22 @@ Platform Core、Device Adapter 与官方设备实现 SHOULD 优先评估并复�
 包装其成熟设备能力
 ```
 
-如果某个通用库本身已经形成稳定、跨平台且广泛采用的抽象，Baga SHOULD 优先把它作为 **Standard Library / Adopted Component** 直接采用，而不是先发明一个更弱的 `baga.*` 包装层。
+如果某个通用库本身已经形成稳定、跨平台且广泛采用的抽象，Baga SHOULD 优先把它作为 **Standard Library / Adopted Component** 直接采用，而不是先发明一个更弱的平台私有包装。
 
 当前明确例子：
 
 ```text
 SQLite + lsqlite3
-→ 直接作为 Baga Lua Profile 的标准数据库库
-→ 不再定义 baga.data
+→ Baga Lua Profile 的标准数据库库
+→ 开发者直接使用 SQLite / SQL 语义
 
 Automerge core
-→ 正式采用为 Local-first / CRDT 优先基础
+→ Local-first / CRDT 优先基础
 → 可整体采用，也可拆用 document/merge、binary、sync、C FFI 等模块
-→ 不生造 baga.automerge / baga.crdt
-```
 
-Kindle 实现还可以复用 KOReader / koreader-base / FBInk 等成熟组件。
+KOReader / koreader-base / FBInk
+→ Kindle Platform / Adapter 的成熟实现来源
+```
 
 但这些项目的存在：
 
@@ -98,6 +98,8 @@ Kindle 实现还可以复用 KOReader / koreader-base / FBInk 等成熟组件。
 标准库与成熟组件的具体规则见：
 
 `13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`
+
+正式 Standards 与 Reference Apps MUST 只描述当前有效设计；历史方案由 Git commit / diff 保存。
 
 ---
 
@@ -456,7 +458,7 @@ baga.permissions
 baga.log
 ```
 
-**`baga.data` 已撤销。** 结构化关系数据直接使用 Baga Lua Profile 标准库 `lsqlite3` / SQLite。
+结构化关系数据直接使用 Baga Lua Profile 标准库 `lsqlite3` / SQLite。
 
 Baga Ink API 与 Baga Lua Profile Standard Libraries 共同构成开发者稳定运行环境，但概念上必须区分：
 
@@ -487,7 +489,7 @@ Platform implementation
 BICTS
 ```
 
-这里的“内部实现”可以直接复用成熟开源组件，不要求先人为增加一个新的公共 `Provider / Engine` 架构层。
+内部实现可以直接复用成熟开源组件，不要求先人为增加新的公共 `Provider / Engine` 架构层。
 
 ---
 
@@ -884,9 +886,9 @@ Baga Ink 当前不以以下为目标：
 8. 为每个品牌维护一套 App 分支；
 9. 把 LifeBook 私有需求当作平台标准；
 10. 建造重复、庞大、需要额外维护的平台中间系统；
-11. 因采用一个开源库而人为增加一个新的公共 `Provider / Engine / Runtime` 架构层；
+11. 因采用一个开源库而人为增加新的公共架构层；
 12. 在已有成熟、许可证兼容且可验证的实现可复用时，仅为了“完全自研”而重新实现 Reader、数据库、同步合并算法或设备基础设施；
-13. 把 SQLite 再包装成更弱的 Baga KV/Collection 数据库 API；
+13. 把 SQLite 再包装成更弱的私有 KV/Collection 数据库接口；
 14. 因 Automerge 很优秀就机械采用 automerge-repo 的所有层或把所有数据都 CRDT 化。
 
 ---
