@@ -1,7 +1,7 @@
 # Baga Ink 顶层战略与架构 / Baga Ink Platform Strategy & Architecture
 
 > **文档级别：Strategic Source of Truth / 项目最高层级定义**  
-> **状态：Strategic Baseline v0.4**  
+> **状态：Strategic Baseline v0.5**  
 > **日期：2026-08-23**  
 > **规范入口：`00_规范总览_Baga-Ink-Standards-Index.md`**
 
@@ -48,6 +48,7 @@ Baga Ink 标准定义的是：
 跨设备语义
 Capability / Permission
 兼容性与安全边界
+Baga Lua Profile / Standard Libraries
 ```
 
 标准 **不规定 Platform 内部必须采用何种软件分层，也不要求已经存在成熟实现的能力重新从零开发。**
@@ -58,18 +59,35 @@ Platform Core、Device Adapter 与官方设备实现 SHOULD 优先评估并复�
 整体采用
 组合使用
 抽取稳定模块
-调用其已有协议/算法
+直接采用其成熟 API
+调用其已有协议 / 数据格式 / 算法
 包装其成熟设备能力
 ```
 
-例如 Kindle 实现可以复用 KOReader / koreader-base / FBInk；结构化本地数据可以复用 SQLite 等成熟存储；需要并发离线编辑与合并的具体场景可以评估 Automerge 等成熟 Local-first / CRDT 实现。
+如果某个通用库本身已经形成稳定、跨平台且广泛采用的抽象，Baga SHOULD 优先把它作为 **Standard Library / Adopted Component** 直接采用，而不是先发明一个更弱的 `baga.*` 包装层。
+
+当前明确例子：
+
+```text
+SQLite + lsqlite3
+→ 直接作为 Baga Lua Profile 的标准数据库库
+→ 不再定义 baga.data
+
+Automerge core
+→ 正式采用为 Local-first / CRDT 优先基础
+→ 可整体采用，也可拆用 document/merge、binary、sync、C FFI 等模块
+→ 不生造 baga.automerge / baga.crdt
+```
+
+Kindle 实现还可以复用 KOReader / koreader-base / FBInk 等成熟组件。
 
 但这些项目的存在：
 
 - MUST NOT 自动形成新的 Baga Ink 公共架构层；
 - MUST NOT 因为“用了一个库”就创造对应的 `Provider / Engine / Runtime` 层；
 - MUST NOT 自动把该库的私有对象、术语、文件格式或 API 变成 `baga.*` 标准；
-- MUST NOT 要求 IKP App 知道底层具体使用了哪个项目；
+- MAY 在经过正式标准决策后，把成熟库本身的 API / protocol / format 纳入 Baga Standard Library / Profile；
+- MUST NOT 要求 IKP App 知道底层具体设备实现；
 - MUST NOT 绕过 BICTS、Permission、Sandbox 与 Compatibility 要求。
 
 原则：
@@ -77,7 +95,9 @@ Platform Core、Device Adapter 与官方设备实现 SHOULD 优先评估并复�
 > **Reuse before reimplement. Standardize semantics, not internal implementation layering.**  
 > **优先复用，不重复造轮子；标准化语义，不标准化内部软件分层。**
 
-如果 Baga Ink 未来需要把某个外部协议或数据格式提升为跨实现互操作标准，必须通过正式规范明确其版本、兼容范围和迁移策略；“当前使用某个开源库”本身不等于该库全部成为 Baga Ink 标准。
+标准库与成熟组件的具体规则见：
+
+`13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`
 
 ---
 
@@ -151,6 +171,8 @@ Baga Ink 的战略是：
 
 内部复用 KOReader、SQLite、Automerge、FBInk 或其他组件时，上图不因此增加新的公共层级。
 
+Baga Lua Profile 中的 Standard Libraries 也不是新的架构层；它们只是 App 在稳定运行环境里可直接使用的成熟通用库。
+
 ---
 
 # 4. Baga Ink 品牌与产品层级
@@ -190,6 +212,7 @@ Baga Ink 的战略是：
 | 设备适配层 | **Baga Ink Device Adapter** |
 | 兼容性标准 | **Baga Ink Compatibility Standard** |
 | 测试套件 | **Baga Ink Compatibility Test Suite / BICTS** |
+| 标准库规范 | **Baga Ink Standard Libraries and Adopted Components** |
 | 开发者门户 | **Baga Ink Developers** |
 | 旗舰 Reference App | **LifeBook** |
 | Kindle 产品描述 | **LifeBook for Kindle** |
@@ -203,9 +226,10 @@ Baga Ink Platform 包括：
 - Platform Core；
 - Embedded Lua Interpreter；
 - Baga Lua Profile；
+- Baga Lua Profile Standard Libraries；
 - Baga Ink API；
 - App Lifecycle；
-- UI / Display / Input / Storage / Data / Library / Network / Power / Reader / Sync 等标准能力；
+- UI / Display / Input / Storage / Library / Network / Power / Reader / Sync 等标准能力；
 - Capability Model；
 - Permission / Sandbox；
 - IKP Package Manager；
@@ -231,7 +255,8 @@ Baga Ink Platform 包括：
 Baga Lua Profile 定义：
 
 - 可使用的 Lua 语言特性；
-- 标准库范围；
+- 基础标准库范围；
+- Adopted Standard Libraries；
 - `baga.*` API；
 - 生命周期；
 - 安全限制；
@@ -240,6 +265,23 @@ Baga Lua Profile 定义：
 Kindle MAY 复用 KOReader 等成熟项目已经验证的 Lua 能力；Android Baga Ink Platform APK MAY 直接嵌入轻量 Lua 解释器。
 
 第三方 App 不依赖具体解释器来源。
+
+当前正式外部 Standard Library：
+
+```text
+lsqlite3
+→ 直接使用成熟 SQLite / SQL 语义
+```
+
+当前 Adopted Foundation：
+
+```text
+Automerge core
+→ Local-first / CRDT 优先基础
+→ developer-facing Lua binding 尚未冻结
+```
+
+详细定义见 `13_标准库与成熟组件采用规范_Baga-Ink-Standard-Libraries-and-Adopted-Components.md`。
 
 ## 6.2 为什么不是 Kotlin / Java 作为统一 App 语言
 
@@ -257,7 +299,7 @@ network / sync infrastructure
 parsers
 security-sensitive components
 Device Adapter
-Capability Provider
+Automerge core / C FFI bridge 等成熟库集成
 ```
 
 Platform 内部允许 Rust、C/C++、Kotlin/Java、JNI、Shell 等按实际设备使用。
@@ -310,6 +352,8 @@ BOOX / iReader 私有 SDK wrapper
 原则：
 
 > **应用代码与资源属于 IKP；设备兼容与共享平台能力属于 Baga Ink Platform。**
+
+由 Baga Lua Profile 正式提供的标准库不需要被每个 IKP 重复打包。
 
 ---
 
@@ -366,6 +410,8 @@ audio.output
 bluetooth.available
 ```
 
+SQLite / lsqlite3 不是硬件 Capability，而是 Baga Lua Profile Standard Library。
+
 ---
 
 # 9. Permission 与 Capability 必须分离
@@ -389,7 +435,7 @@ Permission: network
 
 ---
 
-# 10. Baga Ink API 是唯一稳定 App 边界
+# 10. Baga Ink API 是唯一稳定设备/平台 App 边界
 
 公开 namespace：
 
@@ -401,7 +447,6 @@ baga.display
 baga.input
 baga.device
 baga.storage
-baga.data
 baga.library
 baga.network
 baga.power
@@ -409,6 +454,18 @@ baga.reader
 baga.sync
 baga.permissions
 baga.log
+```
+
+**`baga.data` 已撤销。** 结构化关系数据直接使用 Baga Lua Profile 标准库 `lsqlite3` / SQLite。
+
+Baga Ink API 与 Baga Lua Profile Standard Libraries 共同构成开发者稳定运行环境，但概念上必须区分：
+
+```text
+baga.*
+→ 统一设备 / OS / Platform 差异
+
+lsqlite3 / adopted libraries
+→ 直接采用成熟通用软件能力
 ```
 
 v0.x 允许快速演进，但最终必须长期版本化。
@@ -420,11 +477,12 @@ Baga Ink MUST 不提供一个任意执行 Shell、获取 Android Context、直�
 ```text
 真实需求
   ↓
-Capability / API 语义
+先判断：已有成熟通用库，还是设备/平台差异？
   ↓
-Baga Ink API
+成熟通用库 → Standard Library / Adopted Component
+设备/平台差异 → Capability / Baga Ink API
   ↓
-Platform Core / Device Adapter 内部实现
+Platform implementation
   ↓
 BICTS
 ```
@@ -506,13 +564,22 @@ KUAL / PEKI 类启动基础
 MRPI / KPM / Hotfix 类安装与 Homebrew 基础
 FBInk / framebuffer 相关显示能力
 Kindle 系统服务桥接
-SQLite 等成熟本地数据组件（适合处）
-Automerge 等成熟 Local-first / CRDT 实现（确有并发合并需求时）
+KOReader 已有 libsqlite3
+KOReader 内部现有 lua-ljsqlite3（仅内部继续使用）
+Baga IKP 标准 SQLite binding：lsqlite3
+Automerge core（确有 Local-first / CRDT 需求时整体或拆模块采用）
 ```
 
-这些全部属于 **Baga Ink Platform on Kindle 的内部实现选择**；它们可以位于 Platform Core、Kindle Adapter 或两者协作的实现代码中，不因此形成新的公共架构层。
+这些全部属于 **Baga Ink Platform on Kindle 的内部实现与标准库供给选择**；不因此形成新的公共架构层。
 
-第三方 IKP App 不需要知道它们存在。
+第三方 IKP App：
+
+```text
+设备能力 → baga.*
+关系数据库 → require("lsqlite3")
+```
+
+不需要知道 KOReader 内部仍使用 `lua-ljsqlite3`。
 
 另外：
 
@@ -531,6 +598,7 @@ Baga Ink Platform.apk
         │
         ├── Platform Core
         ├── Baga Ink API
+        ├── Baga Lua Profile / Standard Libraries
         ├── Embedded Lua Interpreter
         └── Android E-Paper Adapter
         │
@@ -543,6 +611,8 @@ Generic Android 负责公共 Android 能力；Vendor Provider 负责 E-Paper 私
 Android 的版本差异与厂商碎片化必须停在 Adapter 以下。
 
 Android 实现同样 SHOULD 优先复用成熟系统能力和开源组件，而不是为了保持“代码看起来统一”重新实现数据库、网络、文档引擎或同步算法。
+
+SQLite 由 Baga Platform 锁定并提供可预测版本，IKP 通过 `lsqlite3` 使用，不依赖 OEM 系统 SQLite 版本差异。
 
 ---
 
@@ -626,6 +696,8 @@ Unsupported
 
 正式规则见 `08` 与 `10` 两份规范。
 
+Standard Libraries 也必须有独立一致性测试，例如 `lsqlite3` API、SQLite compile profile 与 sandbox 行为。
+
 ---
 
 # 18. LifeBook 的战略位置
@@ -645,7 +717,14 @@ LifeBook 必须像第三方 Universal App 一样遵守标准，而不是依赖�
       └── Android E-Paper
 ```
 
-LifeBook 如果遇到通用能力缺失，应推动标准 API / Capability，而不是加入 Vendor 私有分支。
+LifeBook 如果遇到通用能力缺失，应先判断：
+
+```text
+设备/平台差异 → 推动 baga.* / Capability
+成熟通用软件能力 → 优先直接采用 Standard Library / Mature Component
+```
+
+而不是加入 Vendor 私有分支或重复造轮子。
 
 具体实现规范位于：
 
@@ -661,7 +740,8 @@ Baga Ink SHOULD 允许：
 - 第三方贡献 Device Adapter；
 - 厂商实现 Adapter；
 - 第三方贡献 Capability Provider；
-- 第三方参与 SDK / Platform Core。
+- 第三方参与 SDK / Platform Core；
+- 第三方贡献 Standard Library integration / compatibility tests。
 
 但开放不等于没有标准。
 
@@ -672,11 +752,14 @@ Baga Ink SHOULD 允许：
 ```text
 App 层           高度统一
 API 层           高度稳定
-Capability 层    标准化扩展
+Standard Library 直接采用成熟通用语义
+Capability 层    标准化设备/平台扩展
 Adapter 层       允许设备差异
 OS 层            可以完全不同
 Hardware 层      可以完全不同
 ```
+
+Standard Library 不是新的软件架构层，而是开发环境中的稳定库集合。
 
 内部依赖树、第三方库组合方式与具体源码目录不属于上述公共层级模型。
 
@@ -691,6 +774,7 @@ Hardware 层      可以完全不同
 ```text
 App Standard
 API
+Standard Libraries / Adopted Components
 Capability Registry
 Permission Model
 IKP
@@ -713,6 +797,14 @@ Android E-Paper Reference Adapter
 ```
 
 证明同一个 IKP 能在两种完全不同系统上运行。
+
+同时验证：
+
+```text
+lsqlite3 + pinned SQLite
+KOReader reader/UI integration
+Automerge core 在代表性硬件上的可行性
+```
 
 ## Phase 2 — LifeBook Reference App
 
@@ -742,6 +834,8 @@ Android E-Paper Reference Adapter
 IKP
 +
 API
++
+Standard Libraries
 +
 Capability Registry
 +
@@ -791,7 +885,9 @@ Baga Ink 当前不以以下为目标：
 9. 把 LifeBook 私有需求当作平台标准；
 10. 建造重复、庞大、需要额外维护的平台中间系统；
 11. 因采用一个开源库而人为增加一个新的公共 `Provider / Engine / Runtime` 架构层；
-12. 在已有成熟、许可证兼容且可验证的实现可复用时，仅为了“完全自研”而重新实现 Reader、数据库、同步合并算法或设备基础设施。
+12. 在已有成熟、许可证兼容且可验证的实现可复用时，仅为了“完全自研”而重新实现 Reader、数据库、同步合并算法或设备基础设施；
+13. 把 SQLite 再包装成更弱的 Baga KV/Collection 数据库 API；
+14. 因 Automerge 很优秀就机械采用 automerge-repo 的所有层或把所有数据都 CRDT 化。
 
 ---
 
@@ -799,9 +895,15 @@ Baga Ink 当前不以以下为目标：
 
 最终只看一个问题：
 
-> **第三方开发者能否只学习一次 Baga Ink SDK，生成一个 `.ikp`，在 Kindle 与多个 Android E-Paper 设备上运行，而不需要理解每台设备的私有实现？**
+> **第三方开发者能否只学习一次 Baga Ink SDK / Lua Profile，生成一个 `.ikp`，在 Kindle 与多个 Android E-Paper 设备上运行，而不需要理解每台设备的私有实现？**
 
-如果答案是“是”，Baga Ink 是平台。
+其中成熟通用能力应该尽量沿用成熟生态：
+
+```text
+关系数据 → SQLite / lsqlite3
+Reader → Baga Reader API，平台内部复用 KOReader 等
+Local-first CRDT → Automerge core 优先
+```
 
 如果仍需要：
 
@@ -826,4 +928,4 @@ Baga Ink 最终要建立的是：
 
 它只要求最重要的一件事：
 
-> **第三方应用面对同一个稳定平台。**
+> **第三方应用面对同一个稳定平台，并能直接复用成熟通用软件生态。**
