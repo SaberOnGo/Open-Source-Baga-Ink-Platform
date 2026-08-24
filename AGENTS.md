@@ -61,7 +61,7 @@ Hard rules:
 - Counterparts share one stable Document ID / number and MUST NOT become different protocols or architectures.
 - A semantic change to a `current` localized document SHOULD update both maintained locales in the same reviewed PR.
 - Machine-readable specs, code, tests, API identifiers, schema keys, error codes, CLI flags, comments/docstrings, test names, dependency manifests, and commit subjects remain English/language-neutral.
-- `docs/plans/` is operational engineering material and is not required to duplicate every Task Design / Execution Prompt by locale. Stable facts required by external implementers MUST be promoted into localized public docs.
+- `docs/plans/` is operational engineering material and is not required to duplicate every versioned Task Package by locale. Stable facts required by external implementers MUST be promoted into localized public docs.
 
 Create new localized public docs with the scaffolder when available:
 
@@ -79,7 +79,7 @@ Do not weaken validators or add exceptions merely to make invalid structure pass
 
 ## 4. Repository-wide public writing hard gate
 
-**Every documentation file tracked in this public repository is public-facing material.** This includes `docs/plans/`, Platform Port Task Designs, AI Execution Prompts, README files, contributor guides, licensing pages, and `AGENTS.md` itself.
+**Every documentation file tracked in this public repository is public-facing material.** This includes `docs/plans/`, Platform Port Task Packages, AI execution-entry documents, README files, contributor guides, licensing pages, and `AGENTS.md` itself.
 
 There is no tracked “private notes” area inside this public repository.
 
@@ -103,7 +103,7 @@ Normative instructions addressed to a documented public role are valid, for exam
 ```text
 Contributor MUST run the validator.
 OEM Port SHOULD publish reproducible Compatibility Evidence.
-Task Design MUST define Acceptance Criteria.
+Task Package MUST define Acceptance Criteria.
 ```
 
 `docs/plans/` may use direct engineering instructions, but it remains public and follows the same writing rule.
@@ -205,7 +205,7 @@ Key frozen boundaries include:
 - Reader/UI, jailbreak routes, KPM/MRPI, Home Entry, and build tooling remain outside Device Adapter root contract;
 - Kindle Adapter should maximize reuse of pinned KOReader/koreader-base/FBInk/Kindle OS mechanisms.
 
-## 8. Platform-port Task / AI execution-prompt hard gate
+## 8. Platform-port Task Package hard gate
 
 Before changing anything under:
 
@@ -223,40 +223,42 @@ For Kindle also read:
 
 ```text
 docs/plans/platform-ports/kindle/0000_目录说明与文件命名规则_Kindle-Plan-Directory-and-File-Naming.md
-docs/plans/platform-ports/kindle/task/0000_任务设计目录说明_Task-Design-Directory-Guide.md
-docs/plans/platform-ports/kindle/execution-prompts/0000_AI执行提示目录说明_AI-Execution-Prompt-Directory-Guide.md
+docs/plans/platform-ports/kindle/0010_Kindle实现任务总计划_Baga-Ink-Kindle-Implementation-Master-Plan.md
 ```
 
 Required physical workflow:
 
 ```text
 Platform Master Plan
-→ task/<NNNN_中文任务名_English-Task-Name>/vNNN/
-→ select exact Task Design version
-→ execution-prompts/<same Task>/<same vNNN>/
+→ task/YYYY-MM-DD_<slug>/vN/vN.M/
+→ flat numbered documents inside one self-contained task-package version
+→ 00 control document is the entry point
 ```
 
-Use scaffolding tools when available:
+Task-package version files use:
 
 ```text
-python3 tools/new_platform_port_task.py task ...
-python3 tools/new_platform_port_task.py version ...
-python3 tools/new_platform_port_task.py execution ...
-python3 tools/new_platform_port_task.py prompt ...
+NN_vN.M_<semantic-title>.md
+```
+
+The version directory MUST be flat. Do not create a mirrored `execution-prompts/` tree or per-Milestone `TASK-NNNN/vNNN` hierarchy. Detailed Batch write scopes, RED/GREEN tests, device evidence, implementation decisions, and the direct AI execution entry belong in the same task-package version directory.
+
+Use the scaffolder when available:
+
+```text
+python3 tools/new_platform_port_task.py <platform> <YYYY-MM-DD> <slug> <vN> <vN.M>
 ```
 
 Hard rules:
 
-- Do not invent parallel task/prompt/handoff/scratch/temp/date/milestone directories under a platform-port root.
-- Task directory: `NNNN_中文任务名_English-Task-Name`.
-- Version: zero-padded `vNNN` only.
-- Every Markdown file under `docs/plans/platform-ports/` uses `NNNN_中文名_English-Name.md`.
-- Every Task has `0000_任务版本索引_Task-Version-Index.md` and at least one version.
-- Every Task Design version has `0000_任务设计总纲_Task-Design-Overview.md`.
-- Execution Prompt task/version exactly mirrors an existing Task Design task/version.
-- Every execution version has `0000_执行索引_Execution-Index.md`.
-- Execution prompts may refine steps/tests/debug/real-device actions but MUST NOT silently change selected Task Design architecture/scope.
-- Task Design and Execution Prompt prose MUST satisfy the repository-wide public writing rule.
+- Platform port root directories contain only root Plan Markdown plus `task/`.
+- Task packages use `YYYY-MM-DD_<lowercase-kebab-slug>`.
+- Versions use `vN/vN.M`, matching the version token in every file name.
+- Every task-package version has a `00_vN.M_*` control document.
+- Numeric file prefixes are unique inside a version.
+- Task-package version directories contain files only; no ad-hoc subdirectories.
+- Implementation evidence that changes an approved task decision MUST update the task package/version before the architectural change proceeds.
+- Task Package prose MUST satisfy the repository-wide public writing rule.
 
 Mandatory validation:
 
