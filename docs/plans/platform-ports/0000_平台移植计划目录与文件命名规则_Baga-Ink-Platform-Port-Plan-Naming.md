@@ -1,473 +1,169 @@
-# Baga Ink 平台移植计划目录与文件命名规则 / Baga Ink Platform Port Plan Naming
+# Baga Ink 平台移植任务包目录规则 / Baga Ink Platform Port Task Package Rule
 
 > **文档级别：Implementation Plan Directory Rule / 平台移植计划目录规则**  
-> **状态：Mandatory Naming Rule v0.4**  
-> **日期：2026-08-23**  
-> **适用范围：`docs/plans/platform-ports/` 及未来所有设备/OS 平台子目录**  
-> **公共文档国际化规则：`docs/zh-CN/governance/01_文档国际化与本地化规范.md` / `docs/en/governance/01_documentation-internationalization-policy.md`**
+> **状态：Mandatory Naming Rule v1.0**  
+> **日期：2026-08-24**  
+> **适用范围：`docs/plans/platform-ports/` 及未来所有设备/OS 平台子目录**
 
 ---
 
-## 0. 核心规则
+## 0. 核心目标
 
-Baga Ink 未来会有 Kindle、Android E-Paper 以及其他设备/OS 家族的 Platform Port。每个平台都可能产生数百甚至数千份任务设计与 AI 执行文档。
-
-因此，`docs/plans/platform-ports/` 下的 Markdown 文件统一采用：
-
-> **数字前缀 + `_` + 中文名 + `_` + 英文名 + `.md`**
-
-强制格式：
+Platform Port 的任务资料采用便于 GitHub 浏览和实现 Agent 连续阅读的自包含任务包。每个实现版本把研究、差距、裁决、实现计划、Write Scope、测试矩阵、真机验证和执行入口放在同一个扁平目录中，不再拆成 `Task ID → Task Version → Execution Prompt` 镜像树。
 
 ```text
-<数字前缀>_<中文名>_<English-Name>.md
+docs/plans/platform-ports/<platform>/
+├── 0000_...md
+├── 0010_...md
+└── task/
+    └── YYYY-MM-DD_<task-slug>/
+        └── vN/
+            └── vN.M/
+                ├── 00_vN.M_总控_....md
+                ├── 01_vN.M_....md
+                ├── 02_vN.M_....md
+                ├── ...
+                ├── 18_vN.M_下一位AI直接执行Prompt.md
+                └── 19_vN.M_....md
+```
+
+---
+
+# 1. 命名规则
+
+Platform Port 根目录的长期 Plan/Rule 文档继续使用：
+
+```text
+NNNN_中文名_English-Name.md
+```
+
+Task Package 内部采用：
+
+```text
+NN_vN.M_<语义标题>.md
 ```
 
 例如：
 
 ```text
-0000_目录说明与文件命名规则_Platform-Port-Plan-Naming.md
-0010_锁定上游依赖_Pin-Upstream-Dependencies.md
-0020_建立依赖与许可证清单_Dependency-License-Manifest.md
-0030_原生目标构建验证_Native-Target-Build-Bringup.md
+00_v1.1_总控_范围边界与执行纪律.md
+01_v1.1_KOReader与Kindle实现链路研究基线.md
+13_v1.1_分批实施计划与WriteScope.md
+14_v1.1_RED_GREEN测试与验收矩阵.md
+18_v1.1_下一位AI直接执行Prompt.md
+19_v1.1_源码核验后逐项自检表.md
 ```
 
-禁止：
-
-```text
-README.md
-Task.md
-0010_Task.md
-0010_Pin-Upstream-Dependencies.md
-0010_锁定上游依赖.md
-```
-
-即：**只有数字前缀不够；中文名和英文名都必须存在。**
-
-英文名 SHOULD 使用 ASCII 字母、数字与 `-`，避免空格。
+Task Package 文件名不强制中英双语并列。该区域属于快速变化的公开工程施工资料，语义标题优先保证目录可扫描性。稳定公共结论仍应提升到 `docs/en/` 与 `docs/zh-CN/` 的长期文档。
 
 ---
 
-# 1. Platform Port 是 Operational Engineering Docs，不强制全文双语镜像
+# 2. Task Package 与 Version
 
-`docs/plans/platform-ports/` 属于工程施工区，而不是 Baga Ink 公共协议本身。
-
-因此它明确是 Public Localized Docs 规则的例外：
+Task Package 根目录：
 
 ```text
-docs/en/
-docs/zh-CN/
+YYYY-MM-DD_<lowercase-kebab-slug>/
 ```
 
-不会各复制一套：
+版本结构：
 
 ```text
-Task Design
-AI Execution Prompt
-调试日志
-真机步骤
-一次性 PoC
-回归执行记录
+v1/
+└── v1.1/
+
+v2/
+└── v2.1/
 ```
 
-原因是这些材料会达到数百、数千份，并且持续快速变化；强制全文双语会形成巨大的重复和同步成本。
-
-当前默认：
-
-```text
-正文
-→ 中文优先，方便主要维护者工作
-
-文件名
-→ 数字 + 中文语义名 + English semantic name
-→ 方便中文维护者与国际协作者通过目录快速识别
-```
-
-但必须遵守一个更重要的边界：
-
-> **任何外部开发者、OEM、第三方 App/Adapter 实现者需要长期依赖的稳定结论，MUST 从 Plan / Task / Prompt 提升回 Public Localized Docs。**
-
-也就是最终进入：
-
-```text
-docs/en/standards/            + docs/zh-CN/standards/
-docs/en/design/               + docs/zh-CN/design/
-docs/en/reference-apps/       + docs/zh-CN/reference-apps/
-docs/en/governance/           + docs/zh-CN/governance/
-docs/en/status/               + docs/zh-CN/status/
-```
-
-不得让国际开发者必须阅读中文 AI Prompt 才能知道一个正式 API / Contract / Architecture Rule。
+`vN.M/` 是可直接交付给实现 Agent 的具体任务版本。目录内部必须扁平，不再创建 `task/`、`execution-prompts/`、`handoff/` 或其他子目录。需要保留新的设计版本时，新建新的 `vN.M`，不覆盖历史版本。
 
 ---
 
-# 2. Platform Port 的两层实施资料
+# 3. 推荐文档职责
 
-每个大型 Platform Port SHOULD 采用两层结构：
-
-```text
-<platform>/
-├── task/
-└── execution-prompts/
-```
-
-含义：
+大型实现任务 SHOULD 覆盖以下职责；编号可按任务需要调整：
 
 ```text
-task/
-→ 人与 AI 先讨论、研究并确定的“任务设计总纲”
-→ 以实现一个明确功能/模块/验证目标为单位
-→ 可以包含开发、测试、调试、验证、真机操作、回归、恢复等完整目标
-→ 一个 Task 可以持续形成 v001 / v002 / ... / vNNN
-
-execution-prompts/
-→ AI 根据某个确定的 task/<Task>/vNNN 生成的具体执行步骤
-→ 每份文档是一次可独立执行、验证和交接的子步骤
-→ 数量可以达到数百、数千份
+00  总控 / Scope / 执行纪律 / 阅读顺序
+01  上游源码与实现链路研究
+02  当前仓库现状与差距
+03  实现裁决
+04  目录结构与模块边界
+05+ 各 Milestone 实现计划
+13  Batch / Write Scope
+14  RED/GREEN 测试与验收矩阵
+15  真机验证 / Evidence / Recovery
+16  Dependency / License / Patch / Build Assets
+17  实现前最终裁决
+18  下一位 AI 直接执行入口
+19  逐项自检表 / 覆盖矩阵
 ```
 
-`execution-prompts` 相当于旧项目中的 `prompt/ai_prompt`，但名称明确强调：这里保存的是**由 Task Design 派生的执行指令**，不是聊天记录或泛用 Prompt 收藏。
+`00` 是强制入口。实现者不应依赖提交时间或目录外的临时说明判断当前任务。
 
 ---
 
-# 3. Task 与 Execution Prompt 必须镜像
+# 4. 不再建立独立 Execution Prompt 树
 
-推荐结构：
+Platform Port 不再使用：
 
 ```text
-<platform>/
-├── task/
-│   ├── 0000_任务设计目录说明_Task-Design-Directory-Guide.md
-│   └── 0010_适配器契约可执行化_Executable-Adapter-Contract/
-│       ├── 0000_任务版本索引_Task-Version-Index.md
-│       ├── v001/
-│       │   └── 0000_任务设计总纲_Task-Design-Overview.md
-│       └── v002/
-│           └── 0000_任务设计总纲_Task-Design-Overview.md
-│
-└── execution-prompts/
-    ├── 0000_AI执行提示目录说明_AI-Execution-Prompt-Directory-Guide.md
-    └── 0010_适配器契约可执行化_Executable-Adapter-Contract/
-        ├── v001/
-        │   ├── 0000_执行索引_Execution-Index.md
-        │   ├── 0010_建立IDL模式与加载器_Create-IDL-Schema-and-Loader.md
-        │   └── 0020_编写失败基线测试_Write-Failing-Baseline-Tests.md
-        └── v002/
-            └── ...
+task/<Task-ID>/vNNN/
+execution-prompts/<same Task-ID>/vNNN/
 ```
 
-硬规则：
+执行入口直接位于当前 Task Package，例如：
 
-1. `task/0010_.../` 与 `execution-prompts/0010_.../` MUST 使用同一个 Task 目录名；
-2. execution prompt MUST 指向一个精确 Task Version，例如 `v002`；
-3. 不允许让 `v001` 的执行文档静默改成执行 `v002` 的设计；
-4. Task 设计变化时创建新版本，而不是覆盖历史版本；
-5. 旧版本及其执行文档保留为实施历史。
+```text
+18_v1.1_下一位AI直接执行Prompt.md
+```
+
+Batch 写范围与测试门禁分别进入同一目录中的对应编号文档。一个实现 Agent 定位到一个 `vN.M` 目录即可获得完整上下文。
 
 ---
 
-# 4. Task 目录命名
-
-真正代表一个功能/模块/验证目标的 Task 目录 MUST 采用：
+# 5. 权威边界
 
 ```text
-<四位Task编号>_<中文任务名>_<English-Task-Name>/
+Standards
+  > Approved Design / Architecture Freeze
+  > Platform Master Plan
+  > current Task Package
+  > implementation / tests / device evidence
 ```
 
-例如：
-
-```text
-0010_适配器契约可执行化_Executable-Adapter-Contract/
-0020_KOReader-KindleHF启动验证_KOReader-KindleHF-Bringup/
-0030_Kindle基础设备适配器_Kindle-Base-Device-Adapter/
-0040_最小平台与Probe应用_Minimal-Platform-and-Probe-App/
-```
-
-Task 编号是稳定 ID。Task 完成、阻塞或后来出现新版本时，目录编号不得改变。
-
-结构性目录名称，例如：
-
-```text
-task/
-execution-prompts/
-v001/
-v002/
-```
-
-不受“中文名 + 英文名”文件命名规则约束；该规则针对 Markdown 文件名。Task 业务目录仍 MUST 使用上面的双语命名方式。
+Task Package 可以固定本轮实现选择，但不能静默改变上位公共 Contract。实现证据要求改变上位语义时，应先或同步修订对应长期文档。
 
 ---
 
-# 5. Version 目录统一使用 `vNNN`
+# 6. 自动校验
 
-为了避免：
-
-```text
-v1
-v10
-v2
-```
-
-这样的字符串排序问题，新 Task Version MUST 使用三位零填充：
-
-```text
-v001
-v002
-v003
-...
-v010
-...
-v999
-```
-
-Task 新版本表示**任务设计发生了值得保留的变化**，例如：
-
-- 范围变化；
-- 方案变化；
-- 验收标准变化；
-- 实测发现原方案不可行；
-- 真机验证要求变化；
-- 测试/恢复策略变化。
-
-普通执行进度不产生新 Task Version。
-
----
-
-# 6. Markdown 文件默认四位数字前缀
-
-预计长期增长的 `task/` 与 `execution-prompts/` 目录 MUST 使用：
-
-```text
-0000_
-0010_
-0020_
-0030_
-...
-9999_
-```
-
-`0000_` 通常保留给：
-
-```text
-目录说明
-版本索引
-任务设计总纲
-执行索引
-验收 Gate 总览
-```
-
-具体执行文档通常从：
-
-```text
-0010_
-```
-
-开始。
-
-默认按 10 递增，为后续插入步骤保留编号：
-
-```text
-0010_
-0020_
-0030_
-```
-
-需要插入时可以使用：
-
-```text
-0015_
-```
-
-无需重命名后续大量文件。
-
----
-
-# 7. 编号作用域
-
-编号不要求整个仓库全局唯一，而是在当前目录 / 当前 Task 语境中稳定。
-
-推荐理解：
-
-```text
-Task directory number
-→ 这个功能/模块工作包的稳定 ID
-
-Task version
-→ 该工作包任务设计的版本
-
-Execution prompt file number
-→ 某个 Task Version 内具体执行步骤的稳定顺序
-```
-
-例如：
-
-```text
-Task:    0030_Kindle基础设备适配器_Kindle-Base-Device-Adapter/
-Version: v002
-Prompt:  0140_验证睡眠唤醒生命周期_Verify-Sleep-Wake-Lifecycle.md
-```
-
-可以形成稳定引用：
-
-```text
-TASK-0030 / v002 / PROMPT-0140
-```
-
----
-
-# 8. Execution Prompt 必须声明来源
-
-每份 execution prompt SHOULD 在文档开头记录：
-
-```text
-Source Task
-Source Task Version
-Prompt ID / file path
-Goal
-Dependencies
-Acceptance / verification
-```
-
-这样即使单独复制一份文档，也能知道它来自哪个任务设计版本。
-
-如果执行过程中发现需要改变 Task 的架构、范围或验收 Gate，AI MUST 回到 `task/` 形成新版本，而不是在 execution prompt 中偷偷改变上位任务设计。
-
----
-
-# 9. 完成状态不通过改文件名表达
-
-不要创建：
-
-```text
-DONE_0010_....md
-COMPLETE_0020_....md
-```
-
-也不要完成后重新编号。
-
-编号是稳定定位符与阅读顺序；执行结果进入：
-
-```text
-execution prompt 自身的 Result / Evidence
-Task 版本的验收记录
-current catalog-resolved Project Status
-代码 / 测试 / Commit
-Compatibility / BICTS evidence
-```
-
----
-
-# 10. 对所有未来 Platform Port 生效
-
-未来创建：
-
-```text
-docs/plans/platform-ports/android-e-paper/
-docs/plans/platform-ports/remarkable/
-docs/plans/platform-ports/<future-family>/
-```
-
-时，默认继承：
-
-```text
-Task Design
-      ↓
-Versioned Task
-      ↓
-Execution Prompts
-      ↓
-Code / Test / Device Evidence
-      ↓
-Status / Compatibility
-```
-
-以及文件名：
-
-> **`数字前缀_中文名_英文名.md`**
-
-这套结构的目标是：即使未来单个平台积累数百个 Task、每个 Task 又派生大量 AI 执行文档，仍然能通过稳定 Task ID、版本号、文件编号和双语语义名快速定位。
-
----
-
-# 11. Public Doc 引用与国际协作者
-
-在国际化迁移期间，Task / Execution Prompt 如果要引用 Standard / Design / Reference App，SHOULD：
-
-1. 通过 `docs/localization/catalog.json` 确认当前有效路径；
-2. 中文维护者优先引用 `zh-CN` 当前版本（尚未迁移时引用 Catalog 中的 legacy path）；
-3. 给国际开发者的 Handoff / Issue / PR SHOULD 同时给出对应 English path 或明确标注 `translation-pending`；
-4. 不得因为英文翻译尚未完成，就在 Task 中重新发明一套英文 Contract 摘要作为正式权威。
-
-真正稳定的国际协作入口永远是 Public Localized Docs，而不是 AI Prompt。
-
----
-
-# 12. 自动化强制校验
-
-本规则不是仅靠人工或 AI 自觉遵守。
-
-仓库提供强制校验脚本：
-
-```text
-tools/check_platform_port_plans.py
-```
-
-任何修改 `docs/plans/platform-ports/` 的人或 AI，在完成工作前 MUST 执行：
+所有修改必须通过：
 
 ```bash
 python3 tools/check_platform_port_plans.py
+python3 tools/check_public_writing.py
 ```
 
-校验失败时不得宣称任务完成。
+创建新 Task Package 可使用：
 
-GitHub Actions 同时运行：
+```bash
+python3 tools/new_platform_port_task.py <platform> <YYYY-MM-DD> <slug> <vN> <vN.M>
+```
+
+校验器检查 package naming、`vN/vN.M` 层级、版本目录扁平性、`NN_vN.M_*` 文件名一致性、`00` 总控存在性和编号唯一性。
+
+---
+
+# 7. 最终原则
 
 ```text
-.github/workflows/platform-port-plan-guard.yml
+进入一个 vN.M 目录
+→ 从 00 开始
+→ 按编号读完研究、差距、裁决、实现与测试
+→ 从 Batch 0 开始执行
+→ 证据回写同一任务体系
 ```
 
-该 Gate 会检查至少以下内容：
-
-```text
-Markdown 文件名是否符合 数字前缀_中文名_English-Name.md
-Task / execution 文档是否使用四位数字前缀
-Task 目录是否符合 NNNN_中文任务名_English-Task-Name
-是否有人私自创建 task / execution-prompts 之外的顶层执行目录
-Task Version 是否严格使用 vNNN
-每个 Task 是否存在版本索引
-每个 Task Design Version 是否存在任务设计总纲
-execution-prompts 是否精确镜像已有 Task + Version
-每个 execution version 是否存在执行索引
-是否出现 README.md、v1、v10、日期式任务目录、handoff 平铺等非标准结构
-```
-
-公共文档国际化结构由：
-
-```text
-python3 tools/check_docs_i18n.py
-```
-
-独立校验。两个 Guard 都必须通过。
-
-AI MUST NOT：
-
-```text
-为了让 CI 通过而删除校验
-添加 broad exception / ignore pattern
-降低 MUST 为 SHOULD
-把非法目录加入 allowlist
-绕过脚本后直接宣称完成
-```
-
-如果确实需要引入新的正式目录类型或修改命名模型，正确流程是：
-
-```text
-先讨论并修改治理规则
-        ↓
-同步修改 AGENTS.md
-        ↓
-同步修改校验脚本及测试/CI
-        ↓
-再创建新结构
-```
-
-不能反过来先乱建目录，再修改脚本给既成事实放行。
+目录本身就是实现导航，不再要求在多套索引和镜像树之间重建上下文。
